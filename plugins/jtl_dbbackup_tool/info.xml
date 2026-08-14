@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Verified against the actual shop core source (release/5.8.0), not just the
+  docs — the docs page (docs/de/docs/shop_plugins/infoxml.md) turned out to
+  be stale in one place (see the "encrypted" note below):
+  - Root takes no attributes; <XMLVersion> is a required separate element.
+  - <Setting> uses attributes (type/initialValue/conf/sort) plus a required
+    <ValueName> child, not a <Type> child (SettingsLinks.php install path).
+  - type="encrypted" IS a real, working value — SettingsLinks.php stores the
+    type= attribute verbatim with no whitelist, and JTL\Plugin\Data\Config
+    checks for InputType::ENCRYPTED specifically to XTEA-decrypt it. The
+    docs' listed type list (text/textarea/.../none) simply omits it.
+  - <MinShopVersion> (dotted SemVer) is parsed by PluginValidator.php via
+    JTLShop\SemVer\Version and compared against APPLICATION_VERSION;
+    <ShopVersion> is also accepted as a fallback, MinShopVersion taking
+    priority if both are present.
+  - Set to "5.7.0" rather than "5.8.0" DELIBERATELY: under strict SemVer, a
+    pre-release build like "5.8.0-rc3" sorts BELOW its final "5.8.0", so a
+    literal MinShopVersion="5.8.0" rejects any 5.8.0 release candidate
+    (confirmed the hard way — error code 37, "Diese Version von JTL-Shop
+    ist nicht mehr kompatibel", against a real 5.8.0-rc3 shop). "5.7.0"
+    clears that comparison unambiguously once major/minor differ, without
+    depending on how the core's SemVer library orders pre-release tags
+    specifically (unverified). This plugin's PHP code itself was still only
+    checked against actual release/5.8.0 source, not real 5.7.x — see
+    README "Known gaps" if installing on a genuine (non-5.8) 5.7 shop.
+
+  STILL OPEN:
+  - ValueName below just mirrors Name (snake_case) — the real PHP-side
+    naming convention JTL-Shop expects is not yet confirmed.
+-->
+<jtlshopplugin>
+    <XMLVersion>102</XMLVersion>
+    <Name>Database Export Import Backup Tool</Name>
+    <!-- Was "Database Ex/Importer Backup Tool" — the "/" triggered error
+         code 6 ("Der Plugin-Name entspricht nicht der Konvention"). Renamed
+         to letters/spaces only; likely a restricted character set for
+         <Name> (exact allowed regex unconfirmed). -->
+    <Description>Backup- und Restore-Sicherheitsnetz fuer die CSV-Import-Funktionen des JTL-Shop-Backends (Kunden, Newsletter, PLZ/Ort, Weiterleitungen, Gutscheine, Bewertungen, Sprachvariablen).</Description>
+    <Author>Sirko Wolfram</Author>
+    <URL>https://github.com/swolfram-jtl/jtl-shop-db-backup-plugin</URL>
+    <!-- CONFIRMED fatal-error fix, not just the warning: <URL> is documented
+         as optional and PluginValidator never checks it, but
+         Installer.php:159 reads $baseNode['URL'] with no ?? fallback
+         (unlike its neighbors Icon/ExsID/StoreID) — a MISSING element makes
+         $plugin->cURL null, which Meta.php:56 then passes into
+         GetText::translatePluginOrCoreMessage(?string, string $original),
+         whose non-nullable $original throws a fatal TypeError. Any string
+         here (even "") fixes it; this is a real bug/inconsistency in
+         JTL-Shop 5.8.0-rc3 itself, not something wrong in this plugin. -->
+    <PluginID>jtl_dbbackup_tool</PluginID>
+    <Version>0.1.0</Version>
+    <CreateDate>2026-08-14</CreateDate>
+    <MinShopVersion>5.7.0</MinShopVersion>
+
+    <Install>
+        <Adminmenu>
+            <Customlink sort="1">
+                <Name>Dashboard</Name>
+                <Filename>dashboard.php</Filename>
+            </Customlink>
+            <Customlink sort="2">
+                <Name>Backup jetzt</Name>
+                <Filename>backup.php</Filename>
+            </Customlink>
+            <Customlink sort="3">
+                <Name>Wiederherstellen</Name>
+                <Filename>history.php</Filename>
+                <!-- Renamed from "Historie & Restore" on request — restore is
+                     now framed as its own destination, not an add-on to a
+                     history list (file/class names stay history.php/
+                     HistoryController internally, only the visible label
+                     changed, to limit churn during a fast iteration pass). -->
+            </Customlink>
+            <Settingslink sort="4">
+                <Name>Einstellungen</Name>
+
+                <Setting type="text" initialValue="" conf="N" sort="1">
+                    <Name>Backup-Einstellungen</Name>
+                    <ValueName>section_backup</ValueName>
+                    <Description></Description>
+                    <!-- conf="N" = section heading (Config::TYPE_NOT_CONFIGURABLE),
+                         CONFIRMED against tpl_inc/plugin_options.tpl: the
+                         heading text shown is $confItem->niceName, which maps
+                         to THIS <Name> element — NOT <Description> and NOT
+                         initialValue (a conf="N" item's stored value is never
+                         read/displayed at all). Originally had this backwards
+                         (a snake_case key in <Name>, the real heading text
+                         wasted on initialValue) — that key was shown verbatim
+                         since translatePluginOrCoreMessage() only maps to
+                         another string if a matching gettext entry exists,
+                         otherwise returns the original unchanged (the admin
+                         theme's .subheading1 CSS then uppercases it, hence
+                         "SECTION_BACKUP" on screen). -->
+                </Setting>
+                <Setting type="selectbox" initialValue="ftps" conf="Y" sort="2">
+                    <Name>ftp_protocol</Name>
+                    <ValueName>ftp_protocol</ValueName>
+                    <Description>Uebertragungsprotokoll (Klartext-FTP wird nicht unterstuetzt)</Description>
+                    <SelectboxOptions>
+                        <Option value="ftps" sort="0">FTPS</Option>
+                        <Option value="sftp" sort="1">SFTP</Option>
+                    </SelectboxOptions>
+                    <!-- Confirmed schema against docs/de/docs/shop_plugins/infoxml.md
+                         lines 879-993 + SettingsLinks.php — real dropdown now,
+                         not free text. -->
+                </Setting>
+                <Setting type="text" initialValue="" conf="Y" sort="3">
+                    <Name>ftp_host</Name>
+                    <ValueName>ftp_host</ValueName>
+                    <Description>FTPS/SFTP-Host</Description>
+                </Setting>
+                <Setting type="text" initialValue="" conf="Y" sort="4">
+                    <Name>ftp_port</Name>
+                    <ValueName>ftp_port</ValueName>
+                    <Description>Port (FTPS Standard: 21, SFTP Standard: 22)</Description>
+                </Setting>
+                <Setting type="text" initialValue="" conf="Y" sort="5">
+                    <Name>ftp_username</Name>
+                    <ValueName>ftp_username</ValueName>
+                    <Description>Benutzername</Description>
+                </Setting>
+                <Setting type="encrypted" initialValue="" conf="Y" sort="6">
+                    <Name>ftp_password</Name>
+                    <ValueName>ftp_password</ValueName>
+                    <Description>Passwort (FTPS, oder SFTP falls kein Key verwendet wird)</Description>
+                </Setting>
+                <Setting type="encrypted" initialValue="" conf="Y" sort="7">
+                    <Name>ftp_private_key</Name>
+                    <ValueName>ftp_private_key</ValueName>
+                    <Description>SFTP: privater Schluessel (alternativ zu Passwort). Einzeiliges Eingabefeld — Key ggf. extern zusammenhaengend kopieren.</Description>
+                </Setting>
+                <Setting type="encrypted" initialValue="" conf="Y" sort="8">
+                    <Name>ftp_private_key_passphrase</Name>
+                    <ValueName>ftp_private_key_passphrase</ValueName>
+                    <Description>SFTP: Passphrase des privaten Schluessels (falls vorhanden)</Description>
+                </Setting>
+                <Setting type="text" initialValue="/" conf="Y" sort="9">
+                    <Name>ftp_remote_dir</Name>
+                    <ValueName>ftp_remote_dir</ValueName>
+                    <Description>Zielverzeichnis auf dem FTPS/SFTP-Server</Description>
+                </Setting>
+                <Setting type="checkbox" initialValue="" conf="Y" sort="10">
+                    <Name>encryption_enabled</Name>
+                    <ValueName>encryption_enabled</ValueName>
+                    <Description>Backup-Datei zusaetzlich verschluesseln (XChaCha20-Poly1305). Standard: aus.</Description>
+                    <!-- CONFIRMED against tpl_inc/plugin_options.tpl: the core's
+                         own checkbox <input> has no value= attribute, so a
+                         checked box always POSTs the literal string "on"
+                         (browser default), and the template re-checks the box
+                         only if the stored value === "on" — "Y"/"N" was never
+                         a real convention here, just an incorrect assumption
+                         carried over from elsewhere. An unchecked box sends
+                         nothing at all, so PluginController::actionConfig()
+                         stores NULL for "off", not "N" — default-off is
+                         therefore an empty initialValue, not "N". -->
+                </Setting>
+                <Setting type="encrypted" initialValue="" conf="Y" sort="11">
+                    <Name>encryption_passphrase</Name>
+                    <ValueName>encryption_passphrase</ValueName>
+                    <Description>Passwort fuer die Backup-Verschluesselung (nur falls oben aktiviert). Verloren = Backup unlesbar.</Description>
+                </Setting>
+                <Setting type="checkbox" initialValue="on" conf="Y" sort="12">
+                    <Name>maintenance_mode_enabled</Name>
+                    <ValueName>maintenance_mode_enabled</ValueName>
+                    <Description>Shop waehrend des Backups kurz in den Wartungsmodus versetzen (reiner Kunden-Komfort, keine Konsistenzgarantie). Standard: an.</Description>
+                </Setting>
+                <Setting type="text" initialValue="10" conf="Y" sort="13">
+                    <Name>retention_max_count</Name>
+                    <ValueName>retention_max_count</ValueName>
+                    <Description>Max. Anzahl aufzubewahrender Backups</Description>
+                </Setting>
+                <Setting type="text" initialValue="90" conf="Y" sort="14">
+                    <Name>retention_max_age_days</Name>
+                    <ValueName>retention_max_age_days</ValueName>
+                    <Description>Max. Alter aufzubewahrender Backups (Tage)</Description>
+                </Setting>
+                <Setting type="text" initialValue="" conf="Y" sort="15">
+                    <Name>notify_email_on_failure</Name>
+                    <ValueName>notify_email_on_failure</ValueName>
+                    <Description>E-Mail-Adresse fuer Fehlschlag-Benachrichtigungen (leer = keine)</Description>
+                </Setting>
+
+                <Setting type="text" initialValue="" conf="N" sort="16">
+                    <Name>Wiederherstellen-Einstellungen</Name>
+                    <ValueName>section_restore</ValueName>
+                    <Description></Description>
+                </Setting>
+                <Setting type="checkbox" initialValue="on" conf="Y" sort="17">
+                    <Name>pre_restore_snapshot_enabled</Name>
+                    <ValueName>pre_restore_snapshot_enabled</ValueName>
+                    <Description>Vor jedem Restore automatisch ein Backup des aktuellen Stands anlegen. Standard: an.</Description>
+                </Setting>
+                <Setting type="checkbox" initialValue="on" conf="Y" sort="18">
+                    <Name>post_restore_consistency_check_enabled</Name>
+                    <ValueName>post_restore_consistency_check_enabled</ValueName>
+                    <Description>Nach einem Teil-Restore auf moeglicherweise verwaiste Datensaetze pruefen. Standard: an.</Description>
+                </Setting>
+                <Setting type="checkbox" initialValue="on" conf="Y" sort="19">
+                    <Name>version_fingerprint_block_enabled</Name>
+                    <ValueName>version_fingerprint_block_enabled</ValueName>
+                    <Description>Restore bei abweichendem Tabellen-Fingerprint hart blockieren statt nur zu warnen. Standard: an.</Description>
+                </Setting>
+            </Settingslink>
+        </Adminmenu>
+    </Install>
+</jtlshopplugin>

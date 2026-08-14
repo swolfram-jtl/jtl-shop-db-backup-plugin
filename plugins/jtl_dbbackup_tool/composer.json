@@ -1,0 +1,12 @@
+{
+    "name": "swolfram/jtl-dbbackup-tool",
+    "description": "Vendored dependencies for the jtl_dbbackup_tool plugin (SFTP support). Not autoloaded by the shop core — see README Setup.",
+    "type": "project",
+    "require": {
+        "php": ">=8.3",
+        "phpseclib/phpseclib": "^3.0"
+    },
+    "config": {
+        "vendor-dir": "vendor"
+    }
+}

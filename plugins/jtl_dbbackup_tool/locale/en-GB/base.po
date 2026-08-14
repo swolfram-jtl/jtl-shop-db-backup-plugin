@@ -1,0 +1,332 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"X-Domain: jtl_dbbackup_tool\n"
+
+msgid "Presets sind exakt wie im Shop-Backend-Menü benannt, damit klar ist, welches Backup zu welcher Import-Funktion gehört."
+msgstr "Presets are named exactly as in the shop backend menu, so it's clear which backup belongs to which import function."
+
+msgid "Komplett"
+msgstr "Complete"
+
+msgid "Vollständige Datenbank (ohne Plugin-eigene Tabellen)"
+msgstr "Full database (excluding the plugin's own tables)"
+
+msgid "Backup jetzt"
+msgstr "Backup now"
+
+msgid "Optionen für diesen Lauf"
+msgstr "Options for this run"
+
+msgid "FTP/SFTP-Zugangsdaten nur für diesen Lauf eingeben (nicht speichern)"
+msgstr "Enter FTP/SFTP credentials for this run only (not saved)"
+
+msgid "Backup-Datei zusätzlich verschlüsseln (abweichend vom Standard)"
+msgstr "Additionally encrypt the backup file (overrides the default)"
+
+msgid "Mit diesen Optionen sichern"
+msgstr "Back up with these options"
+
+msgid "Host"
+msgstr "Host"
+
+msgid "Port"
+msgstr "Port"
+
+msgid "Benutzername"
+msgstr "Username"
+
+msgid "Passwort"
+msgstr "Password"
+
+msgid "Übersicht"
+msgstr "Overview"
+
+msgid "Letzter Lauf fehlgeschlagen"
+msgstr "Last run failed"
+
+msgid "Letztes Backup"
+msgstr "Last backup"
+
+msgid "keins"
+msgstr "none"
+
+msgid "Nächstes geplantes Backup"
+msgstr "Next scheduled backup"
+
+msgid "kein Cron-Backup aktiv"
+msgstr "no cron backup active"
+
+msgid "Speicherverbrauch"
+msgstr "Storage used"
+
+msgid "lokal"
+msgstr "local"
+
+msgid "Anzahl Backups"
+msgstr "Number of backups"
+
+msgid "Letzte Aktivität"
+msgstr "Recent activity"
+
+msgid "Noch keine Einträge."
+msgstr "No entries yet."
+
+msgid "Noch kein Backup vorhanden"
+msgstr "No backup yet"
+
+msgid "Leg dein erstes Backup an, bevor du eine der CSV-Import-Funktionen des Shops nutzt."
+msgstr "Create your first backup before using one of the shop's CSV import features."
+
+msgid "Tipp: unter „Einstellungen” lässt sich zusätzlich ein tägliches/wöchentliches Cron-Backup aktivieren."
+msgstr "Tip: a daily/weekly cron backup can also be enabled under “Settings”."
+
+msgid "Schnellzugriff"
+msgstr "Quick access"
+
+msgid "Erstellt"
+msgstr "Created"
+
+msgid "Bezeichnung"
+msgstr "Label"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Größe"
+msgstr "Size"
+
+msgid "Verschlüsselt"
+msgstr "Encrypted"
+
+msgid "Download"
+msgstr "Download"
+
+msgid "Wiederherstellen…"
+msgstr "Restore…"
+
+msgid "nicht verfügbar"
+msgstr "not available"
+
+msgid "Noch keine Backups vorhanden."
+msgstr "No backups yet."
+
+msgid "Ja"
+msgstr "Yes"
+
+msgid "Nein"
+msgstr "No"
+
+msgid "Wiederherstellung vorbereiten — dieser Vorgang überschreibt aktuelle Daten"
+msgstr "Prepare restore — this action overwrites current data"
+
+msgid "unveränderte Tabellen anzeigen"
+msgstr "show unchanged tables"
+
+msgid "Tabelle"
+msgstr "Table"
+
+msgid "Jetzt"
+msgstr "Now"
+
+msgid "Im Backup"
+msgstr "In backup"
+
+msgid "Trotz abweichender Tabellenstruktur fortfahren (ich weiß, was ich tue)"
+msgstr "Proceed despite differing table structure (I know what I'm doing)"
+
+msgid "Jetzt wiederherstellen"
+msgstr "Restore now"
+
+msgid "Ein Vorgang läuft bereits"
+msgstr "An operation is already running"
+
+msgid "Gesperrt seit"
+msgstr "Locked since"
+
+msgid "Nur aufheben, wenn der laufende Vorgang wirklich nicht mehr aktiv ist (z. B. nach einem Server-Neustart). Ein noch aktiver Backup/Restore würde sonst mit einem zweiten Lauf kollidieren."
+msgstr "Only release this if the running operation is genuinely no longer active (e.g. after a server restart). A still-active backup/restore would otherwise collide with a second run."
+
+msgid "Sperre manuell aufheben"
+msgstr "Release lock manually"
+
+msgid "Herunterladen"
+msgstr "Download"
+
+msgid "Wo werden Backups abgelegt?"
+msgstr "Where are backups stored?"
+
+msgid "Lokaler Pfad"
+msgstr "Local path"
+
+msgid "außerhalb des Webroots, per .htaccess zusätzlich gegen Web-Zugriff gesperrt"
+msgstr "outside the webroot, additionally blocked from web access via .htaccess"
+
+msgid "Zusätzlich auf"
+msgstr "Additionally on"
+
+msgid "Kein FTP/SFTP-Ziel konfiguriert — Backups liegen ausschließlich lokal."
+msgstr "No FTP/SFTP target configured — backups are stored locally only."
+
+msgid "Unbekanntes Preset: %s"
+msgstr "Unknown preset: %s"
+
+msgid "Backup „%s“ erfolgreich erstellt."
+msgstr "Backup \"%s\" created successfully."
+
+msgid "Backup fehlgeschlagen: %s"
+msgstr "Backup failed: %s"
+
+msgid "Diese Shop-Version stellt die für Backups benötigte Bibliothek (ifsnop/mysqldump-php) nicht mehr bereit. Bitte Plugin-Update abwarten."
+msgstr "This shop version no longer provides the library required for backups (ifsnop/mysqldump-php). Please wait for a plugin update."
+
+msgid "Backup-Selbsttest fehlgeschlagen — Datei scheint beschädigt."
+msgstr "Backup self-test failed — file appears to be corrupted."
+
+msgid "Verschlüsselung aktiviert, aber kein Passwort angegeben."
+msgstr "Encryption enabled, but no password provided."
+
+msgid "Backup fehlgeschlagen"
+msgstr "Backup failed"
+
+msgid "Preset: %s
+Fehler: %s"
+msgstr "Preset: %s
+Error: %s"
+
+msgid "Zu wenig freier Speicherplatz für dieses Backup (benötigt ca. %.1f MB, verfügbar %.1f MB)."
+msgstr "Not enough free disk space for this backup (needs approx. %.1f MB, %.1f MB available)."
+
+msgid "Backup-Upload fehlgeschlagen"
+msgstr "Backup upload failed"
+
+msgid "Datei: %s
+Fehler: %s
+Lokales Backup ist weiterhin vorhanden."
+msgstr "File: %s
+Error: %s
+The local backup is still available."
+
+msgid "Automatisches Backup vor Plugin-Update"
+msgstr "Automatic backup before plugin update"
+
+msgid "Backup nicht gefunden."
+msgstr "Backup not found."
+
+msgid "Manifest-Datei zu diesem Backup fehlt oder ist unlesbar."
+msgstr "The manifest file for this backup is missing or unreadable."
+
+msgid "Restore blockiert: Tabellenstruktur weicht vom Backup-Zeitpunkt ab. %s"
+msgstr "Restore blocked: table structure differs from when the backup was taken. %s"
+
+msgid "Plugin-eigene Tabellen dürfen nie über Restore überschrieben werden."
+msgstr "This plugin's own tables must never be overwritten via restore."
+
+msgid "Automatischer Vorab-Snapshot vor Restore"
+msgstr "Automatic pre-restore snapshot"
+
+msgid "Dieses Backup ist verschlüsselt — Passwort erforderlich."
+msgstr "This backup is encrypted — a password is required."
+
+msgid "Backup-Datei konnte nicht entpackt werden."
+msgstr "The backup file could not be decompressed."
+
+msgid "Vorschau fehlgeschlagen: %s"
+msgstr "Preview failed: %s"
+
+msgid "Bestätigungstext stimmte nicht überein — Restore abgebrochen."
+msgstr "Confirmation text didn't match — restore cancelled."
+
+msgid "Restore abgeschlossen."
+msgstr "Restore completed."
+
+msgid "Hinweise: %s"
+msgstr "Notes: %s"
+
+msgid "Restore fehlgeschlagen: %s"
+msgstr "Restore failed: %s"
+
+msgid "Sperre wurde manuell aufgehoben."
+msgstr "Lock was released manually."
+
+msgid "Dieses Backup stammt von einer ANDEREN Shop-Instanz — Restore ist auf dieselbe Instanz beschränkt (v1)."
+msgstr "This backup comes from a DIFFERENT shop instance — restore is limited to the same instance (v1)."
+
+msgid "Tabellenstruktur von `%s` weicht vom Backup-Zeitpunkt ab (Core-Update oder andere Migration seitdem)."
+msgstr "The table structure of `%s` differs from when the backup was taken (core update or other migration since then)."
+
+msgid "Verzeichnis enthält Backups einer anderen Shop-Instanz (%s) — bitte Zielordner prüfen."
+msgstr "Directory contains backups from another shop instance (%s) — please check the target folder."
+
+msgid "Plugin-Instanz konnte im Cron-Kontext nicht geladen werden."
+msgstr "Plugin instance could not be loaded in the cron context."
+
+msgid "Konnte Datei zum Verschlüsseln nicht öffnen."
+msgstr "Could not open file for encryption."
+
+msgid "Lesefehler beim Verschlüsseln."
+msgstr "Read error while encrypting."
+
+msgid "Konnte Datei zum Entschlüsseln nicht öffnen."
+msgstr "Could not open file for decryption."
+
+msgid "Backup-Datei ist kein gültiges verschlüsseltes Format."
+msgstr "Backup file is not a valid encrypted format."
+
+msgid "Backup-Datei ist beschädigt (unvollständiger Chunk-Header)."
+msgstr "Backup file is corrupted (incomplete chunk header)."
+
+msgid "Backup-Datei ist beschädigt (unvollständiger Chunk)."
+msgstr "Backup file is corrupted (incomplete chunk)."
+
+msgid "Entschlüsselung fehlgeschlagen — falsches Passwort oder Datei wurde manipuliert/beschädigt."
+msgstr "Decryption failed — wrong password, or the file was tampered with/corrupted."
+
+msgid "Sperr-Datei konnte nicht geöffnet werden: %s"
+msgstr "Could not open lock file: %s"
+
+msgid "Es läuft bereits ein Backup oder Restore. Bitte warten, bis der laufende Vorgang abgeschlossen ist."
+msgstr "A backup or restore is already running. Please wait until the current operation has finished."
+
+msgid "FTPS: Login fehlgeschlagen — Zugangsdaten prüfen."
+msgstr "FTPS: Login failed — check credentials."
+
+msgid "SFTP: Login fehlgeschlagen — Zugangsdaten/Key prüfen."
+msgstr "SFTP: Login failed — check credentials/key."
+
+msgid "Konnte Backup-Datei nicht finalisieren: %s -> %s"
+msgstr "Could not finalize backup file: %s -> %s"
+
+msgid "FTPS-Upload fehlgeschlagen: %s"
+msgstr "FTPS upload failed: %s"
+
+msgid "FTPS: Konnte hochgeladene Datei nicht umbenennen: %s"
+msgstr "FTPS: Could not rename uploaded file: %s"
+
+msgid "FTPS: Verbindung zu %s:%d fehlgeschlagen."
+msgstr "FTPS: Connection to %s:%d failed."
+
+msgid "Verbindung erfolgreich, Schreibrechte im Zielverzeichnis bestätigt."
+msgstr "Connection successful, write permissions in the target directory confirmed."
+
+msgid "Verbindung ok, aber Schreibtest im Zielverzeichnis fehlgeschlagen."
+msgstr "Connection OK, but the write test in the target directory failed."
+
+msgid "SFTP-Unterstützung benötigt phpseclib3, das noch nicht installiert ist. Bitte \"composer install\" im Plugin-Ordner (plugins/jtl_dbbackup_tool/) ausführen — siehe README."
+msgstr "SFTP support requires phpseclib3, which is not yet installed. Please run \"composer install\" in the plugin folder (plugins/jtl_dbbackup_tool/) — see README."
+
+msgid "SFTP-Upload fehlgeschlagen: %s"
+msgstr "SFTP upload failed: %s"
+
+msgid "SFTP: Konnte hochgeladene Datei nicht umbenennen: %s"
+msgstr "SFTP: Could not rename uploaded file: %s"
+
+msgid "Kein FTP/SFTP-Ziel konfiguriert (Host-Feld ist leer)."
+msgstr "No FTP/SFTP target configured (host field is empty)."
+
+msgid "Backup-Datei nicht gefunden."
+msgstr "Backup file not found."
+
+msgid "%d Zeile(n) in `%s` verweisen über `%s` auf nicht (mehr) vorhandene Einträge in `%s`."
+msgstr "%d row(s) in `%s` reference, via `%s`, entries that no longer exist in `%s`."
+

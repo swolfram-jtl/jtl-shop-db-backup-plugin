@@ -1,0 +1,598 @@
+<title>Backup Professional Spec</title>
+<style>
+  :root{
+    --bg:#eef1ee; --surface:#ffffff; --surface-alt:#e2e6e1;
+    --ink:#1a231f; --ink-soft:#52625a; --line:rgba(26,35,31,0.16);
+    --accent:#b3591a; --accent-soft:#f0dcc4;
+    --danger:#a3352c; --danger-soft:#f3dcd8;
+    --safe:#3f7a52; --safe-soft:#dbe9de;
+    --defer:#5b6b8c; --defer-soft:#dde2ec;
+    --serif:'Iowan Old Style','Palatino Linotype',Georgia,serif;
+    --sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+    --mono:'SF Mono','Cascadia Code',Consolas,'Liberation Mono',monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#141815; --surface:#1c211d; --surface-alt:#242a25;
+      --ink:#e7ebe6; --ink-soft:#a8b3ac; --line:rgba(231,235,230,0.16);
+      --accent:#d98a3f; --accent-soft:#3a2a16;
+      --danger:#d9776a; --danger-soft:#3a201d;
+      --safe:#6fb98a; --safe-soft:#1f3527;
+      --defer:#8b9bc4; --defer-soft:#232a3a;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141815; --surface:#1c211d; --surface-alt:#242a25;
+    --ink:#e7ebe6; --ink-soft:#a8b3ac; --line:rgba(231,235,230,0.16);
+    --accent:#d98a3f; --accent-soft:#3a2a16;
+    --danger:#d9776a; --danger-soft:#3a201d;
+    --safe:#6fb98a; --safe-soft:#1f3527;
+    --defer:#8b9bc4; --defer-soft:#232a3a;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--sans);
+    margin:0; line-height:1.55; font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--accent-soft); color:var(--ink);}
+
+  a{color:var(--accent);}
+  a:focus-visible, button:focus-visible, summary:focus-visible{
+    outline:2px solid var(--accent); outline-offset:2px;
+  }
+
+  code, .tag-code{
+    font-family:var(--mono); font-size:0.86em;
+    background:var(--surface-alt); border:1px solid var(--line);
+    padding:0.05em 0.4em; border-radius:3px; white-space:nowrap;
+  }
+
+  .shell{
+    max-width:1180px; margin:0 auto; padding:0 clamp(16px,4vw,48px);
+    display:grid; grid-template-columns:220px minmax(0,760px); gap:56px;
+    align-items:start;
+  }
+  @media (max-width:900px){ .shell{grid-template-columns:1fr;} }
+
+  /* ---- Header ---- */
+  header.hero{
+    max-width:1180px; margin:0 auto; padding:56px clamp(16px,4vw,48px) 32px;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:var(--mono); text-transform:uppercase; letter-spacing:0.12em;
+    font-size:0.72rem; color:var(--accent); font-weight:600;
+  }
+  h1{
+    font-family:var(--serif); font-weight:600; font-size:clamp(2rem,4vw,2.7rem);
+    margin:0.3em 0 0.2em; text-wrap:balance; letter-spacing:-0.01em;
+  }
+  .hero p.dek{
+    max-width:62ch; color:var(--ink-soft); font-size:1.08rem; margin:0.6em 0 0;
+  }
+  .stat-row{
+    display:flex; flex-wrap:wrap; gap:28px; margin-top:28px;
+  }
+  .stat{ font-family:var(--mono); }
+  .stat b{
+    display:block; font-size:1.5rem; font-variant-numeric:tabular-nums;
+    color:var(--ink);
+  }
+  .stat span{ font-size:0.75rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.06em; }
+
+  /* ---- Nav rail ---- */
+  nav.rail{ position:sticky; top:24px; padding-top:56px; font-size:0.86rem; }
+  nav.rail ol{ list-style:none; margin:0; padding:0; counter-reset:sec; }
+  nav.rail li{ counter-increment:sec; margin-bottom:2px; }
+  nav.rail a{
+    display:block; padding:6px 0 6px 22px; position:relative;
+    color:var(--ink-soft); text-decoration:none; border-left:1px solid var(--line);
+  }
+  nav.rail a:hover{ color:var(--accent); border-left-color:var(--accent); }
+  nav.rail a::before{
+    content: counter(sec, decimal-leading-zero);
+    position:absolute; left:0; top:6px; font-family:var(--mono);
+    font-size:0.72rem; color:var(--ink-soft);
+  }
+
+  main{ padding:40px 0 96px; min-width:0; }
+
+  section.block{ margin-bottom:64px; scroll-margin-top:20px; }
+  section.block > h2{
+    font-family:var(--serif); font-size:1.5rem; font-weight:600;
+    margin:0 0 6px; letter-spacing:-0.01em;
+  }
+  section.block > .lede{
+    color:var(--ink-soft); max-width:62ch; margin:0 0 28px; font-size:0.98rem;
+  }
+
+  /* ---- Ledger entries ---- */
+  .entry{
+    border-top:1px solid var(--line); padding:18px 0;
+    display:grid; grid-template-columns:1fr; gap:6px;
+  }
+  .entry:last-child{ border-bottom:1px solid var(--line); }
+  .entry .head{
+    display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+  }
+  .entry .head h3{
+    font-family:var(--sans); font-weight:700; font-size:1.02rem; margin:0;
+  }
+  .tag{
+    font-family:var(--mono); font-size:0.66rem; text-transform:uppercase;
+    letter-spacing:0.08em; padding:2px 7px; border:1px solid; line-height:1.6;
+    white-space:nowrap;
+  }
+  .tag.default-on{ color:var(--safe); border-color:var(--safe); background:var(--safe-soft); }
+  .tag.opt-in{ color:var(--defer); border-color:var(--defer); background:var(--defer-soft); }
+  .tag.hard{ color:var(--danger); border-color:var(--danger); background:var(--danger-soft); }
+  .tag.later{ color:var(--ink-soft); border-color:var(--line); background:var(--surface-alt); }
+  .tag.revised{ color:var(--accent); border-color:var(--accent); background:var(--accent-soft); }
+
+  .entry p{ margin:2px 0 0; color:var(--ink-soft); max-width:66ch; }
+  .entry p.why{ font-size:0.94rem; }
+
+  /* ---- callouts ---- */
+  .callout{
+    background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--accent);
+    padding:22px 24px; margin:20px 0;
+  }
+  .callout.principle{ border-top-color:var(--safe); }
+  .callout h4{ margin:0 0 8px; font-family:var(--serif); font-size:1.15rem; }
+  .callout p{ margin:0.4em 0; color:var(--ink-soft); }
+
+  /* ---- tables ---- */
+  .twrap{ overflow-x:auto; margin:18px 0; border:1px solid var(--line); }
+  table{ border-collapse:collapse; width:100%; font-size:0.9rem; min-width:560px; }
+  th, td{ text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  thead th{
+    font-family:var(--mono); font-size:0.7rem; text-transform:uppercase;
+    letter-spacing:0.06em; color:var(--ink-soft); background:var(--surface-alt);
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  td code{ white-space:normal; }
+
+  .vs-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:0; border:1px solid var(--line);
+    margin:18px 0;
+  }
+  .vs-grid > div{ padding:18px 20px; }
+  .vs-grid > div:first-child{ border-right:1px solid var(--line); }
+  .vs-grid h5{
+    font-family:var(--mono); text-transform:uppercase; letter-spacing:0.06em;
+    font-size:0.72rem; color:var(--ink-soft); margin:0 0 10px;
+  }
+  .vs-grid ul{ margin:0; padding-left:1.1em; color:var(--ink-soft); font-size:0.92rem; }
+  .vs-grid li{ margin-bottom:6px; }
+  @media (max-width:600px){ .vs-grid{grid-template-columns:1fr;} .vs-grid > div:first-child{border-right:none;border-bottom:1px solid var(--line);} }
+
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; margin:18px 0 8px; font-size:0.8rem; color:var(--ink-soft); }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+
+  footer.end{
+    max-width:1180px; margin:0 auto; padding:32px clamp(16px,4vw,48px) 64px;
+    border-top:1px solid var(--line); color:var(--ink-soft); font-size:0.86rem;
+  }
+</style>
+
+<header class="hero">
+  <div class="eyebrow">Architektur-Spec · JTL-Shop 5.8 Plugin</div>
+  <h1>Database Ex/Importer Backup Tool</h1>
+  <p class="dek">Ein Backup/Restore-Sicherheitsnetz für riskante manuelle Aktionen im JTL-Shop-Backend (v.&nbsp;a. die sieben CSV-Import-Funktionen des Cores) — kein eigener Importer, keine Datei-Sicherung, kostenlos ohne Pro-Stufe.</p>
+  <div class="stat-row">
+    <div class="stat"><b>56</b><span>Entscheidungen</span></div>
+    <div class="stat"><b>5</b><span>Core-Recherchen</span></div>
+    <div class="stat"><b>1</b><span>Wettbewerbsvergleich</span></div>
+    <div class="stat"><b>7</b><span>CSV-Presets</span></div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail">
+    <ol>
+      <li><a href="#prinzip">Leitprinzip</a></li>
+      <li><a href="#scope">Auslöser &amp; Umfang</a></li>
+      <li><a href="#restore">Restore-Mechanik</a></li>
+      <li><a href="#security">Sicherheit &amp; Datenschutz</a></li>
+      <li><a href="#rechte">Rechte &amp; Nachvollziehbarkeit</a></li>
+      <li><a href="#robust">Zuverlässigkeit</a></li>
+      <li><a href="#betrieb">Betrieb</a></li>
+      <li><a href="#fundamente">Core-Fundamente</a></li>
+      <li><a href="#uiux">UI/UX</a></li>
+      <li><a href="#wettbewerb">Wettbewerb</a></li>
+      <li><a href="#qa">Geschäft &amp; QA</a></li>
+      <li><a href="#offen">Offene Punkte</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <div class="legend">
+      <span class="tag default-on" style="position:static;">Standard an · abschaltbar</span>
+      <span class="tag opt-in" style="position:static;">Standard aus · opt-in</span>
+      <span class="tag hard" style="position:static;">Fest · nicht abschaltbar</span>
+      <span class="tag later" style="position:static;">Später / deferred</span>
+      <span class="tag revised" style="position:static;">Revidiert nach Recherche</span>
+    </div>
+
+    <section class="block" id="prinzip">
+      <h2>Leitprinzip</h2>
+      <p class="lede">Eine Regel zieht sich durch fast jede Sicherheitsentscheidung in diesem Dokument.</p>
+      <div class="callout principle">
+        <h4>Sicherer Default, aber der Nutzer entscheidet — und trägt das Risiko</h4>
+        <p>Jedes Sicherheitsnetz ist standardmäßig aktiv und wird im UI klar empfohlen. Ein informierter Nutzer kann es gezielt abschalten; tut er das, trägt er das Risiko selbst. Gilt für: Wartungsmodus, Pflicht-Vorab-Snapshot vor Restore, Konsistenzprüfung nach Teil-Restore, Versions-/Struktur-Fingerprint-Block.</p>
+        <p><strong>Zwei Ausnahmen bleiben hart</strong>, weil sie fast nichts kosten, aber viel verhindern: kein Klartext-FTP, kein Verzicht auf Type-to-Confirm vor einem Restore.</p>
+      </div>
+      <p class="why">Weitere Leitentscheidungen: Das Plugin importiert selbst keine CSVs — es ist ein Sicherheitsnetz für sieben <em>bestehende</em> Shop-Funktionen, die CSV-Daten importieren. Es sichert bewusst nur die Datenbank, keine Dateien (Templates/Bilder/Plugin-Code) — das hält den Namen <code>Database Ex/Importer Backup Tool</code> ehrlich. Cross-Instanz-Restore (Live→Staging) ist explizit außerhalb des v1-Scopes.</p>
+    </section>
+
+    <section class="block" id="scope">
+      <h2>1 · Auslöser &amp; Umfang</h2>
+
+      <div class="entry">
+        <div class="head"><h3>Trigger-Modell</h3><span class="tag hard">Fest</span></div>
+        <p>Rein manuell, kein Hook auf Import-Events. Core hat ohnehin keinen generischen CSV-Import-Hook — Artikel/Kategorien laufen über die Wawi-XML-Sync (<code>dbeS</code>), nicht CSV. Zusätzlich: ein optionales Cron-Backup, unabhängig von jedem Import-Ereignis (siehe Betrieb).</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Backup-Scope: Presets statt Rohtabellen</h3><span class="tag default-on">Standard</span></div>
+        <p>Ein Preset pro echter Shop-Funktion, 1:1 auf deren Zieltabelle(n) gemappt — plus „Komplett" und ein „Erweitert"-Modus mit freier Tabellenauswahl für Power-User.</p>
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Preset (Backend-Bezeichnung)</th><th>Zieltabelle(n)</th><th>Import-Strategie</th></tr></thead>
+          <tbody>
+            <tr><td>Kundenimport</td><td><code>tkunde</code></td><td>Nur Insert, Duplikate abgewiesen</td></tr>
+            <tr><td>Newsletter-Empfänger</td><td><code>tnewsletterempfaenger</code>, <code>tnewsletterempfaengerhistory</code></td><td>Nur Insert</td></tr>
+            <tr><td>PLZ/Ort</td><td><code>tplz</code></td><td>Truncate / Overwrite / Insert-only wählbar</td></tr>
+            <tr><td>Weiterleitungen</td><td><code>tredirect</code></td><td>Truncate / Overwrite / Insert-only wählbar</td></tr>
+            <tr><td>Gutscheine</td><td><code>tkupon</code>, <code>tkuponsprache</code></td><td>Truncate oder Skip-existing</td></tr>
+            <tr><td>Bewertungen</td><td><code>tbewertung</code></td><td>Truncate / Upsert / Insert-only</td></tr>
+            <tr><td>Sprachvariablen</td><td><code>tsprachwerte</code> u.&nbsp;a. (ohne Plugin-eigene Zeilen)</td><td>Delete-then-insert / Upsert</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Preset-Kollision: Sprachvariablen</h3><span class="tag hard">Fest</span></div>
+        <p>Das Sprachvariablen-Preset filtert explizit nach Plugin-Zugehörigkeit und schließt alle Plugin-eigenen Sprachwerte aus (inkl. der eigenen UI-Texte) — sonst würde ein Sprachvariablen-Restore die eigene Oberfläche zurücksetzen.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Preset-Pflege über Shop-Versionen</h3><span class="tag default-on">Prozess</span></div>
+        <p>Presets sind versioniert und an <code>MinShopVersion</code> gekoppelt, manuell gepflegt (keine verlässliche automatische Erkennung möglich — 3 der 7 Importer teilen sich nicht mal eine Basisklasse). Pflicht-Check bei jedem Release, bevor Kompatibilität zu einer neuen Shop-Version erklärt wird.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Datei-Scope</h3><span class="tag hard">Fest</span></div>
+        <p>Bewusst DB-only, kein Datei-Backup (Templates/Bilder/Plugin-Code) — passt zum Namen und zum eigentlichen Problem: CSV-Importe ändern nur Datenbank-Inhalte.</p>
+      </div>
+    </section>
+
+    <section class="block" id="restore">
+      <h2>2 · Restore-Mechanik</h2>
+
+      <div class="entry">
+        <div class="head"><h3>Automatischer Restore mit Sicherheitsnetz</h3><span class="tag revised">Differenzierung</span></div>
+        <p class="why">Der Wettbewerber (siehe Wettbewerbsvergleich) erlaubt nur manuellen Restore per heruntergeladener Datei. Bewusste Gegenentscheidung: automatischer One-Click-Restore <em>ist</em> der Kernnutzen des Tools — abgesichert durch die vier Netze unten, statt ihn aus Vorsicht ganz zu streichen.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Pflicht-Vorab-Snapshot vor Restore</h3><span class="tag default-on">Standard an</span></div>
+        <p>Direkt vor jedem Restore wird automatisch ein Backup des aktuellen Stands gezogen, damit ein fehlgeschlagener Restore selbst wieder rückgängig gemacht werden kann.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Konsistenz kommt von <code>--single-transaction</code>, nicht vom Wartungsmodus</h3><span class="tag revised">Korrigiert</span></div>
+        <p class="why">Recherche-Korrektur: Wartungsmodus (<code>MaintenanceModeMiddleware</code>) blockiert nur Frontend-Requests. Wawi-<code>dbeS</code>-Sync und die Cron-Queue laufen unbeeinflusst weiter, ein bereits laufender Request (z.&nbsp;B. Checkout) läuft zu Ende. Echte Konsistenz liefert die InnoDB-MVCC-Snapshot-Option der Dump-Library; Wartungsmodus bleibt nur als Kunden-Komfort (siehe Betrieb).</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Konsistenzprüfung nach Teil-Restore</h3><span class="tag default-on">Standard an</span></div>
+        <p>Core nutzt keine DB-seitigen Foreign-Key-Constraints — ein Teil-Restore erzeugt still verwaiste Referenzen, ohne dass die DB einen Fehler wirft. Best-Effort-Check gegen bekannte Referenz-Spalten pro Preset, Ergebnis als Warnliste.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Versions-/Struktur-Fingerprint-Block</h3><span class="tag default-on">Standard an</span></div>
+        <p>Manifest speichert Shop-Version + Spalten-Fingerprint je gesicherter Tabelle. Weicht die aktuelle Struktur ab (Core-Update, fremde Migration), wird der Restore blockiert, mit explizitem Override.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Restore-Vorschau vor Type-to-Confirm</h3><span class="tag default-on">Standard</span></div>
+        <p>Backup-Metadaten plus grober Zeilen-Diff je betroffener Tabelle (<code>tkunde: 1.204 → 1.198 Zeilen</code>). Unveränderte Tabellen sind standardmäßig eingeklappt/versteckt, aber optional einblendbar.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Passwort-Hashes bleiben im Backup</h3><span class="tag hard">Korrektur</span></div>
+        <p class="why">Erste Instinkt war Redaktion aus Datenschutzgründen — falsch für dieses Tool: würde das Kunden-Preset (der wohl häufigste Restore-Fall) kaputt machen, weil sich niemand mehr einloggen könnte.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Cross-Instanz-Restore</h3><span class="tag later">Später</span></div>
+        <p>v1 strikt auf dieselbe Shop-Instanz beschränkt (Instanz-Kennung im Manifest, harte Warnung bei Abweichung). Mögliches Pro-Feature für eine spätere Version — aber: Business-Modell ist aktuell komplett kostenlos ohne Pro-Stufe (siehe Geschäft &amp; QA), Umsetzung also offen.</p>
+      </div>
+    </section>
+
+    <section class="block" id="security">
+      <h2>3 · Sicherheit &amp; Datenschutz</h2>
+
+      <div class="entry">
+        <div class="head"><h3>Nur FTPS/SFTP</h3><span class="tag hard">Fest</span></div>
+        <p>Klartext-FTP ist ausgeschlossen — ein DB-Dump mit Kundendaten unverschlüsselt zu übertragen wäre ein vermeidbares DSGVO-Risiko (Art. 32).</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>At-Rest-Verschlüsselung</h3><span class="tag opt-in">Standard aus</span></div>
+        <p>Opt-in statt opt-out (Wettbewerber macht es ebenso). Verfahren: <code>XChaCha20-Poly1305</code> via PHP <code>sodium</code>-Extension (Core-Bestandteil seit PHP&nbsp;7.2, kein neues Composer-Paket) — AEAD statt unspezifiziertem „AES-256", erkennt Manipulation/Korruption zuverlässig.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Credential-Speicherung</h3><span class="tag default-on">Standard</span></div>
+        <p>Core-eigenes <code>InputType::ENCRYPTED</code>-Config-Feld (<code>JTL\Plugin\Data\Config</code>, XTEA-basiert via <code>CryptoServiceInterface</code>) — konsistent mit jedem anderen JTL-Shop-Plugin. Zusätzlich SFTP-Key-Auth als Alternative zu Passwort.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Ephemere Zugangsdaten</h3><span class="tag default-on">Zusatzoption</span></div>
+        <p>Dauerhafte verschlüsselte Speicherung bleibt Komfort-Standard (nötig für Cron-Backups), zusätzlich Checkbox „Zugangsdaten nicht speichern, nur für diesen Lauf" — funktioniert naturgemäß nicht mit geplanten Cron-Backups.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Speicherort außerhalb des Webroots</h3><span class="tag hard">Fest</span></div>
+        <p>Eigenes Plugin-Verzeichnis auf Shop-Root-Ebene, nicht unter <code>public_html</code>/<code>htdocs</code> — plus Deny-all <code>.htaccess</code> als zweite Absicherung. Downloads laufen über einen authentifizierten PHP-Controller, nie über einen direkten Datei-Link.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>DSGVO-Löschanfragen</h3><span class="tag later">Akzeptierte Grenze</span></div>
+        <p>Löscht ein Kunde seine Daten live, bleiben sie in älteren Backups bis zur Rotation erhalten — dokumentierte, branchenübliche Grenze statt aufwendiger Backup-Redaktion. Die Retention-Regel (Betrieb) begrenzt das Zeitfenster automatisch.</p>
+      </div>
+    </section>
+
+    <section class="block" id="rechte">
+      <h2>4 · Rechte &amp; Nachvollziehbarkeit</h2>
+
+      <div class="entry">
+        <div class="head"><h3>Eine Permission für alles</h3><span class="tag hard">Fest</span></div>
+        <p class="why">Core vergibt pro Plugin automatisch nur <em>eine</em> grobe Permission (<code>PLUGIN_DETAIL_VIEW_&lt;PluginID&gt;</code>, Klasse <code>JTL\Backend\Permissions</code>). <code>info.xml</code> kennt keine eigenen Rechte-Definitionen — wer das Plugin sehen darf, darf auch restoren. Bewusst kein eigenes Gating gebaut.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Type-to-Confirm vor Restore</h3><span class="tag hard">Fest</span></div>
+        <p>Fester Bestätigungstext „RESTORE", Standard-Modal. Kompensiert die fehlende Rechtetrennung als einzige Hürde gegen einen Fehlklick bei einer irreversiblen Aktion.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Audit-Log</h3><span class="tag default-on">Standard</span></div>
+        <p>Jede Backup- und Restore-Aktion wird mit Admin-Account, Zeitstempel und Scope protokolliert, im Plugin-Backend einsehbar — die einzige verbleibende Kontrolle, da bewusst auf Rechtetrennung verzichtet wurde.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Audit-Log-Integrität gegen die eigene Restore-Funktion</h3><span class="tag hard">Fest</span></div>
+        <p class="why">Zugespitzter Punkt: ein „Komplett"-Restore einer älteren Sicherung könnte sonst das eigene Audit-Log zurückdrehen — die einzige Kontrolle wäre durch das Werkzeug selbst aushebelbar. Plugin-eigene Tabellen (Audit-Log, Einstellungen, Backup-Historie) sind daher von <em>jedem</em> Restore ausgeschlossen, auch bei „Komplett".</p>
+      </div>
+    </section>
+
+    <section class="block" id="robust">
+      <h2>5 · Zuverlässigkeit &amp; Robustheit</h2>
+
+      <div class="entry">
+        <div class="head"><h3>Atomares Schreiben</h3><span class="tag hard">Fest</span></div>
+        <p>Dump geht erst in eine <code>.tmp</code>-Datei, wird nur bei fehlerfreiem Abschluss auf den finalen Namen umbenannt (atomares <code>rename()</code>). Verhindert, dass ein abgebrochener Lauf als „fertiges" Backup erscheint.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Backup-Selbsttest</h3><span class="tag default-on">Standard, konfigurierbar</span></div>
+        <p>Leichte Strukturprüfung nach jedem Backup (Datei lesbar, Header/Checksumme plausibel) statt vollem Test-Restore in ein temporäres Schema — als Option abschaltbar.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Nebenläufigkeits-Sperre</h3><span class="tag hard">Fest</span></div>
+        <p>Exklusives Lock/Mutex: läuft ein Backup oder Restore, wird jeder weitere Versuch mit klarer Meldung abgewiesen. Verhindert überschneidende Schreibzugriffe zwischen z.&nbsp;B. Cron-Backup und manuellem Restore.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Speicherplatz-Vorabprüfung</h3><span class="tag default-on">Standard</span></div>
+        <p>Größenschätzung aus Tabellenstatistiken gegen freien Speicherplatz, Warnung/Blockade vor Start statt Abbruch mitten im Dump.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Manifest-Formatversion</h3><span class="tag hard">Fest</span></div>
+        <p>Eigene Formatversionsnummer, unabhängig von Plugin-/Shop-Version — jede neue Plugin-Version muss alle bisherigen Formatversionen lesen können.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Upload-Fehlerfall</h3><span class="tag hard">Fest</span></div>
+        <p>Wartungsmodus wird sofort nach dem lokalen Dump aufgehoben; ein fehlgeschlagener FTP-Upload läuft asynchron mit Retry weiter, Fehler wird separat gemeldet. Ein reiner Netzwerkproblem darf den Shop nie länger offline halten als der eigentliche Dump braucht.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Dependency-Isolation-Risiko akzeptiert</h3><span class="tag revised">Bewusstes Risiko</span></div>
+        <p class="why">Recherche-Fund: Plugins haben <em>kein</em> eigenes Composer-/Vendor-Verzeichnis — <code>Plugin\</code> ist als PSR-4-Root im selben <code>includes/composer.json</code> registriert wie der Core. <code>Ifsnop\Mysqldump\Mysqldump</code> zu nutzen funktioniert nur, weil diese Klasse zufällig im Core-Classmap steckt, nicht weil sie eine dokumentierte Plugin-API ist. Entscheidung: trotzdem bei der Core-Klasse bleiben, aber mit defensivem <code>class_exists()</code>-Boot-Check und klarer Fehlermeldung statt stillem Fatal Error — kein eigenes, namespace-geprefixtes Vendor-Bundle.</p>
+      </div>
+    </section>
+
+    <section class="block" id="betrieb">
+      <h2>6 · Betrieb</h2>
+
+      <div class="entry">
+        <div class="head"><h3>Wartungsmodus während Backup</h3><span class="tag default-on">Standard an</span></div>
+        <p>Bei jedem Backup, unabhängig von der Größe — reiner Kunden-Komfort (verhindert Frontend-Fehler), keine Konsistenzgarantie (siehe Restore-Mechanik).</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Scheduling</h3><span class="tag default-on">Optional</span></div>
+        <p>Zusätzliches Cron-Backup über <code>JTL\Cron\JobInterface</code>, registriert via <code>GET_AVAILABLE_CRONJOBS</code>/<code>MAP_CRONJOB_TYPE</code> — unabhängig vom manuellen Button, deckt auch Datenverlust ohne Import-Kontext ab.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Retention/Rotation</h3><span class="tag default-on">Standard</span></div>
+        <p>Konfigurierbare Kombi-Regel: max. Anzahl <em>und</em> max. Alter, älteste zuerst gelöscht, mit Mindest-Schongrenze (z.&nbsp;B. immer min. 3 behalten).</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Lange Backups laufen immer async</h3><span class="tag hard">Fest</span></div>
+        <p>Auch ein manueller Klick legt nur einen Cron-Queue-Eintrag an; der Dump läuft im Worker-Prozess, UI pollt den Fortschritt. Ein Code-Pfad für kleine und große Backups gleichermaßen.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Benachrichtigung</h3><span class="tag default-on">Standard</span></div>
+        <p>E-Mail nur bei Fehlschlag (Backup oder Upload) — Erfolg nur passiv in der Historie sichtbar, um Benachrichtigungs-Müdigkeit zu vermeiden.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Verbindungstest</h3><span class="tag default-on">Standard</span></div>
+        <p>„Verbindung testen"-Button im Einstellungen-Formular prüft Login und Schreibrechte sofort, statt den ersten Fehlschlag erst beim nächsten Cron-Lauf zu bemerken.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Deinstallation</h3><span class="tag hard">Fest</span></div>
+        <p>Lokale Backup-Dateien <em>und</em> Konfiguration (inkl. verschlüsselter FTP-Zugangsdaten) bleiben erhalten, nur ein Warnhinweis vor der Deinstallation — ein Backup-Tool darf nicht selbst die Daten löschen, die es schützen soll.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Multi-Shop-Kollisionsschutz</h3><span class="tag hard">Fest</span></div>
+        <p>Dateiname/Ordnerstruktur enthält immer eine eindeutige Shop-Instanz-Kennung; Upload prüft vor dem Schreiben, ob im Zielordner bereits Backups einer <em>anderen</em> Instanz liegen, und warnt.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Selbst-Backup bei eigenem Plugin-Update</h3><span class="tag hard">Fest</span></div>
+        <p>Vor jeder eigenen Schema-Migration (<code>Bootstrapper::updated()</code>) automatisch ein kleines Backup der eigenen Plugin-Tabellen (Einstellungen, Audit-Log) — das Tool wendet seine eigene Philosophie reflexiv auf sich selbst an.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Technisches Logging</h3><span class="tag default-on">Standard</span></div>
+        <p>In den Core-eigenen Monolog-Mechanismus mit eigenem Channel-Namen, getrennt vom nutzerfreundlichen Audit-Log — landet dort, wo Admins ohnehin nach Shop-weiten Fehlern schauen.</p>
+      </div>
+    </section>
+
+    <section class="block" id="fundamente">
+      <h2>7 · Core-Fundamente (verifiziert gegen <code>gitlab.com/jtl-software/jtl-shop/core</code>, release/5.8.0)</h2>
+      <p class="lede">Fakten aus fünf gezielten Code-Recherchen, die die Architektur oben tragen.</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Thema</th><th>Fund</th></tr></thead>
+          <tbody>
+            <tr><td>Plugin-Manifest</td><td><code>plugins/&lt;PluginID&gt;/info.xml</code> (Root <code>&lt;jtlshopplugin&gt;</code>), Bootstrap-Klasse implementiert <code>JTL\Plugin\BootstrapperInterface</code></td></tr>
+            <tr><td>Rechtesystem</td><td><code>JTL\Backend\Permissions</code>, ~90 feste Konstanten; keine Plugin-definierbaren Rechte in <code>info.xml</code></td></tr>
+            <tr><td>Hook-System</td><td><code>JTL\Plugin\HookManager</code> feuert <code>shop.hook.&lt;ID&gt;</code>; Konstanten in <code>includes/hooks_inc.php</code>; kein generischer CSV-Import-Hook</td></tr>
+            <tr><td>Backup-Präzedenzfall im Core</td><td><code>JTL\Update\Updater::createSqlDump()</code> nutzt <code>Ifsnop\Mysqldump\Mysqldump</code> (Composer-Dep <code>ifsnop/mysqldump-php ^2.1</code>), genutzt vor Self-Updates</td></tr>
+            <tr><td>Foreign Keys</td><td>Keine <code>FOREIGN KEY</code>/<code>CONSTRAINT</code> in Migrationen gefunden — Referenzintegrität ist reine Anwendungssache</td></tr>
+            <tr><td>Credential-Verschlüsselung</td><td><code>JTL\Plugin\Data\Config</code>, <code>InputType::ENCRYPTED</code>, XTEA via <code>CryptoServiceInterface</code></td></tr>
+            <tr><td>DB-Layer</td><td><code>JTL\DB\NiceDB</code> (PDO-Wrapper), verschachtelte Transaktionen unterstützt</td></tr>
+            <tr><td>Cron-API</td><td><code>JTL\Cron\JobInterface</code>, Registrierung über <code>GET_AVAILABLE_CRONJOBS</code>/<code>MAP_CRONJOB_TYPE</code></td></tr>
+            <tr><td>Composer/Dependency-Isolation</td><td>Kein eigenes Plugin-Vendor — <code>Plugin\</code> als PSR-4-Root im selben <code>includes/composer.json</code> wie Core</td></tr>
+            <tr><td>PHP-Anforderung</td><td><code>php-64bit &gt;=8.3</code>; zip/zlib/sodium garantiert vorhanden</td></tr>
+            <tr><td>Admin-Templating</td><td>Smarty (<code>.tpl</code>), Bootstrap&nbsp;4, gebündeltes Font&nbsp;Awesome Pro, keine DataTables</td></tr>
+            <tr><td>Adminmenü-Mechanik</td><td>Nie ein eigener Top-Level-Menüpunkt — UI hängt unter „Pluginverwaltung"; <code>&lt;Customlink&gt;</code> = Tab, <code>&lt;Settingslink&gt;</code> = Einstellungen-Tab</td></tr>
+            <tr><td>Wartungsmodus-Reichweite</td><td><code>MaintenanceModeMiddleware</code> nur im Frontend-Router; Cron-Queue und <code>dbeS</code>-Sync unbeeinflusst</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block" id="uiux">
+      <h2>8 · UI/UX</h2>
+
+      <div class="entry">
+        <div class="head"><h3>Seitenstruktur</h3><span class="tag hard">Fest</span></div>
+        <p>Eine Plugin-Seite mit Tabs: Dashboard · Backup jetzt · Historie &amp; Restore · Einstellungen/Audit-Log — jeder Tab ein <code>&lt;Customlink&gt;</code>, Einstellungen über <code>&lt;Settingslink&gt;</code>.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Dashboard-Inhalt</h3><span class="tag default-on">Standard</span></div>
+        <p>Status-Kacheln (letztes Backup, nächstes geplantes, Speicherverbrauch lokal+FTP, Anzahl), Schnellzugriff-Buttons für alle 7 Presets direkt auf der Startseite, Warnhinweis-Banner bei fehlgeschlagenem letzten Lauf.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Leerzustand</h3><span class="tag default-on">Standard</span></div>
+        <p>Gezielter Onboarding-Hinweis „Noch kein Backup vorhanden" mit direktem Call-to-Action-Button, plus Hinweis auf empfohlene Cron-Konfiguration.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Backup-Klick-Flow</h3><span class="tag default-on">Standard</span></div>
+        <p>Sofort-Start mit den in den Einstellungen hinterlegten Standardwerten, plus ein kleines „Optionen für diesen Lauf"-Aufklapp-Element für Abweichungen (Ziel, Verschlüsselung, ephemere Zugangsdaten) — der Normalfall bleibt ein Klick.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>UI-Komponenten-Reuse</h3><span class="tag hard">Fest</span></div>
+        <p>Backup-Historie nutzt die vorhandene Pagination (<code>pagination.tpl</code>/<code>$oBlaetterNavi</code>); Fortschrittsanzeige des Cron-Backups spiegelt das DB-Updater-Muster (<code>ioManagedCall()</code> + <code>pushEvent()</code>/<code>showNotify()</code>) statt eigenem AJAX-Polling.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Preset-Benennung</h3><span class="tag hard">Fest</span></div>
+        <p>Exakt identische Bezeichnungen wie im Shop-Backend-Menü übernehmen (z.&nbsp;B. „Weiterleitungen", „Gutscheine") — sofortiges Wiedererkennen statt eigener, generischerer Namen.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Confirm-Dialog-Zugänglichkeit</h3><span class="tag hard">Fest</span></div>
+        <p>Fester Bestätigungstext „RESTORE", Standard-Modal ohne besondere A11y-Sonderbehandlung.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Mobile Restore</h3><span class="tag hard">Fest</span></div>
+        <p>Restore-Button auf schmalen Viewports nicht deaktivieren — Type-to-Confirm ist die eigentliche Schutzmaßnahme, unabhängig von der Bildschirmgröße.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>Plugin-Sprache</h3><span class="tag default-on">Standard</span></div>
+        <p>Deutsch + Englisch über den Core-eigenen Sprachvariablen-Mechanismus (<code>JTL\Language\LanguageHelper</code>) — siehe Preset-Kollisions-Schutz oben.</p>
+      </div>
+    </section>
+
+    <section class="block" id="wettbewerb">
+      <h2>9 · Wettbewerbsvergleich</h2>
+      <p class="lede"><a href="https://www.jtl-software.de/extension-store/backup-professional-fuer-jtl-shop-5-jtl-shop-5">Backup Professional</a> von EcomSec — 120&nbsp;€/Jahr, kompatibel bis Shop 5.7.* (noch <strong>nicht</strong> 5.8 — reale Marktlücke).</p>
+      <div class="vs-grid">
+        <div>
+          <h5>EcomSec Backup Professional</h5>
+          <ul>
+            <li>3 grobe Stufen: DB / Dateien / Komplett — keine Tabellen-Granularität</li>
+            <li>Restore nur manuell über heruntergeladene Datei</li>
+            <li>Rät explizit von dauerhafter FTP-Credential-Speicherung ab</li>
+            <li>Verschlüsselung: XChaCha20-Poly1305</li>
+            <li>Rechte: dieselbe grobe Core-Permission, keine Extra-Ebene</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Dieses Tool</h5>
+          <ul>
+            <li>7 fachliche Presets 1:1 auf echte CSV-Import-Funktionen gemappt</li>
+            <li>Automatischer Restore <em>mit</em> mehrfachem Sicherheitsnetz — der Differenzierungspunkt</li>
+            <li>Dauerhaft <em>und</em> ephemer als Wahl pro Lauf</li>
+            <li>Gleiches Verfahren übernommen (XChaCha20-Poly1305)</li>
+            <li>Gleiche Rechte-Realität, kompensiert durch Type-to-Confirm + Audit-Log</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="qa">
+      <h2>10 · Geschäftsmodell &amp; QA</h2>
+
+      <div class="entry">
+        <div class="head"><h3>Geschäftsmodell</h3><span class="tag hard">Fest</span></div>
+        <p>Komplett kostenlos, keine Pro-Stufe geplant — kein Lizenz-/Gating-Mechanismus nötig.</p>
+      </div>
+
+      <div class="entry">
+        <div class="head"><h3>QA-Strategie</h3><span class="tag hard">Fest</span></div>
+        <p>Automatisierte Backup+Restore-Roundtrip-Tests gegen eine echte JTL-Shop-Testinstanz als Release-Gate (Mocks hätten z.&nbsp;B. die fehlenden Foreign Keys nie aufgedeckt), plus verpflichtende manuelle Restore-Probe vor jedem Release.</p>
+      </div>
+    </section>
+
+    <section class="block" id="offen">
+      <h2>11 · Offene Punkte</h2>
+      <div class="entry">
+        <div class="head"><h3>Bewusst nicht (weiter) behandelt</h3><span class="tag later">Offen</span></div>
+        <p>Haftungsausschluss/rechtliche Hinweise für ein kostenloses Tool mit destruktiven Funktionen — im Gespräch angerissen, aber noch nicht ausdiskutiert. Datei-Backup bleibt Nicht-Ziel, kein v2-Commitment. Cross-Instanz-Restore als möglicher „Pro"-Gedanke, obwohl aktuell kein Pro-Modell existiert — Widerspruch, der vor der Umsetzung aufgelöst werden sollte.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="end">
+  Entstanden aus einer vollständigen Grill-Session zu „Database Ex/Importer Backup Tool" — 56 Entscheidungen, gegengeprüft gegen den öffentlichen JTL-Shop-Core (release/5.8.0) und einen realen Wettbewerber.
+</footer>
