@@ -10,11 +10,13 @@ use JTL\Smarty\JTLSmarty;
 use Plugin\jtl_dbbackup_tool\Service\AuditLogger;
 use Plugin\jtl_dbbackup_tool\Service\BackupHistoryRepository;
 use Plugin\jtl_dbbackup_tool\Service\BackupTrigger;
+use Plugin\jtl_dbbackup_tool\Service\FlashBus;
 use Plugin\jtl_dbbackup_tool\Service\LockService;
 use Plugin\jtl_dbbackup_tool\Service\ManifestService;
 use Plugin\jtl_dbbackup_tool\Service\PresetRegistry;
 use Plugin\jtl_dbbackup_tool\Service\RequestGuard;
 use Plugin\jtl_dbbackup_tool\Service\SettingsRepository;
+use Plugin\jtl_dbbackup_tool\Service\SizeFormatter;
 use Plugin\jtl_dbbackup_tool\Service\StorageReconciliationService;
 use Plugin\jtl_dbbackup_tool\Service\StorageService;
 
@@ -69,11 +71,26 @@ final class DashboardController
             $lock->forceRelease();
             $flashMessage = \d__('jtl_dbbackup_tool', 'Sperre wurde manuell aufgehoben.');
             $flashSuccess = true;
+            FlashBus::set($flashSuccess, $flashMessage);
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['preset']) && RequestGuard::claimBackupTrigger()) {
             $adminAccountId = (int) ($_SESSION['AdminAccount']->kAdminlogin ?? 0);
             $result = (new BackupTrigger($plugin, $db))->trigger((string) $_POST['preset'], $adminAccountId);
             $flashMessage = $result['message'];
             $flashSuccess = $result['success'];
+            // See Service\FlashBus's docblock: this same $_POST is also
+            // visible to BackupController within this same request, so
+            // whichever of the two actually runs the trigger (execution-order
+            // dependent, not necessarily this one) pushes the result here too,
+            // for every tab template to render identically.
+            FlashBus::set($flashSuccess, $flashMessage);
+        }
+
+        if ($flashMessage === null) {
+            $bus = FlashBus::get();
+            if ($bus !== null) {
+                $flashMessage = $bus['text'];
+                $flashSuccess = $bus['success'];
+            }
         }
 
         $latest = $history->latest();
@@ -105,13 +122,22 @@ final class DashboardController
             ->assign('lastRunFailed', $latest !== null && $latest->cStatus === 'failed')
             ->assign('lastRunError', $latest->cLastError ?? null)
             ->assign('nextScheduled', null) // TODO: read from the shop's cron queue once that read API is confirmed
-            ->assign('storageLocalBytes', $this->dirSizeMb($storage))
-            ->assign('storageFtpBytes', null) // remote size isn't queried to avoid a network round-trip on every dashboard load
+            ->assign('storageLocalFormatted', SizeFormatter::human($this->dirSizeBytes($storage)))
+            ->assign('storageFtpFormatted', null) // remote size isn't queried to avoid a network round-trip on every dashboard load
             ->assign('backupCount', $count)
-            // Exact info.xml <Customlink><Name> of the Manager tab — the
-            // "Anzahl Backups" tile links there via ?cPluginTab=... (a plain
-            // GET works the same way the hidden POST field does elsewhere,
-            // see this class's own header comment / Request::verifyGPDataString()).
+            // Exact info.xml <Customlink><Name> of the Manager tab, i.e. the
+            // exact visible text of that tab's own nav-link. Fixed: the
+            // "Anzahl Backups" tile used to be an <a href="?cPluginTab=...">
+            // (a real page reload) — reported as "tile click does nothing".
+            // Root cause, CONFIRMED against admin/templates/bootstrap/tpl_inc/
+            // plugin_uebersicht.tpl: all tabs are plain Bootstrap tab-panes
+            // that ALREADY live in one page (data-toggle="tab", pure
+            // client-side, no server round-trip once loaded) — a bare
+            // "?cPluginTab=..." href replaces the ENTIRE current query
+            // string, silently dropping whatever params (e.g. pluginID) the
+            // admin URL actually needs, which is why nothing visible
+            // happened. dashboard.tpl now instead clicks the real nav-tab
+            // <a> whose text matches this value — see its own script block.
             ->assign('manageTabName', 'Backups verwalten (Historie)')
             ->assign('presets', $presets)
             ->assign('recent', $recent)
@@ -148,13 +174,13 @@ final class DashboardController
         exit;
     }
 
-    private function dirSizeMb(StorageService $storage): float
+    private function dirSizeBytes(StorageService $storage): int
     {
         $total = 0;
         foreach (\glob($storage->baseDirectory() . '/*/*') ?: [] as $file) {
             $total += \is_file($file) ? \filesize($file) : 0;
         }
 
-        return $total / 1_000_000;
+        return $total;
     }
 }

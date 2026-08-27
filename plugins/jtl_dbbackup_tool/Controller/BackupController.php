@@ -8,6 +8,7 @@ use JTL\DB\DbInterface;
 use JTL\Plugin\PluginInterface;
 use JTL\Smarty\JTLSmarty;
 use Plugin\jtl_dbbackup_tool\Service\BackupTrigger;
+use Plugin\jtl_dbbackup_tool\Service\FlashBus;
 use Plugin\jtl_dbbackup_tool\Service\PresetRegistry;
 use Plugin\jtl_dbbackup_tool\Service\RequestGuard;
 
@@ -49,6 +50,20 @@ final class BackupController
             $result = (new BackupTrigger($plugin, $db))->trigger((string) $_POST['preset'], $adminAccountId, $formOptions);
             $flashMessage = $result['message'];
             $flashSuccess = $result['success'];
+            // See Service\FlashBus's docblock: this same $_POST is also
+            // visible to DashboardController within this same request, so
+            // whichever of the two actually runs the trigger (execution-order
+            // dependent, not necessarily this one) pushes the result here too,
+            // for every tab template to render identically.
+            FlashBus::set($flashSuccess, $flashMessage);
+        }
+
+        if ($flashMessage === null) {
+            $bus = FlashBus::get();
+            if ($bus !== null) {
+                $flashMessage = $bus['text'];
+                $flashSuccess = $bus['success'];
+            }
         }
 
         $presets = [];

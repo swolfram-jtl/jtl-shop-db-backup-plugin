@@ -412,5 +412,79 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   `Cron/BackupCronJob.php` now reads this via two new
   `SettingsRepository` methods instead of always looping every preset.
 - Translation catalog grown to 227 entries.
+- **Fixed a live fatal error** reported from a real install: a dense inline
+  `onclick` on the Manager's overview chips contained raw JavaScript
+  (`setTimeout(function(){...`) whose curly braces got mis-parsed as
+  malformed Smarty tags — Smarty's own delimiters are also `{`/`}`. Removed
+  the inline handler (replaced with a `data-target` read by the existing
+  script block) and defensively wrapped every remaining JS/CSS block across
+  `history.tpl`, `settings.tpl`, and `_partials/style.tpl` in
+  `{literal}...{/literal}` rather than relying on incidental spacing that
+  happened to avoid the same bug elsewhere.
+- **Fixed the cron job integration never actually working**, reported as
+  `Undefined array key "jobType"` in `Bootstrap.php` from the shop's own Cron
+  admin page. The real bug was deeper than the notice: both `Bootstrap::boot()`
+  event listeners used an assumed, never-verified event contract. CONFIRMED
+  against the real core source (`CronController::getAvailableCronJobs()`,
+  `Mapper/JobTypeToJob::map()`): `GET_AVAILABLE_CRONJOBS` fires with
+  `['jobs' => &$available]` (a flat list of type strings, not a
+  `['jobTypes' => [type => label]]` map), and `MAP_CRONJOB_TYPE` fires with
+  `['type' => $type, 'mapping' => &$mapping]`, not `['jobType' => ...,
+  'jobClass' => ...]`. `Dispatcher::fire()` is also `: void` and never uses a
+  listener's return value, so mutating the *referenced* array elements in
+  place is the only way a listener's result reaches the caller — the
+  previous `return $args;` never did anything. Net effect: this plugin's
+  cron job type was never actually registered, silently, until PHP's
+  "Undefined array key" notice made it visible. Also updated the Dashboard's
+  cron setup guide: the "Typ" dropdown renders via core's own `{__($type)}`,
+  which has no translation for a plugin-registered type string, so it now
+  correctly tells the admin to look for the raw `plugin:jtl_dbbackup_tool_cron`
+  identifier rather than a nice label that was never actually shown.
+- **Fixed backup-trigger flash messages appearing on the wrong tab**
+  ("Meldung erscheint im Dashboard statt im Tab"). Root cause: every
+  Adminmenu Customlink file executes on every request to pre-render all
+  tabs, so a `preset` POST is visible to both `BackupController` and
+  `DashboardController` — whichever one's `RequestGuard::claimBackupTrigger()`
+  happens to run first (an execution-order accident, not the tab the admin
+  is actually looking at) "won" the action and kept the result message
+  local to itself. New `Service/FlashBus` relays the result across all four
+  controllers within the same request; every tab template now renders it
+  via a shared `_partials/flash.tpl`, so it always shows up on whichever tab
+  ends up active after the reload. The success message is also now more
+  detailed per spec ("ausführliche Meldung"): filename, formatted size, and
+  completion time, not just "erfolgreich erstellt".
+- **Fixed backup file sizes showing "0.0 MB"** for anything under ~50 KB
+  (fixed-unit `%.1f MB` formatting rounded small partial-preset backups to
+  zero). New `Service/SizeFormatter` picks whichever unit (B/KB/MB/GB/TB)
+  keeps the number readable, used in the Manager table and the Dashboard's
+  storage-usage tile.
+- **Fixed the Dashboard's "Anzahl Backups" tile doing nothing on click.**
+  It was a plain `<a href="?cPluginTab=...">` — a real page reload that
+  silently drops every other query-string parameter the admin URL needs
+  (e.g. `pluginID`). CONFIRMED against `admin/templates/bootstrap/tpl_inc/
+  plugin_uebersicht.tpl`: every tab is already a plain Bootstrap tab-pane
+  living in the same page (`data-toggle="tab"`, pure client-side once
+  loaded) — the tile now instead clicks the real nav-tab link by matching
+  its visible text, no navigation involved.
+- Dashboard: the cron setup guide is no longer hidden behind a collapse
+  toggle most admins never noticed — it's shown directly whenever no cron
+  job is configured (which is always, today — `$nextScheduled` reading the
+  shop's real cron queue is still an open gap, see README).
+- Manager: overview chips now use a CSS grid (`auto-fit`/`minmax`) instead
+  of flex-wrap, so the row always fills the tab's full width instead of
+  leaving empty space on a wide screen.
+- **Settings tab reworked** for two reported issues: (1) "Verbindung testen"
+  posted a SEPARATE form containing none of the actual field values, so
+  testing an unsaved host reloaded the page and showed the field as if it
+  had been cleared, then failed with "kein Host angegeben". Merged into the
+  ONE settings form with two submit buttons — "Speichern" and "Speichern und
+  Verbindung testen" (matching the shop's own mail-server settings pattern)
+  — which always saves first, then tests using the just-submitted `$_POST`
+  values directly rather than re-reading `$plugin->getConfig()` (which loads
+  once per request and can still be stale immediately after a same-request
+  save — see `SettingsController::handleConnectionTest()`'s docblock).
+  (2) Field descriptions moved from under the input (low-contrast
+  `text-muted`, easy to miss) to sit directly under the label instead, in a
+  more readable dark-blue-tinted color.
 
 <!-- Next bump also needs explicit confirmation. -->

@@ -37,18 +37,37 @@ class Bootstrap extends Bootstrapper
         parent::boot($dispatcher);
 
         // Spec: "Scheduling" — optional cron backup, independent of the manual button.
-        $dispatcher->listen(Event::GET_AVAILABLE_CRONJOBS, function (array $args): array {
-            $args['jobTypes'][self::CRON_JOB_TYPE] = 'Datenbank-Backup (Plugin)';
-
-            return $args;
+        //
+        // Fixed: both listeners used a wrong, assumed event contract (never
+        // verified against the real core source until a live install reported
+        // "Undefined array key jobType" on Bootstrap.php). CONFIRMED against
+        // includes/src/Router/Controller/Backend/CronController.php and
+        // includes/src/Mapper/JobTypeToJob.php:
+        //   - GET_AVAILABLE_CRONJOBS fires with ['jobs' => &$available], where
+        //     $available is a flat list of type-string constants (Type::...),
+        //     NOT a ['jobTypes' => [type => label]] map — there is no label
+        //     here at all; admin/templates/bootstrap/cron.tpl renders the
+        //     "Typ" dropdown via {__($type)}, core's OWN translation function
+        //     keyed on the raw type string (so an unmapped custom type string
+        //     just displays verbatim — acceptable, not fixable from here).
+        //   - MAP_CRONJOB_TYPE fires with ['type' => $type, 'mapping' => &$mapping],
+        //     not ['jobType' => ..., 'jobClass' => ...] — Dispatcher::fire()
+        //     is also `: void` and never uses a listener's return value, so
+        //     the previous code's `return $args;` never did anything either;
+        //     only mutating the *referenced* array elements ('jobs'/'mapping')
+        //     in place actually reaches the caller.
+        // Both previously-used keys ('jobTypes' on write, 'jobType' on read)
+        // never existed in the real $args shape, so this never actually
+        // registered the job type at all — silently, until PHP's "Undefined
+        // array key" notice on the read side made it visible.
+        $dispatcher->listen(Event::GET_AVAILABLE_CRONJOBS, function (array $args): void {
+            $args['jobs'][] = self::CRON_JOB_TYPE;
         });
 
-        $dispatcher->listen(Event::MAP_CRONJOB_TYPE, function (array $args): array {
-            if ($args['jobType'] === self::CRON_JOB_TYPE) {
-                $args['jobClass'] = BackupCronJob::class;
+        $dispatcher->listen(Event::MAP_CRONJOB_TYPE, function (array $args): void {
+            if (($args['type'] ?? null) === self::CRON_JOB_TYPE) {
+                $args['mapping'] = BackupCronJob::class;
             }
-
-            return $args;
         });
     }
 

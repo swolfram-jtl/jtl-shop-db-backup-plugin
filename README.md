@@ -241,6 +241,39 @@ documented in detail in `CHANGELOG.md`):
   can't be deleted outright (`SettingsLinks::install()` always creates it a
   menu entry, no headless option), so it's demoted to "Erweiterte
   Einstellungen (Rohformular)", sorted last, as a fallback.
+- **The cron job type never actually registered**, surfacing as `Undefined
+  array key "jobType"` in `Bootstrap.php` from the shop's own Cron admin
+  page. `Bootstrap::boot()`'s two `Dispatcher` listeners used an assumed
+  event-args shape that never matched the real one. CONFIRMED against
+  `CronController::getAvailableCronJobs()` and `Mapper/JobTypeToJob::map()`:
+  `GET_AVAILABLE_CRONJOBS` fires `['jobs' => &$available]` (a flat list of
+  type strings), and `MAP_CRONJOB_TYPE` fires `['type' => $type, 'mapping'
+  => &$mapping]` — not the `jobTypes`/`jobType`/`jobClass` keys previously
+  assumed. `Dispatcher::fire()` is `: void` and discards a listener's return
+  value entirely, so only mutating those *referenced* array elements in
+  place reaches the caller. One side effect worth knowing: the "Typ"
+  dropdown in Cron → Anlegen renders via core's own `{__($type)}`, which has
+  no translation for a plugin-registered type string, so it shows the raw
+  identifier `plugin:jtl_dbbackup_tool_cron` verbatim rather than a nice
+  label — not fixable from a plugin, documented in the Dashboard's own setup
+  guide instead.
+- **A backup-trigger's result message could show up on the wrong tab**
+  (e.g. clicking "Backup jetzt" on "Erstellen" showing its result on
+  Dashboard). Every Adminmenu Customlink file executes on every request to
+  pre-render all tabs, so the same `preset` POST is visible to both
+  `BackupController` and `DashboardController` — whichever one's
+  `RequestGuard::claimBackupTrigger()` ran first (execution order, not the
+  tab actually being looked at) kept the result local to itself. Fixed with
+  `Service/FlashBus`, a request-scoped relay every controller now reads from
+  when it didn't handle the action itself, rendered identically via a new
+  shared `_partials/flash.tpl` at the top of every tab.
+- **A live fatal Smarty compile error** ("unknown function 'function'") on
+  the Backups tab, from a dense inline `onclick` containing raw JavaScript —
+  Smarty's own template delimiters are also `{`/`}`, so a `{` immediately
+  followed by a bareword like `function` got parsed as a malformed Smarty
+  tag. Removed the inline handler; every remaining JS/CSS block across this
+  plugin's templates is now wrapped in `{literal}...{/literal}` defensively,
+  not just the one that actually broke.
 
 ## Next steps
 

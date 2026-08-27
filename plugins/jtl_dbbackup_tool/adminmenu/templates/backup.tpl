@@ -15,12 +15,7 @@
    this tab bounces back to the Dashboard tab on reload. *}
 <div class="dbbackup-page">
 
-{if $flashMessage}
-<div class="alert alert-dismissible {if $flashSuccess}alert-success{else}alert-danger{/if} shadow-sm" role="alert">
-    {$flashMessage|escape}
-    <button type="button" class="close" data-dismiss="alert" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
-</div>
-{/if}
+{include file="`$tplDir`/_partials/flash.tpl"}
 
 <p class="text-muted mb-4">{d__('jtl_dbbackup_tool', 'Presets sind exakt wie im Shop-Backend-Menü benannt, damit klar ist, welches Backup zu welcher Import-Funktion gehört.')}</p>
 

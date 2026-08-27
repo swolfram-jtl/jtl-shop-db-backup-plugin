@@ -8,6 +8,7 @@ use JTL\DB\DbInterface;
 use JTL\Helpers\Form;
 use JTL\Plugin\PluginInterface;
 use JTL\Smarty\JTLSmarty;
+use Plugin\jtl_dbbackup_tool\Service\FlashBus;
 use Plugin\jtl_dbbackup_tool\Service\PresetRegistry;
 use Plugin\jtl_dbbackup_tool\Service\RequestGuard;
 
@@ -55,9 +56,7 @@ final class SettingsPageController
         $flashSuccess = true;
         $connectionTestResult = null;
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['test_connection']) && RequestGuard::claimTestConnectionAction()) {
-            $connectionTestResult = (new SettingsController())->handleConnectionTest($plugin);
-        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Setting'])) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Setting'])) {
             // The actual settings save already ran inside
             // PluginController::getResponse() (actionConfig(), before this
             // Customlink file is even required()) — see this class's own
@@ -66,6 +65,29 @@ final class SettingsPageController
             // stale, which reads back as every field simply keeping its old
             // value (native behavior, not something this tab special-cases).
             $flashMessage = \d__('jtl_dbbackup_tool', 'Einstellungen gespeichert.');
+
+            // Spec: "speichern und testen" oder nur "speichern", wie bei den
+            // Mail-Server-Einstellungen — ONE form, two submit buttons
+            // (settings.tpl's "test_connection" button carries name/value so
+            // it only appears in $_POST when THAT button was actually
+            // clicked). Always saves first (above), then optionally tests
+            // with the just-submitted values — see SettingsController::
+            // handleConnectionTest()'s docblock for why $_POST is passed
+            // through rather than re-reading $plugin->getConfig().
+            if (isset($_POST['test_connection']) && RequestGuard::claimTestConnectionAction()) {
+                $connectionTestResult = (new SettingsController())->handleConnectionTest($plugin, $_POST);
+            }
+        }
+
+        if ($flashMessage === null) {
+            // See Service\FlashBus's docblock: picks up a backup-trigger
+            // result from Dashboard/Erstellen when this tab is the one
+            // actually active after the reload.
+            $bus = FlashBus::get();
+            if ($bus !== null) {
+                $flashMessage = $bus['text'];
+                $flashSuccess = $bus['success'];
+            }
         }
 
         $config = $plugin->getConfig();

@@ -76,6 +76,8 @@
 }
 .dbbackup-tile:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1.1rem rgba(11,27,69,.1); }
 .dbbackup-tile--placeholder { opacity: .5; filter: saturate(.4); }
+.dbbackup-tile--clickable { cursor: pointer; }
+.dbbackup-tile--clickable:focus { outline: 2px solid var(--jtl-tech-blue); outline-offset: 2px; }
 .dbbackup-kpi-value {
     font-size: 1.85rem;
     font-weight: 800;
@@ -151,13 +153,21 @@
    clickable shortcuts into the matching accordion group below, styled like
    the Dashboard's brand-colored KPI tiles (centered, colorful) but more
    compact since there can be up to ~9 of them (7 presets + Komplett + the
-   automatic pre-update snapshot), unlike the Dashboard's 4 big tiles. */
+   automatic pre-update snapshot), unlike the Dashboard's 4 big tiles.
+   Grid (not flex) so the row always fills the full available width: each
+   chip gets an equal share via `1fr`, wrapping to a new row once they'd
+   drop below ~9.5rem — fixes chips only ever taking their own content width
+   and leaving empty space on a wide screen. */
+.dbbackup-summary-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: .6rem;
+}
 .dbbackup-summary-chip {
     background: var(--jtl-dark-blue);
     color: #fff;
     border-radius: .6rem;
     padding: .7rem .9rem;
-    min-width: 9.5rem;
     text-align: center;
     cursor: pointer;
     transition: box-shadow .15s ease, transform .15s ease;
@@ -280,6 +290,34 @@
     color: var(--jtl-dark-blue);
     border-top: none;
     border-bottom-width: 1px;
+}
+
+/* Shared flash banner (_partials/flash.tpl), rendered identically at the
+   top of every tab — see Service\FlashBus's docblock for why a single
+   consistent "global" banner across tabs fixes a real bug (backup-trigger
+   result appearing on the wrong tab). Sticky so it stays visible near the
+   top of the tab's own scroll area rather than only the top of the page. */
+.dbbackup-flash-banner {
+    position: sticky;
+    top: .5rem;
+    z-index: 1040;
+}
+
+/* Settings-tab field descriptions: previously plain Bootstrap .text-muted
+   under the input itself — reported as hard to read (low contrast) and in
+   the wrong place (spec: descriptions belong with the title, not the
+   field). Dark-blue-tinted grey instead of a flat grey reads noticeably
+   clearer against both the card's white background and this palette. */
+.dbbackup-field-description {
+    font-size: .8rem;
+    line-height: 1.4;
+    color: rgba(11,27,69,.72);
+    margin-top: .15rem;
+}
+.dbbackup-section-description {
+    font-size: .85rem;
+    line-height: 1.4;
+    color: rgba(11,27,69,.72);
 }
 {/literal}
 </style>

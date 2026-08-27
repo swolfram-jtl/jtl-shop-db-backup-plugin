@@ -3,7 +3,7 @@
    and "Leerzustand" (first-run call-to-action).
    Variables assigned by Controller\DashboardController::render():
      $hasAnyBackup (bool), $lastBackup (array|null: dCreated, cStatus, cLabel),
-     $nextScheduled (string|null), $storageLocalBytes (float), $storageFtpBytes (float|null),
+     $nextScheduled (string|null), $storageLocalFormatted (string), $storageFtpFormatted (string|null),
      $backupCount (int), $manageTabName (string, for the "Anzahl Backups"
        tile's link — must match the Manager Customlink's exact info.xml <Name>),
      $lastRunFailed (bool), $lastRunError (string|null),
@@ -33,12 +33,7 @@
    still hardcoded). *}
 <div class="dbbackup-page">
 
-{if $flashMessage}
-<div class="alert alert-dismissible {if $flashSuccess}alert-success{else}alert-danger{/if} shadow-sm">
-    {$flashMessage|escape}
-    <button type="button" class="close" data-dismiss="alert" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
-</div>
-{/if}
+{include file="`$tplDir`/_partials/flash.tpl"}
 
 {if $isLocked}
 <div class="alert alert-warning shadow-sm d-flex align-items-center justify-content-between flex-wrap" style="gap: .75rem; border-left: 4px solid var(--jtl-orange);">
@@ -101,7 +96,7 @@
                         <div class="dbbackup-eyebrow mb-1">{d__('jtl_dbbackup_tool', 'Nächstes geplantes Backup')}</div>
                         <div class="dbbackup-kpi-value" style="font-size: 1.15rem;">{if $nextScheduled}{$nextScheduled|escape}{else}<span style="font-size:1rem; font-weight: 500;">{d__('jtl_dbbackup_tool', 'kein Cron-Backup aktiv')}</span>{/if}</div>
                         {if !$nextScheduled}
-                        <a href="#" class="small" data-toggle="collapse" data-target="#dbbackup-cron-guide" onclick="event.stopPropagation();">{d__('jtl_dbbackup_tool', 'Einrichten →')}</a>
+                        <span class="small text-muted">{d__('jtl_dbbackup_tool', 'Anleitung unten ↓')}</span>
                         {/if}
                     </div>
                 </div>
@@ -113,15 +108,16 @@
                     <div class="dbbackup-icon-circle"><i class="fal fa-hdd"></i></div>
                     <div class="w-100" style="min-width:0;">
                         <div class="dbbackup-eyebrow mb-1">{d__('jtl_dbbackup_tool', 'Speicherverbrauch')}</div>
-                        <div class="dbbackup-kpi-value">{$storageLocalBytes|string_format:"%.1f"}<span class="dbbackup-kpi-unit"> MB</span></div>
-                        <div class="text-muted small">{d__('jtl_dbbackup_tool', 'lokal')}{if $storageFtpBytes !== null} · {$storageFtpBytes|string_format:"%.1f"} MB FTP{/if}</div>
+                        <div class="dbbackup-kpi-value" style="font-size: 1.4rem;">{$storageLocalFormatted|escape}</div>
+                        <div class="text-muted small">{d__('jtl_dbbackup_tool', 'lokal')}{if $storageFtpFormatted !== null} · {$storageFtpFormatted|escape} FTP{/if}</div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <a href="?cPluginTab={$manageTabName|escape:'url'}" class="text-decoration-none" title="{d__('jtl_dbbackup_tool', 'Zu allen Backups springen')}">
-            <div class="card dbbackup-tile dbbackup-tile--sand shadow-sm h-100 {if !$hasAnyBackup}dbbackup-tile--placeholder{/if}">
+            <div class="card dbbackup-tile dbbackup-tile--sand dbbackup-tile--clickable shadow-sm h-100 {if !$hasAnyBackup}dbbackup-tile--placeholder{/if}"
+                 data-jump-to-tab="{$manageTabName|escape}" role="button" tabindex="0"
+                 title="{d__('jtl_dbbackup_tool', 'Zu allen Backups springen')}">
                 <div class="card-body d-flex align-items-center" style="gap: .9rem;">
                     <div class="dbbackup-icon-circle"><i class="fal fa-layer-group"></i></div>
                     <div class="w-100" style="min-width:0;">
@@ -131,25 +127,22 @@
                     <i class="fal fa-arrow-right" style="color:var(--jtl-dark-blue); opacity:.5;"></i>
                 </div>
             </div>
-            </a>
         </div>
     </div>
 
     {if !$nextScheduled}
-    <div class="collapse mb-3" id="dbbackup-cron-guide">
-        <div class="card border-0 shadow-sm" style="background:var(--jtl-sand);">
-            <div class="card-body">
-                <strong>{d__('jtl_dbbackup_tool', 'Automatisches Backup per Cronjob einrichten')}</strong>
-                <p class="small text-muted mb-2 mt-1">{d__('jtl_dbbackup_tool', 'Dieses Plugin plant nichts von selbst — JTL-Shop hat dafür eine eigene, zentrale Cron-Verwaltung, in der auch dieser Backup-Job eingetragen wird:')}</p>
-                <ol class="small mb-0" style="padding-left:1.2rem;">
-                    <li>{d__('jtl_dbbackup_tool', 'Im Backend links im Menü zu „Cron" gehen.')}</li>
-                    <li>{d__('jtl_dbbackup_tool', 'Dort den Reiter zum Anlegen eines neuen Auftrags öffnen.')}</li>
-                    <li>{d__('jtl_dbbackup_tool', 'Im Feld „Typ" den Eintrag „Datenbank-Backup (Plugin)" auswählen.')}</li>
-                    <li>{d__('jtl_dbbackup_tool', 'Intervall in Stunden festlegen (z. B. 24 für täglich) sowie eine Startzeit außerhalb der Stoßzeiten (z. B. nachts).')}</li>
-                    <li>{d__('jtl_dbbackup_tool', 'Speichern — der Auftrag erscheint danach in der Übersicht und läuft ab dann automatisch.')}</li>
-                </ol>
-                <p class="small text-muted mb-0 mt-2">{d__('jtl_dbbackup_tool', 'Welche Presets der Cronjob sichert (und ob zusätzlich „Komplett" dazugehört) legst du unter „Einstellungen" → „Cronjob-Einstellungen" fest — Standard ist jedes Preset einzeln, „Komplett" bewusst nicht (Performance).')}</p>
-            </div>
+    <div class="card border-0 shadow-sm mb-3" style="background:var(--jtl-sand);">
+        <div class="card-body">
+            <strong>{d__('jtl_dbbackup_tool', 'Automatisches Backup per Cronjob einrichten')}</strong>
+            <p class="small text-muted mb-2 mt-1">{d__('jtl_dbbackup_tool', 'Dieses Plugin plant nichts von selbst — JTL-Shop hat dafür eine eigene, zentrale Cron-Verwaltung, in der auch dieser Backup-Job eingetragen wird:')}</p>
+            <ol class="small mb-0" style="padding-left:1.2rem;">
+                <li>{d__('jtl_dbbackup_tool', 'Im Backend links im Menü zu „Cron" gehen.')}</li>
+                <li>{d__('jtl_dbbackup_tool', 'Dort den Reiter zum Anlegen eines neuen Auftrags öffnen.')}</li>
+                <li>{d__('jtl_dbbackup_tool', 'Im Feld „Typ" den Eintrag „plugin:jtl_dbbackup_tool_cron" auswählen — JTL-Shop zeigt hier den technischen Bezeichner, da dieser Job-Typ nachträglich vom Plugin registriert wird, nicht die eigene Klartext-Bezeichnung.')}</li>
+                <li>{d__('jtl_dbbackup_tool', 'Intervall in Stunden festlegen (z. B. 24 für täglich) sowie eine Startzeit außerhalb der Stoßzeiten (z. B. nachts).')}</li>
+                <li>{d__('jtl_dbbackup_tool', 'Speichern — der Auftrag erscheint danach in der Übersicht und läuft ab dann automatisch.')}</li>
+            </ol>
+            <p class="small text-muted mb-0 mt-2">{d__('jtl_dbbackup_tool', 'Welche Presets der Cronjob sichert (und ob zusätzlich „Komplett" dazugehört) legst du unter „Einstellungen" → „Cronjob-Einstellungen" fest — Standard ist jedes Preset einzeln, „Komplett" bewusst nicht (Performance).')}</p>
         </div>
     </div>
     {/if}
@@ -237,5 +230,42 @@
         </div>
     </div>
 </div>
+
+{* {literal}...{/literal}: see history.tpl's script block for why — Smarty's
+   own delimiters are also "{"/"}", plain JS braces can be mis-parsed as
+   malformed Smarty tags otherwise. No Smarty variables are needed inside
+   this block, so wrapping all of it is safe.
+   Fix for "Kachel im Dashboard löst bei Klick nichts aus": the "Anzahl
+   Backups" tile used to be a plain <a href="?cPluginTab=..."> — a real page
+   reload that silently drops any other query params the admin URL needs
+   (see Controller\DashboardController's own comment on manageTabName for
+   the confirmed root cause). Every tab is already a Bootstrap tab-pane
+   living in the SAME page (admin/templates/bootstrap/tpl_inc/
+   plugin_uebersicht.tpl — data-toggle="tab", pure client-side once loaded),
+   so clicking the REAL nav-tab link is both simpler and actually reliable:
+   no navigation, no query-string guessing, just Bootstrap's own tab JS. *}
+<script>
+{literal}
+document.querySelectorAll('[data-jump-to-tab]').forEach(function (el) {
+    function jump() {
+        var targetName = el.dataset.jumpToTab;
+        var links = document.querySelectorAll('.nav-tabs .nav-link');
+        for (var i = 0; i < links.length; i++) {
+            if (links[i].textContent.trim() === targetName) {
+                links[i].click();
+                return;
+            }
+        }
+    }
+    el.addEventListener('click', jump);
+    el.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            jump();
+        }
+    });
+});
+{/literal}
+</script>
 
 </div>

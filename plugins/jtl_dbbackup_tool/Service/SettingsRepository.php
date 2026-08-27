@@ -186,4 +186,51 @@ final class SettingsRepository
             ? new SftpUploadTarget($host, $port, $username, $password, $privateKey, $privateKeyPassphrase, $remoteDir)
             : new FtpsUploadTarget($host, $port, $username, $password ?? '', $remoteDir);
     }
+
+    /**
+     * Builds an upload target straight from a just-submitted settings-form
+     * POST, for the settings tab's "Speichern und Verbindung testen".
+     *
+     * Why this exists instead of just calling buildUploadTarget() again
+     * after a save: JTL\Plugin\Data\Config loads all its values into an
+     * in-memory Collection ONCE (Config::load(), confirmed against the real
+     * core source) — typically before actionConfig() writes the fresh save
+     * to the DB within the same request. Re-reading via $plugin->getConfig()
+     * right after a same-request save can therefore still return the OLD
+     * values. Reading straight from $_POST sidesteps the question entirely:
+     * it's exactly what was just submitted, no cache staleness possible.
+     * The one exception is the password/key fields, which follow the same
+     * "blank = keep the existing stored value" convention as the real save
+     * (PluginController::handleEncryptedInput()) — a blank field here falls
+     * back to the last SAVED decrypted value instead of testing with an
+     * empty credential.
+     *
+     * @param array<string, mixed> $postValues raw $_POST, keyed by <ValueName>
+     */
+    public function buildUploadTargetFromRequest(array $postValues): ?UploadTargetInterface
+    {
+        $protocol = (string) ($postValues['ftp_protocol'] ?? 'ftps');
+        $host = \trim((string) ($postValues['ftp_host'] ?? ''));
+        if ($host === '') {
+            return null;
+        }
+
+        $postedPort = \trim((string) ($postValues['ftp_port'] ?? ''));
+        $port = (int) ($postedPort !== '' ? $postedPort : ($protocol === 'sftp' ? '22' : '21'));
+        $username = (string) ($postValues['ftp_username'] ?? '');
+        $remoteDir = (string) ($postValues['ftp_remote_dir'] ?? '/');
+
+        $postedPassword = (string) ($postValues['ftp_password'] ?? '');
+        $password = $postedPassword !== '' ? $postedPassword : $this->decrypted('ftp_password');
+
+        $postedPrivateKey = (string) ($postValues['ftp_private_key'] ?? '');
+        $privateKey = $postedPrivateKey !== '' ? $postedPrivateKey : $this->decrypted('ftp_private_key');
+
+        $postedPassphrase = (string) ($postValues['ftp_private_key_passphrase'] ?? '');
+        $privateKeyPassphrase = $postedPassphrase !== '' ? $postedPassphrase : $this->decrypted('ftp_private_key_passphrase');
+
+        return $protocol === 'sftp'
+            ? new SftpUploadTarget($host, $port, $username, $password, $privateKey, $privateKeyPassphrase, $remoteDir)
+            : new FtpsUploadTarget($host, $port, $username, $password ?? '', $remoteDir);
+    }
 }

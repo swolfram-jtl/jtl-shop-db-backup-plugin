@@ -2,7 +2,8 @@
 {* "Backups" tab — the DB Backup Manager. Variables assigned by
    Controller\HistoryController::render():
      $groups (array of {presetKey, presetLabel, rows: [{id, dCreated, cLabel,
-       cComment, cStatus, nSizeBytes(MB), bEncrypted, bUploaded}, ...]}),
+       cComment, cStatus, nSizeBytes(raw bytes), cSizeFormatted (string, e.g.
+       "812 KB"), bEncrypted, bUploaded}, ...]}),
      $overviewTiles (array of {presetKey, presetLabel, count, lastCreated} —
        quick-overview chips, unfiltered/whole-table, "Komplett" always first),
      $presetOptions (array<string,string> key=>label, for the filter dropdown),
@@ -20,12 +21,7 @@
    why both compose cleanly. Every form carries cPluginTab="Backups". *}
 <div class="dbbackup-page">
 
-{if $flashMessage}
-<div class="alert alert-dismissible {if $flashSuccess}alert-success{else}alert-danger{/if} shadow-sm">
-    {$flashMessage|escape}
-    <button type="button" class="close" data-dismiss="alert" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
-</div>
-{/if}
+{include file="`$tplDir`/_partials/flash.tpl"}
 
 {if $isLocked}
 <div class="alert alert-warning shadow-sm d-flex align-items-center" style="gap:.6rem; border-left: 4px solid var(--jtl-orange);">
@@ -35,7 +31,7 @@
 {/if}
 
 {if $overviewTiles}
-<div class="d-flex flex-wrap mb-4" style="gap:.6rem;">
+<div class="dbbackup-summary-chips mb-4">
     {foreach $overviewTiles as $tile}
     <div class="dbbackup-summary-chip dbbackup-scroll-to-group {if $tile.presetKey === 'full'}dbbackup-summary-chip--full{/if}"
          data-toggle="collapse" data-target="#group-{$tile.presetKey|escape}" role="button">
@@ -168,7 +164,7 @@
                         </form>
                     </td>
                     <td><span class="badge {if $row.cStatus === 'ok'}badge-success{elseif $row.cStatus === 'failed'}badge-danger{else}badge-secondary{/if}">{$row.cStatus|escape}</span></td>
-                    <td class="text-nowrap">{$row.nSizeBytes|string_format:"%.1f"} MB</td>
+                    <td class="text-nowrap">{$row.cSizeFormatted|escape}</td>
                     <td>
                         {if $row.bUploaded}<span class="badge" style="background:var(--jtl-light-blue);color:var(--jtl-dark-blue);">{d__('jtl_dbbackup_tool', 'hochgeladen')}</span>
                         {else}<span class="badge badge-light text-muted">{d__('jtl_dbbackup_tool', 'nur lokal')}</span>{/if}

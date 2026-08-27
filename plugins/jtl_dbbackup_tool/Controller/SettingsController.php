@@ -17,21 +17,33 @@ use Plugin\jtl_dbbackup_tool\Service\SettingsRepository;
  * FTPS/SFTP login and write permissions immediately, rather than waiting for
  * the first real backup to reveal a misconfiguration.
  *
- * KNOWN GAP: how this hooks into the Settingslink-rendered form (an extra
- * button/AJAX endpoint alongside the auto-rendered fields) was not verified
- * — only the Customlink dispatch mechanism was confirmed against the core.
- * The actual connection-test LOGIC below is complete and independently
- * usable once that wiring is figured out.
+ * Wired into Controller\SettingsPageController's "Speichern und Verbindung
+ * testen" submit button — a real reported bug ("Eingabe im Hostfeld wird
+ * geleert und als Fehler ausgegeben") traced back to the previous design: a
+ * SEPARATE form that posted only test_connection=1 with none of the actual
+ * FTP fields, so a full page reload re-rendered the host field from whatever
+ * was last SAVED (often nothing) rather than what was just typed. Fixed by
+ * merging into the single settings form (always saves first) and passing
+ * $_POST straight through here — see SettingsRepository::
+ * buildUploadTargetFromRequest()'s docblock for why $_POST is used instead
+ * of re-reading $plugin->getConfig() even after that save.
  */
 final class SettingsController
 {
     /**
+     * @param array<string, mixed> $postValues raw $_POST from the settings
+     *        form — pass [] to fall back to the currently SAVED config
+     *        instead (used nowhere in this plugin's own UI anymore, kept for
+     *        any future non-form caller).
+     *
      * @return array{ok: bool, message: string}
      */
-    public function handleConnectionTest(PluginInterface $plugin): array
+    public function handleConnectionTest(PluginInterface $plugin, array $postValues = []): array
     {
         $settings = new SettingsRepository($plugin);
-        $target = $settings->buildUploadTarget();
+        $target = $postValues !== []
+            ? $settings->buildUploadTargetFromRequest($postValues)
+            : $settings->buildUploadTarget();
 
         if ($target === null) {
             return ['ok' => false, 'message' => \d__(

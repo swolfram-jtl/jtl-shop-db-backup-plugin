@@ -684,3 +684,18 @@ msgstr "Tests the most recently saved credentials — save any unsaved changes a
 msgid "Einstellungen gespeichert."
 msgstr "Settings saved."
 
+msgid "Speichern und Verbindung testen"
+msgstr "Save and test connection"
+
+msgid "Speichert die obigen Felder und prüft danach sofort Login und Schreibrechte."
+msgstr "Saves the fields above, then immediately checks login and write permissions."
+
+msgid "Backup „%s“ erfolgreich erstellt. Datei: %s (%s), abgeschlossen um %s Uhr."
+msgstr "Backup \"%s\" created successfully. File: %s (%s), completed at %s."
+
+msgid "Im Feld „Typ\" den Eintrag „plugin:jtl_dbbackup_tool_cron\" auswählen — JTL-Shop zeigt hier den technischen Bezeichner, da dieser Job-Typ nachträglich vom Plugin registriert wird, nicht die eigene Klartext-Bezeichnung."
+msgstr "In the \"Type\" field, select the entry \"plugin:jtl_dbbackup_tool_cron\" — JTL-Shop shows the technical identifier here, since this job type is registered by the plugin afterwards rather than having its own plain-text label."
+
+msgid "Anleitung unten ↓"
+msgstr "Instructions below ↓"
+

@@ -62,7 +62,7 @@ final class BackupTrigger
             : $settings->buildUploadTarget();
 
         try {
-            $backupService->createBackup($tables, $presetKey, [
+            $historyId = $backupService->createBackup($tables, $presetKey, [
                 'label'                => $label,
                 'maintenanceMode'      => $settings->maintenanceModeEnabled(),
                 'encrypt'              => $encrypt,
@@ -82,9 +82,25 @@ final class BackupTrigger
                 \substr($manifest->instanceId(), 0, 32),
             );
 
+            // Spec: "ausführliche Meldung" — filename + size + completion
+            // time, not just "erfolgreich erstellt". createBackup() has
+            // already finalized the history row (markResult()) by the time
+            // it returns, so this read-back is always the real final state,
+            // never a 'running' placeholder.
+            $row = $history->find($historyId);
+
             return [
                 'success' => true,
-                'message' => \d__('jtl_dbbackup_tool', 'Backup „%s“ erfolgreich erstellt.', $label),
+                'message' => $row !== null
+                    ? \d__(
+                        'jtl_dbbackup_tool',
+                        'Backup „%s“ erfolgreich erstellt. Datei: %s (%s), abgeschlossen um %s Uhr.',
+                        $label,
+                        $row->cFilename,
+                        SizeFormatter::human((int) $row->nSizeBytes),
+                        \date('d.m.Y H:i:s'),
+                    )
+                    : \d__('jtl_dbbackup_tool', 'Backup „%s“ erfolgreich erstellt.', $label),
             ];
         } catch (\Throwable $e) {
             return [

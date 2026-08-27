@@ -17,15 +17,16 @@
          checkboxGroup: {type, name, label, description, options, selected}
    This form POSTs to action="" like every other form in this plugin — see
    this tab's own docblock for why that's enough (no special target URL
-   needed, actionConfig() runs as part of THIS SAME request/page). *}
+   needed, actionConfig() runs as part of THIS SAME request/page).
+   Single form, two submit buttons ("Speichern" / "Speichern und Verbindung
+   testen" — spec: like the shop's own mail-server settings) — fixed a real
+   reported bug where a SEPARATE test-connection form (posting none of the
+   actual field values) reloaded the page and showed the host field's last-
+   SAVED value as if it had been cleared. See Controller\SettingsController::
+   handleConnectionTest()'s docblock for the full root cause. *}
 <div class="dbbackup-page">
 
-{if $flashMessage}
-<div class="alert alert-dismissible {if $flashSuccess}alert-success{else}alert-danger{/if} shadow-sm">
-    {$flashMessage|escape}
-    <button type="button" class="close" data-dismiss="alert" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
-</div>
-{/if}
+{include file="`$tplDir`/_partials/flash.tpl"}
 
 {if $connectionTestResult}
 <div class="alert alert-dismissible {if $connectionTestResult.ok}alert-success{else}alert-danger{/if} shadow-sm">
@@ -45,11 +46,14 @@
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <h5 class="mb-1">{$section.title|escape}</h5>
-            {if $section.description}<p class="small text-muted mb-3">{$section.description|escape}</p>{/if}
+            {if $section.description}<p class="dbbackup-section-description mb-3">{$section.description|escape}</p>{/if}
 
             {foreach $section.fields as $field}
             <div class="form-group form-row align-items-start mb-3 dbbackup-setting-row" {if $field.revealedBy}data-revealed-by="{$field.revealedBy|escape}" style="display:none;"{/if}>
-                <label class="col-sm-3 col-form-label" for="{$field.name}">{$field.label|escape}</label>
+                <div class="col-sm-3">
+                    <label class="col-form-label pb-0 mb-0" for="{$field.name}">{$field.label|escape}</label>
+                    {if $field.description}<div class="dbbackup-field-description">{$field.description|escape}</div>{/if}
+                </div>
                 <div class="col-sm-9">
                     {if $field.type === 'text'}
                         <input type="text" class="form-control" id="{$field.name}" name="{$field.name}" value="{$field.value|escape}">
@@ -82,17 +86,16 @@
                         {/foreach}
                         </div>
                     {/if}
-                    {if $field.description}<small class="form-text text-muted">{$field.description|escape}</small>{/if}
                 </div>
             </div>
             {/foreach}
 
             {if $section.connectionTest}
             <div class="mt-2">
-                <button type="submit" form="dbbackup-test-connection-form" class="btn btn-outline-primary btn-sm">
-                    <i class="fal fa-plug mr-1"></i>{d__('jtl_dbbackup_tool', 'Verbindung testen')}
+                <button type="submit" name="test_connection" value="1" class="btn btn-outline-primary btn-sm">
+                    <i class="fal fa-plug mr-1"></i>{d__('jtl_dbbackup_tool', 'Speichern und Verbindung testen')}
                 </button>
-                <span class="small text-muted ml-2">{d__('jtl_dbbackup_tool', 'Testet die zuletzt gespeicherten Zugangsdaten — noch nicht gespeicherte Änderungen oben zuerst speichern.')}</span>
+                <span class="small text-muted ml-2">{d__('jtl_dbbackup_tool', 'Speichert die obigen Felder und prüft danach sofort Login und Schreibrechte.')}</span>
             </div>
             {/if}
         </div>
@@ -102,12 +105,6 @@
     <button type="submit" class="btn btn-primary">
         <i class="fal fa-save mr-1"></i>{d__('jtl_dbbackup_tool', 'Speichern')}
     </button>
-</form>
-
-<form method="post" action="" id="dbbackup-test-connection-form" class="d-none">
-    <input type="hidden" name="cPluginTab" value="Einstellungen">
-    {$jtlToken}
-    <input type="hidden" name="test_connection" value="1">
 </form>
 
 {* {literal}...{/literal}: see history.tpl's script block for why — Smarty's

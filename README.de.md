@@ -259,6 +259,42 @@ Ursache und Fix klären ließen (Details jeweils in `CHANGELOG.md`):
   (`SettingsLinks::install()` legt dafür immer einen Menüeintrag an, keine
   „headless"-Option), daher als „Erweiterte Einstellungen (Rohformular)"
   degradiert, ans Ende sortiert, als Fallback.
+- **Der Cronjob-Typ hat sich nie tatsächlich registriert**, sichtbar als
+  `Undefined array key "jobType"` in `Bootstrap.php` auf der Cron-Verwaltung
+  des Shops. `Bootstrap::boot()`s beide `Dispatcher`-Listener gingen von
+  einer angenommenen, nie verifizierten Event-Args-Struktur aus. Gegen
+  `CronController::getAvailableCronJobs()` und `Mapper/JobTypeToJob::map()`
+  bestätigt: `GET_AVAILABLE_CRONJOBS` feuert mit `['jobs' => &$available]`
+  (eine flache Liste von Typ-Strings), und `MAP_CRONJOB_TYPE` feuert mit
+  `['type' => $type, 'mapping' => &$mapping]` — nicht die zuvor
+  angenommenen Schlüssel `jobTypes`/`jobType`/`jobClass`. `Dispatcher::fire()`
+  ist `: void` und verwirft den Rückgabewert eines Listeners komplett, daher
+  erreicht nur das Verändern dieser *referenzierten* Array-Elemente die
+  aufrufende Stelle. Ein Nebeneffekt zum Wissen: das „Typ"-Dropdown unter
+  Cron → Anlegen rendert über das core-eigene `{__($type)}`, das keine
+  Übersetzung für einen vom Plugin registrierten Typ-String kennt — es zeigt
+  daher den rohen Bezeichner `plugin:jtl_dbbackup_tool_cron` unverändert an,
+  nicht per Plugin behebbar, stattdessen in der Dashboard-Anleitung
+  dokumentiert.
+- **Die Erfolgsmeldung eines Backup-Laufs konnte auf dem falschen Tab
+  erscheinen** (z. B. Klick auf „Backup jetzt" im Tab „Erstellen", Meldung
+  aber im Dashboard sichtbar). Jede Adminmenu-Customlink-Datei wird bei
+  jedem Request ausgeführt, um alle Tabs vorzurendern — dasselbe
+  `preset`-POST ist daher sowohl für `BackupController` als auch
+  `DashboardController` sichtbar, und wer zuerst `RequestGuard::
+  claimBackupTrigger()` gewinnt (eine Frage der Ausführungsreihenfolge, nicht
+  des tatsächlich betrachteten Tabs), behielt das Ergebnis bisher nur lokal.
+  Behoben mit `Service/FlashBus`, einem request-weiten Relay, aus dem jeder
+  Controller liest, wenn er die Aktion nicht selbst verarbeitet hat, gerendert
+  identisch über ein neues gemeinsames `_partials/flash.tpl` oben auf jedem Tab.
+- **Ein echter fataler Smarty-Compile-Fehler** („unknown function 'function'")
+  auf dem Backups-Tab, ausgelöst durch ein dichtes Inline-`onclick` mit
+  rohem JavaScript — Smartys eigene Template-Trennzeichen sind ebenfalls
+  „{"/"}", sodass ein „{" direkt vor einem Wort wie `function` als
+  fehlerhaftes Smarty-Tag geparst wurde. Das Inline-Handler wurde entfernt;
+  jeder verbleibende JS/CSS-Block in den Templates dieses Plugins ist jetzt
+  vorsorglich in `{literal}...{/literal}` eingepackt, nicht nur der eine,
+  der tatsächlich live gebrochen ist.
 
 ## Nächste Schritte
 

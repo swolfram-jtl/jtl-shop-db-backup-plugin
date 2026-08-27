@@ -13,12 +13,14 @@ use Plugin\jtl_dbbackup_tool\Service\BackupHistoryRepository;
 use Plugin\jtl_dbbackup_tool\Service\BackupServiceFactory;
 use Plugin\jtl_dbbackup_tool\Service\ConsistencyChecker;
 use Plugin\jtl_dbbackup_tool\Service\EncryptionService;
+use Plugin\jtl_dbbackup_tool\Service\FlashBus;
 use Plugin\jtl_dbbackup_tool\Service\LockService;
 use Plugin\jtl_dbbackup_tool\Service\ManifestService;
 use Plugin\jtl_dbbackup_tool\Service\PresetLabelResolver;
 use Plugin\jtl_dbbackup_tool\Service\RequestGuard;
 use Plugin\jtl_dbbackup_tool\Service\RestoreService;
 use Plugin\jtl_dbbackup_tool\Service\SettingsRepository;
+use Plugin\jtl_dbbackup_tool\Service\SizeFormatter;
 use Plugin\jtl_dbbackup_tool\Service\StorageReconciliationService;
 use Plugin\jtl_dbbackup_tool\Service\StorageService;
 
@@ -215,14 +217,15 @@ final class HistoryController
                 ];
             }
             $groups[$key]['rows'][] = [
-                'id'         => $row->kID,
-                'dCreated'   => $row->dCreated,
-                'cLabel'     => $row->cLabel,
-                'cComment'   => $row->cComment ?? '',
-                'cStatus'    => $row->cStatus,
-                'nSizeBytes' => $row->nSizeBytes / 1_000_000,
-                'bEncrypted' => (bool) $row->bEncrypted,
-                'bUploaded'  => (bool) $row->bUploaded,
+                'id'             => $row->kID,
+                'dCreated'       => $row->dCreated,
+                'cLabel'         => $row->cLabel,
+                'cComment'       => $row->cComment ?? '',
+                'cStatus'        => $row->cStatus,
+                'nSizeBytes'     => (int) $row->nSizeBytes,
+                'cSizeFormatted' => SizeFormatter::human((int) $row->nSizeBytes),
+                'bEncrypted'     => (bool) $row->bEncrypted,
+                'bUploaded'      => (bool) $row->bUploaded,
             ];
         }
 
@@ -246,6 +249,18 @@ final class HistoryController
         foreach (['date', 'size', 'status'] as $field) {
             $nextDir = ($sortField === $field && $sortDir === 'DESC') ? 'ASC' : 'DESC';
             $sortLinks[$field] = '?' . \http_build_query($baseParams + ['sort' => $field, 'dir' => $nextDir]);
+        }
+
+        // See Service\FlashBus's docblock: picks up a backup-trigger result
+        // from Dashboard/Erstellen when this tab is the one actually active
+        // after the reload, regardless of which controller's file happened
+        // to claim RequestGuard::claimBackupTrigger() first this request.
+        if ($flashMessage === null) {
+            $bus = FlashBus::get();
+            if ($bus !== null) {
+                $flashMessage = $bus['text'];
+                $flashSuccess = $bus['success'];
+            }
         }
 
         $smarty->assign('tplDir', \dirname(__DIR__) . '/adminmenu/templates')
