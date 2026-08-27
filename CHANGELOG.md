@@ -598,5 +598,22 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   through the SAME `SettingsRepository` getters (not a separate raw-store
   read) so the checked state shown on screen can never drift from what the
   rest of the plugin actually does at runtime.
+- **New: the plugin adds itself to JTL's own admin "Favoriten"** (the star
+  button in the admin header, present on every backend page — CONFIRMED via
+  `admin/templates/bootstrap/tpl_inc/header.tpl`/`favs_drop.tpl`), so the
+  Dashboard is one click away from anywhere. `Bootstrap::installed()` adds
+  it automatically for whichever admin performs the install; a new toggle
+  button on the Dashboard (`Service/AdminFavoriteService`, `JTL\Backend\
+  AdminFavorite`'s own `tadminfavs` table) lets any admin add/remove it
+  manually too. An earlier idea — a custom floating icon injected via
+  `HOOK_BACKEND_FUNCTIONS_GRAVATAR`, the only hook firing on nearly every
+  backend page — was investigated and rejected as actively unsafe, not
+  merely unsupported: CONFIRMED against `BackendPlugins::getAvatar()` that
+  hook fires mid-evaluation of `<img src="{getAvatar ...}">`, so anything a
+  plugin echoed there would land inside that `src="..."` attribute value
+  and corrupt the page rather than render as a separate element. The
+  favorite's deep-link (`{adminURL}/plugin/{id}?cPluginTab=Dashboard`) was
+  verified against the real route registration (`Route::PLUGIN . '/{id}'`
+  in `Collection.php`, read by `PluginController::getResponse()`).
 
 <!-- Next bump also needs explicit confirmation. -->

@@ -96,7 +96,11 @@ sorting (date/size/status), real server-side pagination, free-text comments
 (settable at creation, inline-editable any time), single and bulk delete
 (local file + manifest + history row — gated by a confirmation dialog/
 checkbox and blocked while a backup or restore is running), and the restore
-preview/confirm flow in a modal.
+preview/confirm flow in a modal. The plugin also adds itself to JTL's own
+admin "Favoriten" (the star button in the header, present on every backend
+page) automatically at install — see "Confirmed against a real running
+install" below for why that's the supported path and a custom floating
+icon isn't.
 
 ## Known gaps — verify before relying on this in production
 
@@ -306,6 +310,23 @@ documented in detail in `CHANGELOG.md`):
   tag. Removed the inline handler; every remaining JS/CSS block across this
   plugin's templates is now wrapped in `{literal}...{/literal}` defensively,
   not just the one that actually broke.
+- **A custom floating "quick access" icon, investigated on request, turned
+  out to be actively unsafe rather than merely unsupported.** The only hook
+  firing on nearly every backend page is `HOOK_BACKEND_FUNCTIONS_GRAVATAR`
+  — but CONFIRMED against `includes/src/Smarty/BackendPlugins.php`'s
+  `getAvatar()`, it fires mid-evaluation of `<img src="{getAvatar
+  account=$account}">` in `header.tpl`. Anything a plugin's hook listener
+  echoed there would land inside that `src="..."` attribute value and
+  corrupt the page, not render as a separate element — every other
+  `HOOK_BACKEND_*` constant is narrow/feature-specific, and the generic
+  Smarty output-filter hooks that DO support content injection are
+  explicitly disabled for the backend context (`BackendSmarty` always
+  constructs with `ContextType::BACKEND`, and `JTLSmarty`'s output-filter/
+  `{include}`/fetch-template hooks all guard on `ContextType::FRONTEND`).
+  Used the shop's own **"Favoriten"** admin feature instead (see "What's
+  implemented" above) — genuinely supported, no hook needed at all, since a
+  plugin can just insert into `tadminfavs` directly via the existing
+  `JTL\Backend\AdminFavorite` class.
 
 ## Next steps
 

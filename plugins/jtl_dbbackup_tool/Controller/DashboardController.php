@@ -7,6 +7,7 @@ namespace Plugin\jtl_dbbackup_tool\Controller;
 use JTL\DB\DbInterface;
 use JTL\Plugin\PluginInterface;
 use JTL\Smarty\JTLSmarty;
+use Plugin\jtl_dbbackup_tool\Service\AdminFavoriteService;
 use Plugin\jtl_dbbackup_tool\Service\AuditLogger;
 use Plugin\jtl_dbbackup_tool\Service\BackupHistoryRepository;
 use Plugin\jtl_dbbackup_tool\Service\BackupTrigger;
@@ -46,6 +47,8 @@ final class DashboardController
         $settings = new SettingsRepository($db);
         $manifestService = new ManifestService($db);
         $instanceId = \substr($manifestService->instanceId(), 0, 32);
+        $adminAccountId = (int) ($_SESSION['AdminAccount']->kAdminlogin ?? 0);
+        $favorites = new AdminFavoriteService($db);
 
         if (($_GET['action'] ?? null) === 'download' && isset($_GET['id'])) {
             $this->handleDownload((int) $_GET['id'], $history, $storage, $instanceId);
@@ -59,12 +62,27 @@ final class DashboardController
         // tab has already caught up (each Adminmenu tab file queries the DB
         // independently within the same request).
         (new StorageReconciliationService($storage, $manifestService, $history, new AuditLogger($db)))
-            ->reconcile($instanceId, (int) ($_SESSION['AdminAccount']->kAdminlogin ?? 0));
+            ->reconcile($instanceId, $adminAccountId);
 
         $flashMessage = null;
         $flashSuccess = true;
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['force_unlock']) && RequestGuard::claimBackupTrigger()) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_favorite'])) {
+            // Manual counterpart to Bootstrap::installed()'s auto-add — see
+            // Service\AdminFavoriteService's own docblock. Covers any admin
+            // other than whoever happened to install the plugin, and lets
+            // the favorite be removed again or re-added if install-time
+            // adding silently didn't happen for some reason.
+            if ($favorites->isFavorited($adminAccountId, $plugin)) {
+                $favorites->remove($adminAccountId, $plugin);
+                $flashMessage = \d__('jtl_dbbackup_tool', 'Aus Favoriten entfernt.');
+            } else {
+                $favorites->add($adminAccountId, $plugin);
+                $flashMessage = \d__('jtl_dbbackup_tool', 'Zu Favoriten hinzugefügt — ab jetzt über den Stern („Favoriten") oben im Admin-Header von jeder Seite aus erreichbar.');
+            }
+            $flashSuccess = true;
+            FlashBus::set($flashSuccess, $flashMessage);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['force_unlock']) && RequestGuard::claimBackupTrigger()) {
             // Spec-adjacent safety valve, admin-confirmed only — see
             // LockService::forceRelease() docblock for why this must never
             // be automatic.
@@ -73,8 +91,6 @@ final class DashboardController
             $flashSuccess = true;
             FlashBus::set($flashSuccess, $flashMessage);
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['preset']) && RequestGuard::claimBackupTrigger()) {
-            $adminAccountId = (int) ($_SESSION['AdminAccount']->kAdminlogin ?? 0);
-
             // Same per-run options the Erstellen tab's modal collects — the
             // Dashboard's "Sofort-Backup" buttons now open the identical
             // modal (see _partials/backup-options-modal.tpl), so this needs
@@ -166,6 +182,7 @@ final class DashboardController
             ->assign('lockedSince', $lock->lockedSince()?->format('Y-m-d H:i:s'))
             ->assign('storageLocalPath', $storage->baseDirectory())
             ->assign('ftpSummary', $settings->ftpSummary())
+            ->assign('isFavorited', $favorites->isFavorited($adminAccountId, $plugin))
             ->assign('flashMessage', $flashMessage)
             ->assign('flashSuccess', $flashSuccess);
 

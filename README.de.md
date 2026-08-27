@@ -100,7 +100,11 @@ Freitext-Kommentare (bei Anlage setzbar, jederzeit inline editierbar),
 Einzel- und Mehrfach-Löschen (lokale Datei + Manifest + Historie-Zeile —
 abgesichert durch Bestätigungsdialog/-Checkbox und gesperrt, während ein
 Backup oder Restore läuft), sowie den Restore-Vorschau/Bestätigen-Ablauf in
-einem Modal.
+einem Modal. Das Plugin trägt sich außerdem automatisch bei der
+Installation in JTL-Shops eigene admin-„Favoriten" ein (der Stern-Button im
+Header, auf jeder Backend-Seite vorhanden) — siehe „Gegen eine echte
+laufende Installation bestätigt" weiter unten, warum das der unterstützte
+Weg ist und ein eigenes schwebendes Icon es nicht wäre.
 
 ## Bekannte Lücken — vor Produktiveinsatz prüfen
 
@@ -324,6 +328,24 @@ Ursache und Fix klären ließen (Details jeweils in `CHANGELOG.md`):
   jeder verbleibende JS/CSS-Block in den Templates dieses Plugins ist jetzt
   vorsorglich in `{literal}...{/literal}` eingepackt, nicht nur der eine,
   der tatsächlich live gebrochen ist.
+- **Ein eigenes schwebendes „Schnellzugriff"-Icon, auf Nachfrage geprüft,
+  stellte sich als tatsächlich unsicher heraus, nicht nur als inoffiziell.**
+  Der einzige Hook, der auf praktisch jeder Backend-Seite feuert, ist
+  `HOOK_BACKEND_FUNCTIONS_GRAVATAR` — aber BESTÄTIGT gegen
+  `includes/src/Smarty/BackendPlugins.php`s `getAvatar()`: er feuert mitten
+  in der Auswertung von `<img src="{getAvatar account=$account}">` in
+  `header.tpl`. Alles, was ein Plugin-Hook dort ausgibt, würde innerhalb
+  dieses `src="..."`-Attributwerts landen und die Seite zerstören, statt als
+  eigenes Element zu erscheinen — jede andere `HOOK_BACKEND_*`-Konstante ist
+  eng/funktionsspezifisch, und die generischen Smarty-Output-Filter-Hooks,
+  die Content-Injection eigentlich unterstützen, sind im Backend-Kontext
+  explizit deaktiviert (`BackendSmarty` konstruiert immer mit
+  `ContextType::BACKEND`, und `JTLSmarty`s Output-Filter-/`{include}`-/
+  Fetch-Template-Hooks prüfen alle auf `ContextType::FRONTEND`). Stattdessen
+  das shop-eigene **„Favoriten"**-Feature genutzt (siehe „Was implementiert
+  ist" oben) — echt unterstützt, gar kein Hook nötig, da ein Plugin einfach
+  direkt über die bestehende Klasse `JTL\Backend\AdminFavorite` in
+  `tadminfavs` schreiben kann.
 
 ## Nächste Schritte
 

@@ -756,3 +756,21 @@ msgstr "After a partial restore (e.g. customers only), checks other tables for p
 msgid "Blockiert Restore hart, wenn sich die Tabellenstruktur seit dem Backup geändert hat (z. B. durch ein Shop-Update), statt nur zu warnen. Standard: an — ein Restore lässt sich dann nur mit ausdrücklicher Bestätigung erzwingen."
 msgstr "Hard-blocks restore if the table structure has changed since the backup (e.g. via a shop update), instead of only warning. Default: on — a restore can then only be forced with explicit confirmation."
 
+msgid "Aus Favoriten entfernt."
+msgstr "Removed from favorites."
+
+msgid "Zu Favoriten hinzugefügt — ab jetzt über den Stern („Favoriten\") oben im Admin-Header von jeder Seite aus erreichbar."
+msgstr "Added to favorites — from now on reachable from any page via the star (\"Favorites\") in the admin header."
+
+msgid "Aus Favoriten entfernen"
+msgstr "Remove from favorites"
+
+msgid "Zu Favoriten hinzufügen — von jeder Admin-Seite aus über den Stern „Favoriten“ oben erreichbar"
+msgstr "Add to favorites — reachable from any admin page via the \"Favorites\" star above"
+
+msgid "In Favoriten"
+msgstr "In favorites"
+
+msgid "Zu Favoriten hinzufügen"
+msgstr "Add to favorites"
+

@@ -12,6 +12,8 @@
      $isLocked (bool), $lockedSince (string|null, "Y-m-d H:i:s"),
      $storageLocalPath (string, absolute filesystem path),
      $ftpSummary (array{protocol,host,remoteDir}|null),
+     $isFavorited (bool, whether this admin already has the plugin's
+       Dashboard tab in JTL's own "Favoriten" — see Service\AdminFavoriteService),
      $flashMessage (string|null), $flashSuccess (bool)
    Forms submit with action="" — every Adminmenu tab file gets executed on
    each request to pre-render all tabs, so a relative action keeps the
@@ -54,19 +56,37 @@
 </div>
 {/if}
 
-<div class="d-flex align-items-center justify-content-between mb-3">
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap" style="gap:.5rem;">
     <div class="dbbackup-eyebrow text-muted">{d__('jtl_dbbackup_tool', 'Übersicht')}</div>
-    {if $lastRunFailed}
-    <details>
-        <summary class="dbbackup-bell-toggle text-danger">
-            <i class="fal fa-bell dbbackup-bell-ring"></i>
-            <span class="small font-weight-bold">{d__('jtl_dbbackup_tool', 'Letzter Lauf fehlgeschlagen')}</span>
-        </summary>
-        <div class="alert alert-danger shadow-sm mt-2 mb-0" style="max-width: 32rem;">
-            {$lastRunError|escape}
-        </div>
-    </details>
-    {/if}
+    <div class="d-flex align-items-center" style="gap:1rem;">
+        {* Spec: ein Backup-Tool soll von jeder Admin-Seite aus einen Klick
+           entfernt sein — verwendet das native JTL-„Favoriten"-Menü im
+           Header (siehe Service\AdminFavoriteService), statt eines eigenen
+           schwebenden Icons (das sich als unsicher herausgestellt hat, da
+           der einzige seitenweite Hook mitten in einem <img src="...">-
+           Attribut feuert). Bootstrap::installed() setzt diesen Favoriten
+           bereits automatisch bei der Installation — dieser Button deckt
+           weitere Admin-Konten und ein versehentliches Entfernen ab. *}
+        <form method="post" action="" class="d-inline">
+            <input type="hidden" name="cPluginTab" value="Dashboard">
+            <input type="hidden" name="toggle_favorite" value="1">
+            <button type="submit" class="btn btn-sm {if $isFavorited}btn-warning{else}btn-outline-secondary{/if}"
+                    title="{if $isFavorited}{d__('jtl_dbbackup_tool', 'Aus Favoriten entfernen')}{else}{d__('jtl_dbbackup_tool', 'Zu Favoriten hinzufügen — von jeder Admin-Seite aus über den Stern „Favoriten“ oben erreichbar')}{/if}">
+                <i class="fa{if $isFavorited}s{else}l{/if} fa-star mr-1"></i>{if $isFavorited}{d__('jtl_dbbackup_tool', 'In Favoriten')}{else}{d__('jtl_dbbackup_tool', 'Zu Favoriten hinzufügen')}{/if}
+            </button>
+        </form>
+        {if $lastRunFailed}
+        <details>
+            <summary class="dbbackup-bell-toggle text-danger">
+                <i class="fal fa-bell dbbackup-bell-ring"></i>
+                <span class="small font-weight-bold">{d__('jtl_dbbackup_tool', 'Letzter Lauf fehlgeschlagen')}</span>
+            </summary>
+            <div class="alert alert-danger shadow-sm mt-2 mb-0" style="max-width: 32rem;">
+                {$lastRunError|escape}
+            </div>
+        </details>
+        {/if}
+    </div>
 </div>
 
 <div class="dbbackup-widgets-wrap mb-4">

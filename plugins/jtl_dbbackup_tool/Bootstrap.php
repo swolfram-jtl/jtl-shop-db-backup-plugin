@@ -102,7 +102,30 @@ class Bootstrap extends Bootstrapper
         // (includes/src/Plugin/Admin/Installation/MigrationManager.php) is
         // invoked from Installer.php as part of the install flow itself,
         // before this hook fires. Default setting values come from each
-        // <Setting initialValue="..."> in info.xml. Nothing left to do here.
+        // <Setting initialValue="..."> in info.xml. Nothing left to do here
+        // for settings.
+        //
+        // Spec: a DB backup tool should be reachable in one click from
+        // anywhere in the admin, since it's safety-critical — see
+        // Service\AdminFavoriteService's own docblock for the full
+        // mechanics (the shop's native "Favoriten" star button, present on
+        // every backend page) and why a custom floating icon was ruled out
+        // as unsafe instead. install() runs inside the installing admin's
+        // own authenticated request (Installer.php is triggered by that
+        // admin's own action), so $_SESSION['AdminAccount'] is populated
+        // here exactly like in every Controller\*Controller. Best-effort
+        // only: if this silently does nothing for any reason (e.g. a
+        // scripted/CLI install with no real admin session), the Dashboard's
+        // own manual "Zu Favoriten hinzufügen" toggle
+        // (Controller\DashboardController) covers the same ground for any
+        // admin, any time.
+        try {
+            $adminAccountId = (int) ($_SESSION['AdminAccount']->kAdminlogin ?? 0);
+            (new \Plugin\jtl_dbbackup_tool\Service\AdminFavoriteService(\JTL\Shop::Container()->getDB()))
+                ->add($adminAccountId, $this->getPlugin());
+        } catch (\Throwable) {
+            // Never fail installation over this.
+        }
     }
 
     /**
