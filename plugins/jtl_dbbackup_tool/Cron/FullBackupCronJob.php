@@ -26,6 +26,10 @@ use Plugin\jtl_dbbackup_tool\Service\BackupTrigger;
  * mirrors how core itself maps one job TYPE to one dedicated CLASS (see
  * JTL\Mapper\JobTypeToJob::map()) — the two classes' bodies are similar but
  * small, and a shared abstraction isn't worth it for two call sites.
+ *
+ * See BackupCronJob's own docblock for a real bug fixed here too:
+ * Helper::getLoaderByPluginID() takes the NUMERIC kPlugin, not this class's
+ * string PLUGIN_ID — Helper::getPluginById(string) is the correct method.
  */
 final class FullBackupCronJob extends Job implements JobInterface
 {
@@ -34,7 +38,7 @@ final class FullBackupCronJob extends Job implements JobInterface
     public function start(QueueEntry $queueEntry): JobInterface
     {
         try {
-            $plugin = Helper::getLoaderByPluginID(self::PLUGIN_ID)?->init(self::PLUGIN_ID);
+            $plugin = Helper::getPluginById(self::PLUGIN_ID);
             if ($plugin === null) {
                 throw new \RuntimeException(
                     \d__('jtl_dbbackup_tool', 'Plugin-Instanz konnte im Cron-Kontext nicht geladen werden.'),

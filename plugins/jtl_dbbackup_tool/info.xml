@@ -25,9 +25,12 @@
     checked against actual release/5.8.0 source, not real 5.7.x — see
     README "Known gaps" if installing on a genuine (non-5.8) 5.7 shop.
 
-  STILL OPEN:
-  - ValueName below just mirrors Name (snake_case) — the real PHP-side
-    naming convention JTL-Shop expects is not yet confirmed.
+  This file no longer declares any <Setting>/<Settingslink> at all — the
+  <ValueName> naming notes above described that schema while it still
+  existed here; kept for historical/reference accuracy about the format
+  itself, not because this file still uses it. See the "Einstellungen"
+  <Customlink> below (and Controller\SettingsPageController's own docblock)
+  for where settings actually live now.
 -->
 <jtlshopplugin>
     <XMLVersion>102</XMLVersion>

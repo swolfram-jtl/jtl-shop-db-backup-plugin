@@ -104,44 +104,35 @@ einem Modal.
 
 ## Bekannte Lücken — vor Produktiveinsatz prüfen
 
-Nichts hiervon konnte in der Umgebung, in der es entstand, tatsächlich
-ausgeführt werden (keine PHP-Laufzeit, kein Shop) — das ist eine sorgfältige
-Best-Effort-Implementierung gegen verifizierte Core-APIs, wo immer möglich,
-aber noch kein einziges Mal gelaufen. Vor echtem Vertrauen mit echten Daten:
-
-**Wahrscheinlich bei der ersten Installation zu korrigieren:**
-- `Service/BackupService.php` und `RestoreService.php`s `buildDsn()` gehen
-  von `DB_HOST`/`DB_NAME`/`DB_USER`/`DB_PASS`-Konstanten aus (klassische
-  JTL-Shop-Konvention), um mysqldump-phps eigene, separate DB-Verbindung zu
-  öffnen — nicht gegen `config.JTL-Shop.ini.php` dieser Shop-Version
-  verifiziert.
-- `Cron/BackupCronJob.php` geht davon aus, dass
-  `JTL\Plugin\Helper::getLoaderByPluginID()` der Weg ist, wie ein Plugin
-  seine eigene Instanz aus einem Cron-Kontext lädt (anders als bei
-  Customlink-Dateien gibt es dort kein automatisch bereitgestelltes
-  `$oPlugin`) — unverifiziert. Falls das nicht stimmt, ist NUR das
-  wiederkehrende geplante Backup betroffen; der manuelle „Backup
-  jetzt"-Ablauf hängt nicht davon ab.
-- Die ID des aktuell eingeloggten Admins wird als
-  `$_SESSION['AdminAccount']->kAdminlogin` gelesen (fürs Audit-Log) —
-  Eigenschaftsname unverifiziert.
-- `ftp_protocol`s `<Setting type="selectbox">` braucht irgendeine
-  Options-Liste (eine `<Option>`/`<Value>`-Kindstruktur wurde nicht
-  bestätigt) — aktuell ist nur `initialValue="ftps"` gesetzt.
+Das meiste, was hier ursprünglich als „unverifiziert, keine PHP-Laufzeit zum
+Testen verfügbar" markiert war, wurde inzwischen gegen den echten
+Shop-Core-Quellcode (eine lokale Kopie von release/5.8.0) oder gegen eine
+echte laufende Installation geprüft — siehe „Gegen den Shop-Core verifiziert"
+und „Bestätigt gegen eine echte laufende Installation" weiter unten, unter
+anderem zwei bis dahin unentdeckte Bugs (der Cronjob-Typ hat sich nie
+registriert, und der wiederkehrende Job ist bei jedem Lauf still an einem
+`TypeError` gescheitert) — beide jetzt behoben. Was hier noch offen bleibt:
 
 **Bewusste Scope-Entscheidungen, keine Bugs:**
 - Klicks auf „Backup jetzt" laufen **synchron** im Admin-Request, nicht über
   die Cron-Queue, obwohl der Spec Letzteres vorsah („Lange Backups laufen
-  immer async") — die genaue `CronController::addQueueEntry()`-API zum
-  Einreihen eines parametrisierten Einmal-Jobs wurde nicht rechtzeitig
-  verifiziert. In der Praxis unproblematisch für jedes Preset (kleine
-  Tabellen); „Komplett" bei einer sehr großen Datenbank könnte ein
-  PHP-Request-Timeout auslösen. Der wiederkehrende Cron-Job
-  (`BackupCronJob`) ist davon nicht betroffen.
+  immer async"). GEPRÜFT (nicht nur angenommen) gegen die echte
+  `CronController::addQueueEntry(array $post): int`: sie unterstützt nur
+  dieselbe wiederkehrende Zeitplan-Form (`frequency`/`startDate`/
+  `startTime`, eine `tcron`-Zeile, die ab dann in ihrem eigenen Rhythmus
+  läuft), die `Cron/BackupCronJob.php` bereits nutzt — es gibt in diesem
+  Controller keine eigene „einmal einreihen, gleich im Hintergrund
+  ausführen"-Funktion. Ein echter Einmal-Trigger bräuchte einen anderen
+  Mechanismus (einen anderen Teil des `Cron\Queue`-Ausführungsmodells, nicht
+  weiter untersucht) — nicht einfach einen anderen Aufruf derselben Methode.
+  In der Praxis unproblematisch für jedes Preset (kleine Tabellen);
+  „Komplett" bei einer sehr großen Datenbank könnte ein PHP-Request-Timeout
+  auslösen. Der wiederkehrende Cron-Job ist davon so oder so nicht betroffen
+  und hat inzwischen einen eigenen, unabhängigen Zeitplan nur für „Komplett"
+  (`Cron/FullBackupCronJob`).
 - Nur das Audit-Log (nicht der Backups-Tab, der jetzt echte Pagination hat)
-  ist noch eine einfache, unpaginierte Tabelle statt der Core-Komponente
-  `pagination.tpl`/`$oBlaetterNavi` — dafür gibt es bislang gar keine eigene
-  Admin-Oberfläche.
+  ist noch eine einfache, unpaginierte Tabelle statt einer Core-Pagination-
+  Komponente — dafür gibt es bislang gar keine eigene Admin-Oberfläche.
 - Das Löschen eines Backups entfernt IMMER nur die **lokale** Kopie (Datei +
   Manifest + Historie-Zeile) — eine bewusste Entscheidung, kein Versehen:
   FTP/SFTP ist als unabhängige Offsite-Sicherheitskopie gedacht, ein
@@ -150,11 +141,11 @@ aber noch kein einziges Mal gelaufen. Vor echtem Vertrauen mit echten Daten:
   eine neue `delete()`-Methode auf `UploadTargetInterface`, nicht
   implementiert).
 - Die Shop-Instanz-Kennung (`ManifestService::instanceId()`) wird aus
-  `Shop::getURL()` abgeleitet, mit `method_exists()` abgesichert — fällt auf
-  einen statischen `'unknown-instance'`-String zurück (nicht pro Installation
-  gespeichert), falls diese Methode nicht existiert, was den
-  Multi-Shop-Kollisionsschutz und die Cross-Instanz-Restore-Sperre
-  abschwächen (nicht brechen) würde.
+  `Shop::getURL()` abgeleitet, mit `method_exists()` abgesichert — BESTÄTIGT,
+  dass diese Methode in release/5.8.0 immer existiert
+  (`includes/src/Shop.php`), die Absicherung ist also günstige Vorsorge für
+  die deklarierte `MinShopVersion`-Kompatibilität mit 5.7.x (nicht
+  unabhängig geprüft), kein echtes Risiko auf 5.8.
 
 **Gar nicht umgesetzt:**
 - Keine automatisierten Tests (der Spec sieht eine echte
@@ -172,15 +163,31 @@ exakten Lebenszyklus-Signaturen von `Bootstrapper`, wo `<Customlink>`-Dateien
 physisch liegen müssen und was beim Ausführen im Scope ist, die echte
 `JTL\DB\DbInterface`-CRUD-/Transaktions-API, wie Plugin-Migrationen
 automatisch über `MigrationManager` laufen (kein manuelles Verdrahten aus
-`Bootstrap.php` nötig), `JTLSmarty::assign()`/`fetch()`, und
-`JTL\Plugin\Data\Config::getValue()` vs. `getDecryptedValue()` für
-verschlüsselte Einstellungen. Details stehen in den Docblocks im Code direkt
-bei der jeweiligen Entscheidung.
+`Bootstrap.php` nötig), `JTLSmarty::assign()`/`fetch()`.
+- `DB_HOST`/`DB_NAME`/`DB_USER`/`DB_PASS` (genutzt von `BackupService`/
+  `RestoreService`s `buildDsn()`, um mysqldump-phps eigene, separate
+  DB-Verbindung zu öffnen) — BESTÄTIGT gegen
+  `includes/src/Installation/VueInstaller.php`, das bei einer frischen
+  Installation genau diese vier Konstantennamen in die
+  `config.JTL-Shop.ini.php` schreibt.
+- `$_SESSION['AdminAccount']->kAdminlogin` (ID des aktuell eingeloggten
+  Admins, fürs Audit-Log) — BESTÄTIGT gegen
+  `includes/src/Router/Controller/Backend/AdminAccountController.php`,
+  das genau diese Eigenschaft liest/schreibt.
+- `JTL\Plugin\Data\Config::getValue()` vs. `getDecryptedValue()` für
+  verschlüsselte Einstellungen, und die `base64(XTEA(...))`-Speicherform
+  dahinter — relevante Historie, auch wenn dieses Plugin `Config` inzwischen
+  gar nicht mehr nutzt (siehe die Einstellungen-Speicher-Umstellung weiter
+  unten), da `SettingsRepository` genau diese Form jetzt gegen seine eigene
+  Tabelle repliziert.
+
+Details stehen in den Docblocks im Code direkt bei der jeweiligen
+Entscheidung.
 
 ## Gegen eine echte laufende Installation + den Shop-Core-Quellcode bestätigt
 
-Nach der Installation auf einem echten 5.8.0-rc3-Shop tauchten drei subtile
-Bugs auf, die sich alle mit einer eindeutigen, quellcode-bestätigten
+Nach der Installation auf einem echten 5.8.0-rc3-Shop tauchten mehrere
+subtile Bugs auf, die sich alle mit einer eindeutigen, quellcode-bestätigten
 Ursache und Fix klären ließen (Details jeweils in `CHANGELOG.md`):
 
 - **Tab springt nach jedem POST von einem anderen Tab zurück auf Dashboard.**
@@ -250,15 +257,37 @@ Ursache und Fix klären ließen (Details jeweils in `CHANGELOG.md`):
   als Hover-Tooltip gerendert, und `PluginController::renderMenu()` bietet
   Plugins keinen Hook, um eigenes JS/HTML in dieses automatisch generierte
   Formular einzuschleusen. Ersetzt durch einen komplett eigenen
-  Customlink-Tab (`SettingsPageController`), der auf denselben nativen
-  Speicher-Endpunkt postet (`PluginController::actionConfig()`, über
-  dieselben `action=""` + `Setting=1`/`kPluginAdminMenu`/`jtl_token`-Felder,
-  die das native Formular selbst sendet) — Speicherung, Verschlüsselung und
-  die Checkbox-Konvention sind weiterhin zu 100 % der unveränderte native
-  Mechanismus. Das native Settingslink lässt sich nicht komplett entfernen
-  (`SettingsLinks::install()` legt dafür immer einen Menüeintrag an, keine
-  „headless"-Option), daher als „Erweiterte Einstellungen (Rohformular)"
-  degradiert, ans Ende sortiert, als Fallback.
+  Customlink-Tab (`SettingsPageController`). Zwei Stufen: zuerst über
+  denselben nativen Speicher-Endpunkt (`PluginController::actionConfig()`),
+  bei laufendem „Erweiterte Einstellungen (Rohformular)"-Fallback-Tab, rein
+  um dessen `<Setting>`-Schema registriert zu halten (`SettingsLinks::
+  install()` legt für ein `<Settingslink>` immer einen sichtbaren
+  Menüeintrag an, bestätigt keine „headless"/Schema-only-Option) — dann,
+  sobald dieser Fallback-Tab selbst nicht mehr gewünscht war, die
+  Einstellungen komplett in eine eigene Plugin-Tabelle verschoben
+  (`Service/SettingsStore`, `Migration20260827140000`, die bereits
+  gespeicherte native Werte einmalig mit übernimmt, damit ein Update nichts
+  verliert) und das `<Settingslink>` ganz aus `info.xml` entfernt.
+  Verschlüsselte Felder behalten exakt dieselbe Speicherform —
+  `base64(XTEA(Klartext))` über den shop-eigenen `CryptoServiceInterface`
+  — sodass keine neue Schlüsselverwaltung nötig wurde.
+- **Der wiederkehrende Cronjob hat bei jedem Lauf still nichts getan** —
+  unabhängig vom (und zusätzlich zum) Registrierungs-Bug unten:
+  `Cron/BackupCronJob.php` rief `Helper::getLoaderByPluginID(self::PLUGIN_ID)`
+  mit der STRING-ID des Plugins auf, aber die echte Signatur dieser Methode
+  ist `getLoaderByPluginID(int $id, ...)` — die NUMERISCHE `kPlugin`. Wegen
+  `declare(strict_types=1)` in dieser Datei wirft das Übergeben eines Strings
+  dort sofort einen `TypeError`, der vom eigenen pauschalen
+  `catch (\Throwable)` des Jobs still verschluckt wird (der genau dafür da
+  ist, dass ein Plugin-Fehler nie den kompletten Cron-Lauf des Shops zum
+  Absturz bringt) — selbst mit korrekt registriertem Job-Typ hätte also jeder
+  geplante Lauf sofort geworfen und nichts getan, nicht unterscheidbar von
+  „gelaufen, nichts zu sichern konfiguriert". BESTÄTIGT gegen
+  `includes/src/Plugin/Helper.php`: `getPluginById(string $pluginID):
+  ?PluginInterface` ist die richtige Methode für genau diesen Fall — nimmt
+  die String-ID entgegen, löst die numerische selbst über eine gecachte
+  Abfrage auf und gibt ein bereits geladenes Plugin direkt zurück. Behoben
+  in `Cron/BackupCronJob.php` und im neuen `Cron/FullBackupCronJob.php`.
 - **Der Cronjob-Typ hat sich nie tatsächlich registriert**, sichtbar als
   `Undefined array key "jobType"` in `Bootstrap.php` auf der Cron-Verwaltung
   des Shops. `Bootstrap::boot()`s beide `Dispatcher`-Listener gingen von
@@ -298,10 +327,16 @@ Ursache und Fix klären ließen (Details jeweils in `CHANGELOG.md`):
 
 ## Nächste Schritte
 
-1. Auf eine echte JTL-Shop-5.8-Testinstanz bringen und beheben, was der
-   Abschnitt „Bekannte Lücken" oben vorhersagt.
-2. Die „Bewusste Scope-Entscheidungen"-Liste durchgehen — die meisten sind
-   für ein v1 in Ordnung, aber der Async-Cron-Queue-Punkt lohnt sich zu
-   überdenken, falls „Komplett"-Backups spürbar langsam werden.
-3. Erst danach: echtes Backup/Restore-Roundtrip-Testing, wie es der Spec als
-   QA-Anforderung vorsieht.
+1. Die beiden Cron-Fixes oben auf der echten Installation Ende-zu-Ende
+   bestätigen: der Job-Typ erscheint jetzt im „Typ"-Dropdown von Cron →
+   Anlegen, und ein echter geplanter Lauf erzeugt auch wirklich ein Backup
+   (nicht nur „kein Fehler") — gerade der `TypeError`-Bug könnte plausibel
+   eine ganze Weile still fehlgeschlagen sein, bevor er hier auffiel.
+2. Die restliche „Bewusste Scope-Entscheidungen"-Liste durchgehen — die
+   meisten sind so in Ordnung, aber der Async-Cron-Queue-Punkt lohnt sich zu
+   überdenken, falls „Komplett"-Backups spürbar langsam werden; siehe diesen
+   Punkt für das, was dazu tatsächlich geprüft wurde und warum es kein
+   einfacher Umbau ist.
+3. Echtes Backup/Restore-Roundtrip-Testing, wie es der Spec als
+   QA-Anforderung vorsieht (weiterhin der einzige Punkt ganz ohne
+   automatisierte Abdeckung — siehe „Gar nicht umgesetzt").

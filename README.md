@@ -100,40 +100,34 @@ preview/confirm flow in a modal.
 
 ## Known gaps — verify before relying on this in production
 
-Nothing here was executable in the environment this was built in (no PHP
-runtime, no shop instance) — this is a careful best-effort implementation
-against verified core APIs where possible, but it has not run once. Before
-trusting it with real data:
-
-**Likely to need a fix on first install:**
-- `Service/BackupService.php` and `RestoreService.php`'s `buildDsn()`
-  assume `DB_HOST`/`DB_NAME`/`DB_USER`/`DB_PASS` constants exist (classic
-  JTL-Shop convention) to open mysqldump-php's own separate DB connection —
-  not confirmed against `config.JTL-Shop.ini.php` in this shop version.
-- `Cron/BackupCronJob.php` assumes `JTL\Plugin\Helper::getLoaderByPluginID()`
-  is how a plugin loads its own instance from a cron context (no `$oPlugin`
-  is handed to it the way Customlink files get one) — unverified. If this
-  is wrong, only the *recurring scheduled* backup is affected; the manual
-  "Backup jetzt" flow doesn't depend on it at all.
-- The currently-logged-in admin's ID is read as
-  `$_SESSION['AdminAccount']->kAdminlogin` (used for the audit log) —
-  unverified property name.
-- `ftp_protocol`'s `<Setting type="selectbox">` needs its option list
-  defined somehow (an `<Option>`/`<Value>` child structure wasn't
-  confirmed) — currently only the `initialValue="ftps"` default is set.
+Most of what was originally flagged here as "unverified, no PHP runtime
+available at the time" has since been checked against the real shop core
+source (a local copy of the release/5.8.0 codebase) or against a real
+running install — see "Verified against the shop core" and "Confirmed
+against a real running install" below for what that turned up, including
+two previously-undiscovered bugs (the cron job type never registering, and
+the recurring job silently `TypeError`-ing every single run) that are now
+fixed. What's left here is genuinely still open:
 
 **Deliberate scope decisions, not bugs:**
 - Manual "Backup jetzt" clicks run **synchronously** in the admin request,
   not via the cron queue, despite the spec calling for the latter
-  ("Lange Backups laufen immer async") — the exact
-  `CronController::addQueueEntry()` API for enqueuing a one-off parameterized
-  job wasn't verified in time. Fine in practice for every preset (small
-  tables); "Komplett" on a very large database could hit a PHP request
-  timeout. The recurring cron job (`BackupCronJob`) is unaffected.
+  ("Lange Backups laufen immer async"). CHECKED (not just assumed) against
+  the real `CronController::addQueueEntry(array $post): int`: it only
+  supports the SAME recurring-schedule shape (`frequency`/`startDate`/
+  `startTime`, one `tcron` row that runs on its own cadence going forward)
+  that `Cron/BackupCronJob.php` already uses — there's no separate "enqueue
+  this once, run it in the background shortly" primitive in that
+  controller. A real one-off async trigger would need a different
+  mechanism (a different part of the `Cron\Queue` execution model, not
+  investigated further) — not simply a matter of calling this method
+  differently. Fine in practice for every preset (small tables); "Komplett"
+  on a very large database could hit a PHP request timeout. The recurring
+  cron job is unaffected either way, and now has its own independent
+  "Komplett"-only schedule option (`Cron/FullBackupCronJob`).
 - The audit log's own list (not the Backups tab, which now has real
-  pagination) is still a plain, un-paginated table rather than reusing
-  core's `pagination.tpl`/`$oBlaetterNavi` component — it has no admin UI of
-  its own yet at all.
+  pagination) is still a plain, un-paginated table rather than reusing a
+  core pagination component — it has no admin UI of its own yet at all.
 - Deleting a backup only ever removes the **local** copy (file + manifest +
   history row) — a deliberate choice, not an oversight: FTP/SFTP is meant as
   an independent offsite safety copy, so a single delete click must never be
@@ -141,10 +135,11 @@ trusting it with real data:
   remote copy at all (would need a new `delete()` method on
   `UploadTargetInterface`, not implemented).
 - The shop-instance identifier (`ManifestService::instanceId()`) is derived
-  from `Shop::getURL()`, guarded with `method_exists()` — falls back to a
-  static `'unknown-instance'` string (not persisted per-install) if that
-  method doesn't exist, which would weaken (not break) the multi-shop
-  collision check and the cross-instance-restore block.
+  from `Shop::getURL()`, guarded with `method_exists()` — CONFIRMED that
+  method exists unconditionally in release/5.8.0 (`includes/src/Shop.php`),
+  so the guard is low-cost insurance for the 5.7.x compatibility floor this
+  plugin declares (`MinShopVersion`) but hasn't independently verified,
+  rather than a real risk on 5.8.
 
 **Not done at all:**
 - No automated tests (spec calls for a real backup/restore roundtrip test
@@ -154,21 +149,38 @@ trusting it with real data:
 
 ## Verified against the shop core (release/5.8.0)
 
-Several rounds of research against the public core repo corrected wrong
-first guesses along the way — `info.xml`'s real schema (`<XMLVersion>`,
-`<Setting>` attributes, `type="encrypted"` actually working despite the docs
-omitting it, `<MinShopVersion>` format), `Bootstrapper`'s exact lifecycle
-signatures, where `<Customlink>` files must physically live and what's in
-scope when they run, the real `JTL\DB\DbInterface` CRUD/transaction API, how
-plugin migrations run automatically via `MigrationManager` (no manual
-wiring needed from `Bootstrap.php`), `JTLSmarty::assign()`/`fetch()`, and
-`JTL\Plugin\Data\Config::getValue()` vs. `getDecryptedValue()` for encrypted
-settings. Full details are in the code's own docblocks next to each
-decision, and in the conversation history that produced this.
+Several rounds of research against a local copy of the core source
+corrected wrong first guesses along the way, or confirmed assumptions that
+had been carried since early on without ever being checked:
+- `info.xml`'s real schema (`<XMLVersion>`, `<Setting>` attributes,
+  `type="encrypted"` actually working despite the docs omitting it,
+  `<MinShopVersion>` format).
+- `Bootstrapper`'s exact lifecycle signatures, where `<Customlink>` files
+  must physically live and what's in scope when they run, the real
+  `JTL\DB\DbInterface` CRUD/transaction API, how plugin migrations run
+  automatically via `MigrationManager` (no manual wiring needed from
+  `Bootstrap.php`), and `JTLSmarty::assign()`/`fetch()`.
+- `DB_HOST`/`DB_NAME`/`DB_USER`/`DB_PASS` (used by `BackupService`/
+  `RestoreService`'s `buildDsn()` to open mysqldump-php's own separate DB
+  connection) — CONFIRMED against `includes/src/Installation/VueInstaller.php`,
+  which writes exactly these four constant names into a freshly installed
+  shop's `config.JTL-Shop.ini.php`.
+- `$_SESSION['AdminAccount']->kAdminlogin` (the currently-logged-in admin's
+  ID, used for the audit log) — CONFIRMED against
+  `includes/src/Router/Controller/Backend/AdminAccountController.php`,
+  which reads/writes that exact property.
+- `JTL\Plugin\Data\Config::getValue()` vs. `getDecryptedValue()` for
+  encrypted settings, and the `base64(XTEA(...))` storage shape behind it —
+  relevant history even though this plugin no longer uses `Config` at all
+  (see the settings-storage rewrite below), since `SettingsRepository` now
+  replicates that exact shape against its own table instead.
+
+Full details are in the code's own docblocks next to each decision, and in
+the conversation history that produced this.
 
 ## Confirmed against a real running install + the shop core source
 
-Once installed on a real 5.8.0-rc3 shop, three subtle bugs surfaced that
+Once installed on a real 5.8.0-rc3 shop, several subtle bugs surfaced that
 turned out to have definitive, source-confirmed root causes and fixes (all
 documented in detail in `CHANGELOG.md`):
 
@@ -232,15 +244,35 @@ documented in detail in `CHANGELOG.md`):
   `help_description.tpl`: `<Setting><Description>` always renders as a
   hover-only tooltip, and `PluginController::renderMenu()` gives plugins no
   hook to inject their own JS/HTML into that auto-generated form. Replaced
-  it with a fully custom Customlink tab (`SettingsPageController`) that
-  POSTs to the exact same native save endpoint
-  (`PluginController::actionConfig()`, reached via the same
-  `action=""` + `Setting=1`/`kPluginAdminMenu`/`jtl_token` fields the native
-  form itself sends) — persistence, encryption, and the checkbox convention
-  are all still 100% the untouched native mechanism. The native Settingslink
-  can't be deleted outright (`SettingsLinks::install()` always creates it a
-  menu entry, no headless option), so it's demoted to "Erweiterte
-  Einstellungen (Rohformular)", sorted last, as a fallback.
+  it with a fully custom Customlink tab (`SettingsPageController`). Two
+  stages: first reused the native save endpoint
+  (`PluginController::actionConfig()`) while keeping a demoted, sorted-last
+  "Erweiterte Einstellungen (Rohformular)" fallback tab around purely to
+  keep its `<Setting>` schema registered (`SettingsLinks::install()` always
+  creates a visible menu entry for a `<Settingslink>`, confirmed no
+  headless/schema-only option exists) — then, once that fallback tab itself
+  was no longer wanted, moved settings storage into this plugin's own table
+  (`Service/SettingsStore`, `Migration20260827140000`, which one-time-copies
+  any already-configured native values so an upgrade doesn't lose them) and
+  removed the `<Settingslink>` from `info.xml` entirely. Encrypted fields
+  keep the exact same `base64(XTEA(...))` storage shape via the shop's own
+  `CryptoServiceInterface`, so no new key management was introduced.
+- **The recurring cron job silently did nothing on every single run** —
+  independent of, and in addition to, the job-type-registration bug below:
+  `Cron/BackupCronJob.php` called `Helper::getLoaderByPluginID(self::PLUGIN_ID)`
+  with the plugin's STRING ID, but that method's real signature is
+  `getLoaderByPluginID(int $id, ...)` — the NUMERIC `kPlugin`. Under this
+  file's own `declare(strict_types=1)`, passing a string there throws a
+  `TypeError` immediately, silently caught by the job's own blanket
+  `catch (\Throwable)` (there to stop one plugin's failure from fataling the
+  shop's whole cron run) — so even with the job type properly registered,
+  every scheduled run would have thrown immediately and done nothing,
+  indistinguishable from "ran, nothing configured to back up". CONFIRMED
+  against `includes/src/Plugin/Helper.php`: `getPluginById(string
+  $pluginID): ?PluginInterface` is the correct method for this exact case —
+  takes the string ID, resolves the numeric one itself via a cached
+  lookup, and returns an already-loaded plugin directly. Fixed in both
+  `Cron/BackupCronJob.php` and the new `Cron/FullBackupCronJob.php`.
 - **The cron job type never actually registered**, surfacing as `Undefined
   array key "jobType"` in `Bootstrap.php` from the shop's own Cron admin
   page. `Bootstrap::boot()`'s two `Dispatcher` listeners used an assumed
@@ -277,10 +309,15 @@ documented in detail in `CHANGELOG.md`):
 
 ## Next steps
 
-1. Get this onto a real JTL-Shop 5.8 test instance and fix whatever the
-   "Known gaps" section above predicts will break.
-2. Work through the "Deliberate scope decisions" list — most are fine for a
-   v1 to skip, but the async-cron-queue one is worth revisiting if
-   "Komplett" backups turn out to be slow enough to time out.
-3. Only then: real backup/restore roundtrip testing, per the spec's own QA
-   requirement.
+1. Confirm the two cron fixes above actually work end-to-end on the real
+   install: the job type now appearing in Cron → Anlegen's "Typ" dropdown,
+   and a real scheduled run actually producing a backup (not just "no
+   error") — the `TypeError` bug in particular could very plausibly have
+   been silently failing for a while before it was caught here.
+2. Work through the remaining "Deliberate scope decisions" list — most are
+   fine to leave as-is, but the async-cron-queue one is worth revisiting if
+   "Komplett" backups turn out to be slow enough to time out; see that
+   bullet for what was actually checked and why it's not a simple swap.
+3. Real backup/restore roundtrip testing, per the spec's own QA requirement
+   (still the one item with no automated coverage at all — see "Not done at
+   all").

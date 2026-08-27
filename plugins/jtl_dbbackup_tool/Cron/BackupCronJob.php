@@ -23,14 +23,22 @@ use Plugin\jtl_dbbackup_tool\Service\SettingsRepository;
  * previous behavior exactly (every preset, never "Komplett") so upgrading
  * an existing install doesn't silently change what its cron job does.
  *
- * NOT independently verified: how a plugin obtains its own PluginInterface
- * instance from OUTSIDE the admin-menu request context (Cron\Queue runs
- * this class directly, without the $oPlugin the Customlink files get for
- * free). JTL\Plugin\Helper::getLoaderByPluginID()->init() is the best-known
- * pattern for this but wasn't confirmed against this specific repo/version
- * — if this breaks, the manual "Backup jetzt" flow (Controller/*) is
- * entirely unaffected, since it gets $oPlugin handed to it directly by the
- * framework and never goes through this class.
+ * FIXED, a real bug that likely made every recurring run silently fail from
+ * day one: this used to call `Helper::getLoaderByPluginID(self::PLUGIN_ID)`
+ * — but that method's signature is `getLoaderByPluginID(int $id, ...)`, the
+ * NUMERIC `kPlugin`, not the string PluginID this class only ever has. Under
+ * this file's own `declare(strict_types=1)`, passing a string there throws
+ * a `TypeError` immediately — caught by the blanket `catch (\Throwable)`
+ * below, so the job just silently did nothing on every scheduled run,
+ * indistinguishable from "ran, nothing to do". CONFIRMED against
+ * includes/src/Plugin/Helper.php: `getPluginById(string $pluginID):
+ * ?PluginInterface` is the correct method for exactly this case — takes the
+ * string ID this class actually has, resolves the numeric `kPlugin` itself
+ * (via a cached `tplugin` lookup), and returns an already-`init()`'d
+ * PluginInterface directly, no separate loader step needed. The manual
+ * "Backup jetzt" flow (Controller/*) was never affected either way, since it
+ * gets `$oPlugin` handed to it directly by the framework and never goes
+ * through this class.
  */
 final class BackupCronJob extends Job implements JobInterface
 {
@@ -39,7 +47,7 @@ final class BackupCronJob extends Job implements JobInterface
     public function start(QueueEntry $queueEntry): JobInterface
     {
         try {
-            $plugin = Helper::getLoaderByPluginID(self::PLUGIN_ID)?->init(self::PLUGIN_ID);
+            $plugin = Helper::getPluginById(self::PLUGIN_ID);
             if ($plugin === null) {
                 throw new \RuntimeException(
                     \d__('jtl_dbbackup_tool', 'Plugin-Instanz konnte im Cron-Kontext nicht geladen werden.'),

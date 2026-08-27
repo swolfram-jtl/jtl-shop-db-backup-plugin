@@ -551,5 +551,29 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   method every other class already calls) is completely unchanged — only
   its constructor (`DbInterface` instead of `PluginInterface`, plumbed
   through 6 call sites) and internal storage changed.
+- **Fixed a second, independent cron bug found while working through
+  README "Known gaps": the recurring job silently did nothing on every
+  single run**, even once the job-type-registration bug (previous entry)
+  was fixed. `Cron/BackupCronJob.php` called `Helper::
+  getLoaderByPluginID(self::PLUGIN_ID)` with the plugin's STRING ID, but
+  that method's real signature is `getLoaderByPluginID(int $id, ...)` — the
+  NUMERIC `kPlugin`. Under this file's `declare(strict_types=1)`, passing a
+  string there throws a `TypeError` immediately, silently caught by the
+  job's own blanket `catch (\Throwable)`. CONFIRMED against `includes/src/
+  Plugin/Helper.php`: `getPluginById(string $pluginID): ?PluginInterface`
+  is the correct method — takes the string ID directly, resolves the
+  numeric one itself via a cached lookup, returns an already-loaded plugin.
+  Fixed in both `Cron/BackupCronJob.php` and `Cron/FullBackupCronJob.php`.
+- Closed out most of README's "Known gaps" by checking each assumption
+  against the real core source: `DB_HOST`/`DB_NAME`/`DB_USER`/`DB_PASS`
+  (confirmed via `VueInstaller.php`, which writes exactly those names),
+  `$_SESSION['AdminAccount']->kAdminlogin` (confirmed via
+  `AdminAccountController.php`), `Shop::getURL()` always existing in
+  5.8.0, and the real `CronController::addQueueEntry()` API (confirmed it
+  only supports the same recurring-schedule shape `BackupCronJob` already
+  uses, not a distinct one-off/async primitive — the synchronous-backup
+  scope decision stands, now for a checked reason instead of an
+  unverified one). The `ftp_protocol` `<Setting type="selectbox">` gap is
+  moot entirely now that `<Setting>` doesn't exist in `info.xml` anymore.
 
 <!-- Next bump also needs explicit confirmation. -->
