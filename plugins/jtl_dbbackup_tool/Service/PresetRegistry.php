@@ -17,6 +17,13 @@ namespace Plugin\jtl_dbbackup_tool\Service;
  * every table here and must be checked before this is relied on to catch
  * every real orphan case; core has no DB-level foreign keys, so this can
  * only ever be an approximation, never a generic/guaranteed mechanism.
+ *
+ * `customer_import`'s label is "Kunden" (not "Kundenimport", the CSV-import
+ * function's own name) and `coupon_import`'s is "Coupons" (not "Gutscheine")
+ * — both explicit corrections, since these backups cover the underlying
+ * customer/coupon DATA, not just the one import function that happens to
+ * touch it, and "Coupons" is the shop's own current term for what used to
+ * be called "Gutscheine".
  */
 final class PresetRegistry
 {
@@ -33,7 +40,7 @@ final class PresetRegistry
     {
         return [
             'customer_import' => [
-                'label'  => 'Kundenimport',
+                'label'  => 'Kunden',
                 'tables' => ['tkunde'],
                 'consistencyHints' => [
                     // Other tables reference tkunde.kKunde; a customer restore can
@@ -60,7 +67,7 @@ final class PresetRegistry
                 'consistencyHints' => [],
             ],
             'coupon_import' => [
-                'label'  => 'Gutscheine',
+                'label'  => 'Coupons',
                 'tables' => ['tkupon', 'tkuponsprache'],
                 'consistencyHints' => [
                     ['column' => 'kKupon', 'table' => 'tkuponsprache', 'referencedTable' => 'tkupon', 'referencedColumn' => 'kKupon'],

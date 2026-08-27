@@ -8,6 +8,7 @@ use JTL\Events\Dispatcher;
 use JTL\Events\Event;
 use JTL\Plugin\Bootstrapper;
 use Plugin\jtl_dbbackup_tool\Cron\BackupCronJob;
+use Plugin\jtl_dbbackup_tool\Cron\FullBackupCronJob;
 
 // Optional, separately-vendored dependency for SFTP support only (phpseclib3)
 // — see Service/Upload/SftpUploadTarget.php and composer.json in this folder.
@@ -31,6 +32,10 @@ if (\is_file($vendorAutoload)) {
 class Bootstrap extends Bootstrapper
 {
     private const CRON_JOB_TYPE = 'plugin:jtl_dbbackup_tool_cron';
+    // Spec: a SECOND, independently schedulable job type dedicated to
+    // "Komplett" — see Cron\FullBackupCronJob's own docblock for why this
+    // is additive, not a replacement for cron_backup_include_full.
+    private const CRON_JOB_TYPE_FULL = 'plugin:jtl_dbbackup_tool_cron_full';
 
     public function boot(Dispatcher $dispatcher)
     {
@@ -62,11 +67,15 @@ class Bootstrap extends Bootstrapper
         // array key" notice on the read side made it visible.
         $dispatcher->listen(Event::GET_AVAILABLE_CRONJOBS, function (array $args): void {
             $args['jobs'][] = self::CRON_JOB_TYPE;
+            $args['jobs'][] = self::CRON_JOB_TYPE_FULL;
         });
 
         $dispatcher->listen(Event::MAP_CRONJOB_TYPE, function (array $args): void {
-            if (($args['type'] ?? null) === self::CRON_JOB_TYPE) {
+            $type = $args['type'] ?? null;
+            if ($type === self::CRON_JOB_TYPE) {
                 $args['mapping'] = BackupCronJob::class;
+            } elseif ($type === self::CRON_JOB_TYPE_FULL) {
+                $args['mapping'] = FullBackupCronJob::class;
             }
         });
     }

@@ -74,7 +74,28 @@ final class DashboardController
             FlashBus::set($flashSuccess, $flashMessage);
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['preset']) && RequestGuard::claimBackupTrigger()) {
             $adminAccountId = (int) ($_SESSION['AdminAccount']->kAdminlogin ?? 0);
-            $result = (new BackupTrigger($plugin, $db))->trigger((string) $_POST['preset'], $adminAccountId);
+
+            // Same per-run options the Erstellen tab's modal collects — the
+            // Dashboard's "Sofort-Backup" buttons now open the identical
+            // modal (see _partials/backup-options-modal.tpl), so this needs
+            // to read the same fields Controller\BackupController does.
+            $comment = \trim((string) ($_POST['comment'] ?? ''));
+            $formOptions = [
+                'encrypt_override' => isset($_POST['encrypt_override']),
+                'comment'          => $comment !== '' ? $comment : null,
+            ];
+            if (isset($_POST['use_ephemeral_credentials']) && (string) ($_POST['eph_host'] ?? '') !== '') {
+                $formOptions['use_ephemeral_credentials'] = true;
+                $formOptions['ephemeral'] = [
+                    'protocol' => (string) ($_POST['eph_protocol'] ?? 'ftps'),
+                    'host'     => (string) $_POST['eph_host'],
+                    'port'     => (string) ($_POST['eph_port'] ?? ''),
+                    'username' => (string) ($_POST['eph_username'] ?? ''),
+                    'password' => (string) ($_POST['eph_password'] ?? ''),
+                ];
+            }
+
+            $result = (new BackupTrigger($plugin, $db))->trigger((string) $_POST['preset'], $adminAccountId, $formOptions);
             $flashMessage = $result['message'];
             $flashSuccess = $result['success'];
             // See Service\FlashBus's docblock: this same $_POST is also

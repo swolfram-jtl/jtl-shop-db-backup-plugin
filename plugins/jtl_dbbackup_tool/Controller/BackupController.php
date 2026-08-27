@@ -13,12 +13,16 @@ use Plugin\jtl_dbbackup_tool\Service\PresetRegistry;
 use Plugin\jtl_dbbackup_tool\Service\RequestGuard;
 
 /**
- * Spec decision "Backup-Klick-Flow": one click starts a backup with the
- * configured defaults; an "Optionen für diesen Lauf" disclosure exposes
- * per-run overrides (destination, encryption, ephemeral credentials) without
- * blocking the common case behind a full dialog.
+ * Spec decision "Backup-Klick-Flow": clicking a preset opens a modal
+ * (_partials/backup-options-modal.tpl) asking for a comment/reason and
+ * exposing per-run overrides (encryption, ephemeral FTP/SFTP credentials) —
+ * revised from an earlier "start immediately, options hidden behind a
+ * collapse link" design, which turned out to be less discoverable than a
+ * modal asked every time.
  * Spec decision "Preset-Benennung": preset labels must exactly match the
- * shop's own backend menu wording (see Service\PresetRegistry).
+ * shop's own backend menu wording (see Service\PresetRegistry) — except
+ * "Kunden" and "Coupons", which deliberately deviate from the CSV-import
+ * function names ("Kundenimport"/"Gutscheine") per explicit instruction.
  */
 final class BackupController
 {

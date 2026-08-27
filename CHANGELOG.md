@@ -486,5 +486,43 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   (2) Field descriptions moved from under the input (low-contrast
   `text-muted`, easy to miss) to sit directly under the label instead, in a
   more readable dark-blue-tinted color.
+- **Backup trigger flow reworked into a modal.** Every "Backup jetzt" /
+  "Jetzt sichern" click (Erstellen tab AND Dashboard quick-access) now opens
+  a shared modal (`_partials/backup-options-modal.tpl`) asking for a
+  comment/reason and exposing the same per-run overrides (ephemeral FTP/SFTP
+  credentials, encryption) that used to sit behind an easy-to-miss
+  "Optionen für diesen Lauf" collapse link — spec: the modal ask is more
+  discoverable. One shared modal instance per tab serves every preset
+  button via `data-preset`/`data-preset-label`, populated on Bootstrap's own
+  `show.bs.modal` event; the old per-preset `_partials/run-options.tpl` is
+  removed. `DashboardController` now parses the same comment/encrypt/
+  ephemeral `$_POST` fields `BackupController` already did, since its
+  quick-access buttons post through the identical modal form.
+- **New second cron job type dedicated to "Komplett".** `Cron/
+  FullBackupCronJob` + a second `Bootstrap::boot()` registration
+  (`plugin:jtl_dbbackup_tool_cron_full`) let an admin give the full backup
+  its own independent schedule in JTL's Cron admin, instead of only being
+  able to fold it into the same job as the configured-presets one via the
+  existing `cron_backup_include_full` setting (still there, unchanged,
+  works exactly as before for anyone who wants a single combined job).
+  Dashboard's cron setup guide updated to explain both job types.
+- Renamed two preset labels: `customer_import` "Kundenimport" → "Kunden"
+  (the backup covers customer data generally, not just the one CSV-import
+  function) and `coupon_import` "Gutscheine" → "Coupons" (the shop's own
+  current term) — flows through everywhere via `PresetRegistry`, no other
+  hardcoded copies existed. `info.xml`'s `<Description>` updated to match.
+- Dashboard's cron setup guide reverted to hidden-by-default (a "Anleitung"
+  button fades it in via a small dedicated `.dbbackup-fade-panel` class,
+  opacity-based rather than Bootstrap's height-based `.collapse`) — the
+  "always visible" version from the previous round turned out to be the
+  wrong direction; a clear, clickable "Anleitung" trigger is more
+  discoverable than the old easy-to-miss link without permanently taking up
+  Dashboard space.
+- Settings tab: field labels are now bold, so they visibly outrank the
+  description text sitting directly under them. "Speichern und Verbindung
+  testen" now uses the shop's own `btn-secondary` styling (confirmed against
+  `admin/templates/bootstrap/tpl_inc/einstellungen_bearbeiten.tpl`, the
+  mail-server settings page's own save-and-test button) instead of this
+  plugin's usual outline-primary.
 
 <!-- Next bump also needs explicit confirmation. -->

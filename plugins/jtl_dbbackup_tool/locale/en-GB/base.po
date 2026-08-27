@@ -699,3 +699,36 @@ msgstr "In the \"Type\" field, select the entry \"plugin:jtl_dbbackup_tool_cron\
 msgid "Anleitung unten ↓"
 msgstr "Instructions below ↓"
 
+msgid "Anleitung"
+msgstr "Instructions"
+
+msgid "Backup erstellen"
+msgstr "Create backup"
+
+msgid "Kommentar / Grund (optional)"
+msgstr "Comment / reason (optional)"
+
+msgid "Abbrechen"
+msgstr "Cancel"
+
+msgid "Backup jetzt starten"
+msgstr "Start backup now"
+
+msgid "Ein Klick öffnet einen kurzen Dialog für Kommentar/Grund und optionale Einstellungen, bevor das Backup startet."
+msgstr "One click opens a short dialog for a comment/reason and optional settings before the backup starts."
+
+msgid "Im Feld „Typ\" gibt es zwei Einträge dieses Plugins — JTL-Shop zeigt hier den technischen Bezeichner, da diese Job-Typen nachträglich vom Plugin registriert werden, nicht die eigene Klartext-Bezeichnung: „plugin:jtl_dbbackup_tool_cron\" sichert die unter „Einstellungen\" → „Cronjob-Einstellungen\" gewählten Presets, „plugin:jtl_dbbackup_tool_cron_full\" sichert unabhängig davon immer „Komplett\"."
+msgstr "The \"Type\" field has two entries for this plugin — JTL-Shop shows the technical identifier here, since these job types are registered by the plugin afterwards rather than having their own plain-text label: \"plugin:jtl_dbbackup_tool_cron\" backs up the presets chosen under \"Einstellungen\" → \"Cronjob-Einstellungen\", \"plugin:jtl_dbbackup_tool_cron_full\" always backs up \"Komplett\" independently of that."
+
+msgid "Speichern — der Auftrag erscheint danach in der Übersicht und läuft ab dann automatisch. Für getrennte Zeitpläne (z. B. Presets täglich, „Komplett\" wöchentlich) beide Typen als zwei eigene Aufträge anlegen."
+msgstr "Save — the job then appears in the overview and runs automatically from then on. For separate schedules (e.g. presets daily, \"Komplett\" weekly), set up both types as two separate jobs."
+
+msgid "Welche Presets der erste Cronjob-Typ sichert (und ob er zusätzlich „Komplett\" mit einschließt) legst du unter „Einstellungen\" → „Cronjob-Einstellungen\" fest — Standard ist jedes Preset einzeln, „Komplett\" bewusst nicht (Performance, dafür der zweite Job-Typ)."
+msgstr "Which presets the first cron job type backs up (and whether it also includes \"Komplett\") is set under \"Einstellungen\" → \"Cronjob-Einstellungen\" — the default is every preset individually, deliberately not \"Komplett\" (performance — that's what the second job type is for)."
+
+msgid "Kunden"
+msgstr "Customers"
+
+msgid "Coupons"
+msgstr "Coupons"
+

@@ -42,7 +42,7 @@
          name/description/docs only — PluginID stays jtl_dbbackup_tool
          (changing it would make an already-installed instance's settings and
          history orphaned, effectively requiring a reinstall). -->
-    <Description>Backup- und Restore-Sicherheitsnetz fuer die CSV-Import-Funktionen des JTL-Shop-Backends (Kunden, Newsletter, PLZ/Ort, Weiterleitungen, Gutscheine, Bewertungen, Sprachvariablen) — inklusive Backup-Manager mit Gruppierung, Filtern, Sortierung, Kommentaren und Loeschen.</Description>
+    <Description>Backup- und Restore-Sicherheitsnetz fuer die CSV-Import-Funktionen des JTL-Shop-Backends (Kunden, Newsletter, PLZ/Ort, Weiterleitungen, Coupons, Bewertungen, Sprachvariablen) — inklusive Backup-Manager mit Gruppierung, Filtern, Sortierung, Kommentaren und Loeschen.</Description>
     <Author>Sirko Wolfram</Author>
     <URL>https://github.com/swolfram-jtl/jtl-shop-db-backup-plugin</URL>
     <!-- CONFIRMED fatal-error fix, not just the warning: <URL> is documented
@@ -74,9 +74,9 @@
                      class names deliberately stay backup.php/BackupController
                      to limit churn; only the visible label changed. Every
                      form's hidden cPluginTab field in backup.tpl and
-                     _partials/run-options.tpl must match this <Name> EXACTLY
-                     (see dashboard.tpl's header comment for why) — updated to
-                     "Erstellen" everywhere. -->
+                     _partials/backup-options-modal.tpl must match this
+                     <Name> EXACTLY (see dashboard.tpl's header comment for
+                     why) — updated to "Erstellen" everywhere. -->
             </Customlink>
             <Customlink sort="3">
                 <Name>Backups verwalten (Historie)</Name>

@@ -1,18 +1,20 @@
 {include file="`$tplDir`/_partials/style.tpl"}
-{* Spec: "Backup-Klick-Flow" — one click per preset with configured defaults,
-   plus an "Optionen für diesen Lauf" disclosure for per-run overrides.
+{* Spec: "Backup-Klick-Flow" — clicking a preset opens a modal asking for a
+   comment/reason (and optional per-run overrides) before starting, rather
+   than starting immediately with an easy-to-miss "Optionen für diesen Lauf"
+   link — see _partials/backup-options-modal.tpl for the modal itself.
    Variables assigned by Controller\BackupController::render():
      $presets (array<string,string> key=>label),
      $flashMessage (string|null), $flashSuccess (bool)
-   Forms submit with action="" (see below on why: every Adminmenu tab file
-   gets executed on each request to pre-render all tabs, so a relative
-   action keeps the submit on whichever URL is actually loaded rather than
-   guessing at a cross-tab URL scheme). Every form (here and in
-   _partials/run-options.tpl) also carries a hidden cPluginTab="Erstellen"
-   field (tab renamed from "Backup jetzt" — the button labels below keep
-   saying "Backup jetzt" on purpose, that's an action verb, not the tab name)
-   — see dashboard.tpl's header comment for why: without it, a POST from
-   this tab bounces back to the Dashboard tab on reload. *}
+   The modal's own form submits with action="" (see below on why: every
+   Adminmenu tab file gets executed on each request to pre-render all tabs,
+   so a relative action keeps the submit on whichever URL is actually
+   loaded rather than guessing at a cross-tab URL scheme) and carries a
+   hidden cPluginTab="Erstellen" field (tab renamed from "Backup jetzt" —
+   the button labels below keep saying "Backup jetzt" on purpose, that's an
+   action verb, not the tab name) — see dashboard.tpl's header comment for
+   why: without it, a POST from this tab bounces back to the Dashboard tab
+   on reload. *}
 <div class="dbbackup-page">
 
 {include file="`$tplDir`/_partials/flash.tpl"}
@@ -29,15 +31,12 @@
             </div>
         </div>
         <div class="mt-2 mt-md-0">
-            <form method="post" action="" class="d-inline">
-            <input type="hidden" name="cPluginTab" value="Erstellen">
-                <input type="hidden" name="preset" value="full">
-                <button type="submit" class="btn btn-primary">{d__('jtl_dbbackup_tool', 'Backup jetzt')}</button>
-            </form>
-            <a class="btn btn-link" data-toggle="collapse" href="#opts-full">{d__('jtl_dbbackup_tool', 'Optionen für diesen Lauf')}</a>
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#backup-modal-erstellen"
+                    data-preset="full" data-preset-label="{d__('jtl_dbbackup_tool', 'Komplett')|escape}">
+                {d__('jtl_dbbackup_tool', 'Backup jetzt')}
+            </button>
         </div>
     </div>
-    {include file="`$tplDir`/_partials/run-options.tpl" presetKey="full"}
 </div>
 
 {foreach $presets as $presetKey => $presetLabel}
@@ -48,16 +47,15 @@
             <div>{$presetLabel|escape}</div>
         </div>
         <div class="mt-2 mt-md-0">
-            <form method="post" action="" class="d-inline">
-            <input type="hidden" name="cPluginTab" value="Erstellen">
-                <input type="hidden" name="preset" value="{$presetKey|escape}">
-                <button type="submit" class="btn btn-primary btn-sm">{d__('jtl_dbbackup_tool', 'Backup jetzt')}</button>
-            </form>
-            <a class="btn btn-link btn-sm" data-toggle="collapse" href="#opts-{$presetKey}">{d__('jtl_dbbackup_tool', 'Optionen für diesen Lauf')}</a>
+            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#backup-modal-erstellen"
+                    data-preset="{$presetKey|escape}" data-preset-label="{$presetLabel|escape}">
+                {d__('jtl_dbbackup_tool', 'Backup jetzt')}
+            </button>
         </div>
     </div>
-    {include file="`$tplDir`/_partials/run-options.tpl" presetKey=$presetKey}
 </div>
 {/foreach}
+
+{include file="`$tplDir`/_partials/backup-options-modal.tpl" modalId="backup-modal-erstellen" cPluginTab="Erstellen"}
 
 </div>

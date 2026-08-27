@@ -92,8 +92,8 @@
 
             {if $section.connectionTest}
             <div class="mt-2">
-                <button type="submit" name="test_connection" value="1" class="btn btn-outline-primary btn-sm">
-                    <i class="fal fa-plug mr-1"></i>{d__('jtl_dbbackup_tool', 'Speichern und Verbindung testen')}
+                <button type="submit" name="test_connection" value="1" class="btn btn-secondary">
+                    {d__('jtl_dbbackup_tool', 'Speichern und Verbindung testen')}
                 </button>
                 <span class="small text-muted ml-2">{d__('jtl_dbbackup_tool', 'Speichert die obigen Felder und prüft danach sofort Login und Schreibrechte.')}</span>
             </div>

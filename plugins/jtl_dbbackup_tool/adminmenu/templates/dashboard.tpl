@@ -96,7 +96,7 @@
                         <div class="dbbackup-eyebrow mb-1">{d__('jtl_dbbackup_tool', 'Nächstes geplantes Backup')}</div>
                         <div class="dbbackup-kpi-value" style="font-size: 1.15rem;">{if $nextScheduled}{$nextScheduled|escape}{else}<span style="font-size:1rem; font-weight: 500;">{d__('jtl_dbbackup_tool', 'kein Cron-Backup aktiv')}</span>{/if}</div>
                         {if !$nextScheduled}
-                        <span class="small text-muted">{d__('jtl_dbbackup_tool', 'Anleitung unten ↓')}</span>
+                        <button type="button" class="btn btn-link btn-sm p-0 small" id="dbbackup-cron-guide-toggle" onclick="event.stopPropagation();">{d__('jtl_dbbackup_tool', 'Anleitung')} →</button>
                         {/if}
                     </div>
                 </div>
@@ -131,18 +131,20 @@
     </div>
 
     {if !$nextScheduled}
-    <div class="card border-0 shadow-sm mb-3" style="background:var(--jtl-sand);">
-        <div class="card-body">
-            <strong>{d__('jtl_dbbackup_tool', 'Automatisches Backup per Cronjob einrichten')}</strong>
-            <p class="small text-muted mb-2 mt-1">{d__('jtl_dbbackup_tool', 'Dieses Plugin plant nichts von selbst — JTL-Shop hat dafür eine eigene, zentrale Cron-Verwaltung, in der auch dieser Backup-Job eingetragen wird:')}</p>
-            <ol class="small mb-0" style="padding-left:1.2rem;">
-                <li>{d__('jtl_dbbackup_tool', 'Im Backend links im Menü zu „Cron" gehen.')}</li>
-                <li>{d__('jtl_dbbackup_tool', 'Dort den Reiter zum Anlegen eines neuen Auftrags öffnen.')}</li>
-                <li>{d__('jtl_dbbackup_tool', 'Im Feld „Typ" den Eintrag „plugin:jtl_dbbackup_tool_cron" auswählen — JTL-Shop zeigt hier den technischen Bezeichner, da dieser Job-Typ nachträglich vom Plugin registriert wird, nicht die eigene Klartext-Bezeichnung.')}</li>
-                <li>{d__('jtl_dbbackup_tool', 'Intervall in Stunden festlegen (z. B. 24 für täglich) sowie eine Startzeit außerhalb der Stoßzeiten (z. B. nachts).')}</li>
-                <li>{d__('jtl_dbbackup_tool', 'Speichern — der Auftrag erscheint danach in der Übersicht und läuft ab dann automatisch.')}</li>
-            </ol>
-            <p class="small text-muted mb-0 mt-2">{d__('jtl_dbbackup_tool', 'Welche Presets der Cronjob sichert (und ob zusätzlich „Komplett" dazugehört) legst du unter „Einstellungen" → „Cronjob-Einstellungen" fest — Standard ist jedes Preset einzeln, „Komplett" bewusst nicht (Performance).')}</p>
+    <div class="dbbackup-fade-panel mb-3" id="dbbackup-cron-guide">
+        <div class="card border-0 shadow-sm" style="background:var(--jtl-sand);">
+            <div class="card-body">
+                <strong>{d__('jtl_dbbackup_tool', 'Automatisches Backup per Cronjob einrichten')}</strong>
+                <p class="small text-muted mb-2 mt-1">{d__('jtl_dbbackup_tool', 'Dieses Plugin plant nichts von selbst — JTL-Shop hat dafür eine eigene, zentrale Cron-Verwaltung, in der auch dieser Backup-Job eingetragen wird:')}</p>
+                <ol class="small mb-0" style="padding-left:1.2rem;">
+                    <li>{d__('jtl_dbbackup_tool', 'Im Backend links im Menü zu „Cron" gehen.')}</li>
+                    <li>{d__('jtl_dbbackup_tool', 'Dort den Reiter zum Anlegen eines neuen Auftrags öffnen.')}</li>
+                    <li>{d__('jtl_dbbackup_tool', 'Im Feld „Typ" gibt es zwei Einträge dieses Plugins — JTL-Shop zeigt hier den technischen Bezeichner, da diese Job-Typen nachträglich vom Plugin registriert werden, nicht die eigene Klartext-Bezeichnung: „plugin:jtl_dbbackup_tool_cron" sichert die unter „Einstellungen" → „Cronjob-Einstellungen" gewählten Presets, „plugin:jtl_dbbackup_tool_cron_full" sichert unabhängig davon immer „Komplett".')}</li>
+                    <li>{d__('jtl_dbbackup_tool', 'Intervall in Stunden festlegen (z. B. 24 für täglich) sowie eine Startzeit außerhalb der Stoßzeiten (z. B. nachts).')}</li>
+                    <li>{d__('jtl_dbbackup_tool', 'Speichern — der Auftrag erscheint danach in der Übersicht und läuft ab dann automatisch. Für getrennte Zeitpläne (z. B. Presets täglich, „Komplett" wöchentlich) beide Typen als zwei eigene Aufträge anlegen.')}</li>
+                </ol>
+                <p class="small text-muted mb-0 mt-2">{d__('jtl_dbbackup_tool', 'Welche Presets der erste Cronjob-Typ sichert (und ob er zusätzlich „Komplett" mit einschließt) legst du unter „Einstellungen" → „Cronjob-Einstellungen" fest — Standard ist jedes Preset einzeln, „Komplett" bewusst nicht (Performance, dafür der zweite Job-Typ).')}</p>
+            </div>
         </div>
     </div>
     {/if}
@@ -191,25 +193,25 @@
             <i class="fal fa-bolt text-primary mt-1"></i>
             <div>
                 <h5 class="mb-1">{d__('jtl_dbbackup_tool', 'Sofort-Backup')}</h5>
-                <div class="small text-muted">{d__('jtl_dbbackup_tool', 'Ein Klick startet SOFORT ein Backup mit den Standard-Einstellungen — hier werden keine Optionen geöffnet.')}</div>
+                <div class="small text-muted">{d__('jtl_dbbackup_tool', 'Ein Klick öffnet einen kurzen Dialog für Kommentar/Grund und optionale Einstellungen, bevor das Backup startet.')}</div>
             </div>
         </div>
         <div class="d-flex flex-wrap align-items-center" style="gap: .5rem;">
-            <form method="post" action="">
-                <input type="hidden" name="cPluginTab" value="Dashboard">
-                <input type="hidden" name="preset" value="full">
-                <button type="submit" class="btn btn-primary"><i class="fal fa-bolt mr-1"></i> {d__('jtl_dbbackup_tool', 'Jetzt sichern: Komplett')}</button>
-            </form>
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#backup-modal-dashboard"
+                    data-preset="full" data-preset-label="{d__('jtl_dbbackup_tool', 'Komplett')|escape}">
+                <i class="fal fa-bolt mr-1"></i> {d__('jtl_dbbackup_tool', 'Jetzt sichern: Komplett')}
+            </button>
             {foreach $presets as $presetKey => $presetLabel}
-            <form method="post" action="">
-                <input type="hidden" name="cPluginTab" value="Dashboard">
-                <input type="hidden" name="preset" value="{$presetKey|escape}">
-                <button type="submit" class="btn btn-outline-secondary"><i class="fal fa-bolt mr-1"></i> {d__('jtl_dbbackup_tool', 'Jetzt sichern')}: {$presetLabel|escape}</button>
-            </form>
+            <button type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#backup-modal-dashboard"
+                    data-preset="{$presetKey|escape}" data-preset-label="{$presetLabel|escape}">
+                <i class="fal fa-bolt mr-1"></i> {d__('jtl_dbbackup_tool', 'Jetzt sichern')}: {$presetLabel|escape}
+            </button>
             {/foreach}
         </div>
     </div>
 </div>
+
+{include file="`$tplDir`/_partials/backup-options-modal.tpl" modalId="backup-modal-dashboard" cPluginTab="Dashboard"}
 
 <div class="alert alert-info shadow-sm d-flex" style="gap: .75rem; background-color: var(--jtl-sand, #EEEEE7); border-color: rgba(11,27,69,.15); color: var(--jtl-dark-blue, #0B1B45);">
     <i class="fal fa-folder-open mt-1"></i>
@@ -265,6 +267,14 @@ document.querySelectorAll('[data-jump-to-tab]').forEach(function (el) {
         }
     });
 });
+
+var cronGuideToggle = document.getElementById('dbbackup-cron-guide-toggle');
+var cronGuidePanel = document.getElementById('dbbackup-cron-guide');
+if (cronGuideToggle && cronGuidePanel) {
+    cronGuideToggle.addEventListener('click', function () {
+        cronGuidePanel.classList.toggle('show');
+    });
+}
 {/literal}
 </script>
 

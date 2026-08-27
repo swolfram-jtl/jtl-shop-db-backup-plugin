@@ -307,7 +307,8 @@
    under the input itself — reported as hard to read (low contrast) and in
    the wrong place (spec: descriptions belong with the title, not the
    field). Dark-blue-tinted grey instead of a flat grey reads noticeably
-   clearer against both the card's white background and this palette. */
+   clearer against both the card's white background and this palette. The
+   label itself is bold so it visibly outranks the description under it. */
 .dbbackup-field-description {
     font-size: .8rem;
     line-height: 1.4;
@@ -319,5 +320,24 @@
     line-height: 1.4;
     color: rgba(11,27,69,.72);
 }
+.dbbackup-setting-row label.col-form-label {
+    font-weight: 700;
+    color: var(--jtl-dark-blue);
+}
+
+/* Dashboard cron-guide panel: hidden by default, opacity-fades in on click
+   (spec: "nur eingeblendet werden (fade) wenn ich auf 'Anleitung' klicke")
+   — a plain Bootstrap .collapse animates height, not opacity, so this is a
+   small dedicated class instead. */
+.dbbackup-fade-panel {
+    display: none;
+    opacity: 0;
+    transition: opacity .2s ease;
+}
+.dbbackup-fade-panel.show {
+    display: block;
+    opacity: 1;
+}
+
 {/literal}
 </style>
