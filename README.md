@@ -16,19 +16,24 @@ a breaking change for an already-installed instance.
 
 Deutsche Version: [README.de.md](README.de.md)
 
-> **Status:** installed and running against a real JTL-Shop 5.8.0-rc3
-> instance — Dashboard, Erstellen, Backups verwalten (Historie) (manager +
-> restore), and Settings tabs all render and the manual backup flow works
-> end-to-end. Under
-> active real-usage iteration; see `CHANGELOG.md` for the running log of bugs
-> found and fixed this way (several — a duplicate-trigger bug, a wrong return
-> type, an ephemeral-credentials UI that was previously a no-op, a restore
-> lock self-deadlock — see `Service/RequestGuard.php`'s docblock for one
-> especially non-obvious one: **every Adminmenu tab's PHP file runs on every
-> single request**, not just the visible tab, which matters for any future
-> controller that reads `$_POST`). The architecture and ~56 individual design
-> decisions behind this plugin were worked out in a dedicated design review;
-> see `docs/architecture-spec.html`.
+> **Status:** **v1.0.0 — first stable release.** Installed and running
+> against a real JTL-Shop 5.8.0-rc3 instance; all tabs (Dashboard, Erstellen,
+> Backups verwalten (Historie) — manager + restore —, Einstellungen) render
+> and the full backup/restore/cleanup flow works end-to-end. Reached this
+> point through several rounds of real-usage iteration; see `CHANGELOG.md`
+> for the running log of bugs found and fixed this way — including two
+> genuinely severe ones caught late: a recurring cron job that silently never
+> ran at all (wrong plugin-loading call under `strict_types`), and, after
+> that was fixed, a second cron bug that made it re-run on *every* pseudo-cron
+> trigger instead of respecting its own interval (missing `parent::start()`/
+> `setFinished()` calls — see `Cron/BackupCronJob.php`'s own docblock). See
+> `Service/RequestGuard.php`'s docblock for one especially non-obvious
+> architectural fact that shaped a lot of this: **every Adminmenu tab's PHP
+> file runs on every single request**, not just the visible tab. Still worth
+> reading "Known gaps" below before relying on this in production — a few
+> things are deliberately out of scope (v1) or not yet automated-tested. The
+> architecture and ~56 individual design decisions behind this plugin were
+> worked out in a dedicated design review; see `docs/architecture-spec.html`.
 
 ## What this is (and isn't)
 

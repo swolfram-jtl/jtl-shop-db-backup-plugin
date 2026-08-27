@@ -19,19 +19,25 @@ Instanz.
 
 English version: [README.md](README.md)
 
-> **Status:** installiert und lauffähig gegen eine echte
-> JTL-Shop-5.8.0-rc3-Instanz — Dashboard, Erstellen, Backups verwalten
-> (Historie) (Manager + Restore) und Einstellungen rendern alle, der manuelle
-> Backup-Ablauf
-> funktioniert Ende-zu-Ende. In aktiver Iteration gegen echten Einsatz; siehe
-> `CHANGELOG.md` für das laufende Protokoll gefundener und behobener Bugs
-> (mehrere — ein Doppel-Trigger-Bug, ein falscher Rückgabetyp, eine
-> Ephemere-Zugangsdaten-UI, die zuvor ein No-Op war, ein
-> Restore-Lock-Selbst-Deadlock — siehe `Service/RequestGuard.php`s Docblock
-> für einen besonders unauffälligen: **jede Adminmenu-Tab-PHP-Datei läuft bei
-> JEDER einzelnen Anfrage**, nicht nur beim sichtbaren Tab, was für jeden
-> künftigen Controller relevant ist, der `$_POST` liest). Die Architektur und
-> ~56 einzelne Design-Entscheidungen dahinter wurden in einer eigenen
+> **Status:** **v1.0.0 — erste stabile Version.** Installiert und lauffähig
+> gegen eine echte JTL-Shop-5.8.0-rc3-Instanz; alle Tabs (Dashboard,
+> Erstellen, Backups verwalten (Historie) — Manager + Restore —,
+> Einstellungen) rendern, der komplette Backup-/Restore-/Bereinigungs-Ablauf
+> funktioniert Ende-zu-Ende. Bis hierhin über mehrere Runden echten Einsatzes
+> gehärtet; siehe `CHANGELOG.md` für das laufende Protokoll gefundener und
+> behobener Bugs — darunter zwei wirklich ernste, spät entdeckte: ein
+> wiederkehrender Cronjob, der durch einen falschen Plugin-Lade-Aufruf unter
+> `strict_types` still nie gelaufen ist, und, nachdem das behoben war, ein
+> zweiter Cron-Bug, durch den er stattdessen bei JEDEM Pseudo-Cron-Trigger
+> erneut lief statt sein eigenes Intervall zu beachten (fehlende
+> `parent::start()`/`setFinished()`-Aufrufe — siehe `Cron/BackupCronJob.php`s
+> eigenes Docblock). Siehe `Service/RequestGuard.php`s Docblock für einen
+> besonders unauffälligen architektonischen Fakt, der vieles hiervon geprägt
+> hat: **jede Adminmenu-Tab-PHP-Datei läuft bei JEDER einzelnen Anfrage**,
+> nicht nur beim sichtbaren Tab. Trotzdem lohnt sich vor Produktiveinsatz ein
+> Blick in „Bekannte Lücken" unten — einiges ist bewusst außerhalb des
+> v1-Umfangs oder noch nicht automatisiert getestet. Die Architektur und ~56
+> einzelne Design-Entscheidungen dahinter wurden in einer eigenen
 > Design-Review erarbeitet, siehe `docs/architecture-spec.html`.
 
 ## Was das ist (und was nicht)

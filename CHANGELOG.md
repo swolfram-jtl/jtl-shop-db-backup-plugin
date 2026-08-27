@@ -5,6 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-27
+
+First stable release — feature-complete and hardened through several rounds
+of real-usage testing against a live JTL-Shop 5.8 install. See "Known gaps"
+in `README.md`/`README.de.md` for what's still deliberately out of scope or
+not yet automated-tested.
+
 - Initial plugin scaffold: `info.xml`, `Bootstrap.php`, `Service/`,
   `Cron/`, `Controller/` stubs, one `Migrations/` stub, Smarty template
   stubs for the four Adminmenu tabs.
