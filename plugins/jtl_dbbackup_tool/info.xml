@@ -93,8 +93,46 @@
                      <Name> EXACTLY (see dashboard.tpl's header comment for
                      why) — updated everywhere. -->
             </Customlink>
-            <Settingslink sort="4">
+            <Customlink sort="4">
                 <Name>Einstellungen</Name>
+                <Filename>settings.php</Filename>
+                <!-- CUSTOM settings tab (Controller\SettingsPageController),
+                     not the native Settingslink-rendered form — verified
+                     against admin/templates/bootstrap/tpl_inc/plugin_options.tpl
+                     and help_description.tpl that the native form ALWAYS
+                     renders a Setting's <Description> as a hover-only tooltip
+                     icon and gives plugins no hook to inject custom JS/HTML
+                     (conditional fields, always-visible help text) into it —
+                     both were explicitly requested and impossible there.
+                     This custom tab instead POSTs directly to the exact same
+                     native save endpoint every Settingslink form uses
+                     (JTL\Router\Controller\Backend\PluginController::actionConfig(),
+                     reached at Shop::getAdminURL(true).'plugin/'.$plugin->getID()),
+                     with the same kPlugin/kPluginAdminMenu/Setting=1/jtl_token
+                     hidden fields and each field posted under name="<ValueName>" —
+                     so persistence is 100% the untouched native mechanism
+                     (including the "empty encrypted field = keep existing
+                     value" behavior confirmed in PluginController::handleEncryptedInput()),
+                     only the rendering is custom. See SettingsPageController's
+                     own docblock for the full mechanics. -->
+            </Customlink>
+            <Settingslink sort="5">
+                <Name>Erweiterte Einstellungen (Rohformular)</Name>
+                <!-- Renamed from "Einstellungen" — this native Settingslink
+                     tab can't be removed (SettingsLinks::install() always
+                     creates ONE tpluginadminmenu row per <Settingslink>, with
+                     no "headless"/schema-only option — confirmed against
+                     includes/src/Plugin/Admin/Installation/Items/SettingsLinks.php),
+                     so instead of two same-named tabs it's demoted to an
+                     out-of-the-way fallback: same fields, JTL's own stock
+                     rendering (hover-only descriptions, no conditional
+                     fields), sorted last. The real, intended settings
+                     experience is the "Einstellungen" Customlink above. All
+                     <Setting> children below are UNCHANGED from before this
+                     split — they still register the exact same schema/
+                     storage (tplugineinstellungenconf/tplugineinstellungen)
+                     that SettingsRepository AND the new custom tab both read
+                     from identically. -->
 
                 <Setting type="text" initialValue="" conf="N" sort="1">
                     <Name>Backup-Einstellungen</Name>
@@ -225,6 +263,33 @@
                     <Name>Bei Strukturabweichung blockieren</Name>
                     <ValueName>version_fingerprint_block_enabled</ValueName>
                     <Description>Restore hart blockieren, wenn sich die Tabellenstruktur seit dem Backup geaendert hat (z. B. durch ein Shop-Update), statt nur zu warnen. Standard: an — sicherer, aber ein Restore laesst sich dann nur mit ausdruecklicher Bestaetigung erzwingen.</Description>
+                </Setting>
+
+                <Setting type="text" initialValue="" conf="N" sort="20">
+                    <Name>Cronjob-Einstellungen</Name>
+                    <ValueName>section_cron</ValueName>
+                    <Description></Description>
+                </Setting>
+                <Setting type="text" initialValue="customer_import,newsletter_import,zip_import,redirect_import,coupon_import,review_import,language_import" conf="Y" sort="21">
+                    <Name>Presets im Cronjob (kommagetrennt)</Name>
+                    <ValueName>cron_backup_presets</ValueName>
+                    <Description>Preset-Schluessel, die der wiederkehrende Cronjob sichert, kommagetrennt. Bearbeitung ueber den Haupt-Tab "Einstellungen" empfohlen (dort als Checkbox-Liste) — dieses Rohfeld ist der direkte Speicherwert.</Description>
+                    <!-- Comma-joined list rather than a native multi-select
+                         <Setting> (type="selectbox" multiple="Y") deliberately:
+                         the custom "Einstellungen" tab renders this as real
+                         checkboxes and posts a joined string, which is simpler
+                         and more robust than replicating core's TYPE_DYNAMIC
+                         serialize()'d-array convention for a field this tab
+                         doesn't even use the native rendering for. Default =
+                         every PresetRegistry key, matching this plugin's
+                         previous (hardcoded, unconfigurable) cron behavior —
+                         upgrading an existing install changes nothing until
+                         the admin deliberately edits this. -->
+                </Setting>
+                <Setting type="checkbox" initialValue="" conf="Y" sort="22">
+                    <Name>„Komplett" im Cronjob einschließen</Name>
+                    <ValueName>cron_backup_include_full</ValueName>
+                    <Description>Zusaetzlich zu den oben ausgewaehlten Presets bei jedem Cronjob-Lauf auch ein volles "Komplett"-Backup anlegen. Standard: aus — ein wiederkehrendes Komplett-Backup kann die Performance auf einer grossen Datenbank spuerbar beeintraechtigen, das bleibt bewusst eine bewusste Entscheidung.</Description>
                 </Setting>
             </Settingslink>
         </Adminmenu>

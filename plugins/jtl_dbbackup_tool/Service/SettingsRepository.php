@@ -106,6 +106,30 @@ final class SettingsRepository
     }
 
     /**
+     * Spec decision "Cronjob konfigurierbar": which presets the recurring
+     * cron job backs up — see Cron/BackupCronJob.php. Falls back to every
+     * PresetRegistry key if unset (matches this plugin's previous,
+     * hardcoded-always-all-presets behavior, so an upgrade never silently
+     * changes what an existing install's cron job does).
+     *
+     * @return string[]
+     */
+    public function cronBackupPresets(): array
+    {
+        $raw = $this->value('cron_backup_presets');
+        if ($raw === null) {
+            return \array_keys(PresetRegistry::all());
+        }
+
+        return \array_values(\array_filter(\array_map('trim', \explode(',', $raw))));
+    }
+
+    public function cronBackupIncludeFull(): bool
+    {
+        return $this->checkbox('cron_backup_include_full');
+    }
+
+    /**
      * Display-only summary for the "wo werden Backups abgelegt?" info box —
      * deliberately excludes credentials, only host/protocol/path.
      *

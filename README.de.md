@@ -52,14 +52,13 @@ plugins/<PluginID>/
                         Settings- und FTPS/SFTP-Upload-Services
   Cron/                Wiederkehrender geplanter Backup-Job
   Controller/          Backend-Tab-Controller (Dashboard, Backup, Backups/Manager (Klasse
-                        heißt weiterhin HistoryController — siehe deren Docblock), Einstellungen)
+                        heißt weiterhin HistoryController — siehe deren Docblock), Einstellungen —
+                        SettingsPageController, ein komplett eigener Tab, NICHT das native
+                        <Settingslink>-Rendering — siehe „Gegen eine echte laufende
+                        Installation ... bestätigt" unten)
   Migrations/           Eigene Schema-Migrationen (Audit-Log, Backup-Historie)
   adminmenu/            Adminmenü-<Customlink>-Einstiegspunkte + deren Templates
                         (verifizierter Ort: PFAD_PLUGIN_ADMINMENU = 'adminmenu/')
-  templates/settings.tpl
-                        Einstellungen-Tab-Zusatz (Verbindungstest-Button) — der
-                        Render-/Hook-Mechanismus von Settingslink selbst ist
-                        NOCH NICHT verifiziert, siehe „Bekannte Lücken"
 ```
 
 `<PluginID>` ist aktuell der Platzhalter `jtl_dbbackup_tool` — vor einer
@@ -139,9 +138,6 @@ aber noch kein einziges Mal gelaufen. Vor echtem Vertrauen mit echten Daten:
   Tabellen); „Komplett" bei einer sehr großen Datenbank könnte ein
   PHP-Request-Timeout auslösen. Der wiederkehrende Cron-Job
   (`BackupCronJob`) ist davon nicht betroffen.
-- Die Verbindungstest-**Logik** (`SettingsController::handleConnectionTest()`)
-  ist fertig, aber noch nicht ins Settingslink-gerenderte Formular
-  eingehängt (siehe Projektstruktur oben).
 - Nur das Audit-Log (nicht der Backups-Tab, der jetzt echte Pagination hat)
   ist noch eine einfache, unpaginierte Tabelle statt der Core-Komponente
   `pagination.tpl`/`$oBlaetterNavi` — dafür gibt es bislang gar keine eigene
@@ -246,6 +242,23 @@ Ursache und Fix klären ließen (Details jeweils in `CHANGELOG.md`):
   auf der Festplatte (über ihre `.manifest.json`-Begleitdatei), die noch
   nicht erfasst ist, eine Historie-Zeile nachträgt — rein additiv, rührt nie
   eine bestehende Zeile an.
+- **„Einstellungen" konnte über das native `<Settingslink>`-Formular weder
+  immer sichtbare Hilfetexte noch ein bedingtes Feld zeigen** (z. B. das
+  Verschlüsselungs-Passwort erst bei gesetztem Haken). Gegen
+  `admin/templates/bootstrap/tpl_inc/plugin_options.tpl` und
+  `help_description.tpl` bestätigt: `<Setting><Description>` wird immer nur
+  als Hover-Tooltip gerendert, und `PluginController::renderMenu()` bietet
+  Plugins keinen Hook, um eigenes JS/HTML in dieses automatisch generierte
+  Formular einzuschleusen. Ersetzt durch einen komplett eigenen
+  Customlink-Tab (`SettingsPageController`), der auf denselben nativen
+  Speicher-Endpunkt postet (`PluginController::actionConfig()`, über
+  dieselben `action=""` + `Setting=1`/`kPluginAdminMenu`/`jtl_token`-Felder,
+  die das native Formular selbst sendet) — Speicherung, Verschlüsselung und
+  die Checkbox-Konvention sind weiterhin zu 100 % der unveränderte native
+  Mechanismus. Das native Settingslink lässt sich nicht komplett entfernen
+  (`SettingsLinks::install()` legt dafür immer einen Menüeintrag an, keine
+  „headless"-Option), daher als „Erweiterte Einstellungen (Rohformular)"
+  degradiert, ans Ende sortiert, als Fallback.
 
 ## Nächste Schritte
 

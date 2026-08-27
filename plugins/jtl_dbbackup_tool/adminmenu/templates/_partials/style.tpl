@@ -141,35 +141,42 @@
 }
 
 /* Manager quick-overview chips (one per preset: label, count, last-created) —
-   compact by design since there can be up to ~9 of them (7 presets + Komplett
-   + the automatic pre-update snapshot), unlike the 4 big Dashboard KPI tiles. */
+   clickable shortcuts into the matching accordion group below, styled like
+   the Dashboard's brand-colored KPI tiles (centered, colorful) but more
+   compact since there can be up to ~9 of them (7 presets + Komplett + the
+   automatic pre-update snapshot), unlike the Dashboard's 4 big tiles. */
 .dbbackup-summary-chip {
-    background: #fff;
-    border: 1px solid rgba(11,27,69,.12);
+    background: var(--jtl-dark-blue);
+    color: #fff;
     border-radius: .6rem;
-    padding: .5rem .85rem;
-    min-width: 11rem;
+    padding: .7rem .9rem;
+    min-width: 9.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: box-shadow .15s ease, transform .15s ease;
 }
+.dbbackup-summary-chip:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1.1rem rgba(11,27,69,.18); }
 .dbbackup-summary-chip--full {
-    border-color: var(--jtl-orange);
-    border-width: 2px;
-    background: var(--jtl-sand);
+    background: var(--jtl-orange);
 }
 .dbbackup-summary-chip-label {
     font-size: .75rem;
     font-weight: 700;
-    color: var(--jtl-dark-blue);
     text-transform: uppercase;
     letter-spacing: .03em;
+    opacity: .85;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .dbbackup-summary-chip-count {
-    font-size: 1.3rem;
+    font-size: 1.6rem;
     font-weight: 800;
-    color: var(--jtl-dark-blue);
-    line-height: 1;
+    line-height: 1.2;
+}
+.dbbackup-summary-chip-meta {
+    font-size: .72rem;
+    opacity: .85;
 }
 
 /* Preset cards */

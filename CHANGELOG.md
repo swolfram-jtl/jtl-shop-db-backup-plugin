@@ -371,5 +371,46 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   "Backups" → "Backups verwalten (Historie)" — `cPluginTab` hidden fields
   updated across every template that submits to either tab.
 - `<Version>` bumped to **0.2.0** (first real bump — explicitly confirmed).
+- Manager: fixed "select all" not visually checking each group's own
+  checkbox (now syncs checked/indeterminate on every change, not just
+  row-level); fixed the accordion group tables' cell padding not matching
+  the card-header's inset above them; restore modal restyled with brand
+  colors instead of stock Bootstrap red; clarified the failure-notification
+  setting sends an email.
+- Dashboard: added a step-by-step "how do I set up the cron job" guide
+  (collapsible, shown only while no cron job is detected), verified against
+  the real `admin/templates/bootstrap/cron.tpl`.
+- New per-preset quick-overview chips at the top of the Backups tab (count +
+  last-created date per preset, unfiltered) — brand-colored, centered, and
+  clickable (opens/scrolls to that preset's accordion group), matching the
+  Dashboard's KPI-tile look after a first pass left them plain/white.
+- **Replaced the native `<Settingslink>` "Einstellungen" tab with a fully
+  custom one** (`Controller/SettingsPageController`, `adminmenu/settings.tpl`)
+  after confirming two hard limits of the native form against the real core
+  source: `<Setting><Description>` only ever renders as a hover tooltip
+  (`tpl_inc/help_description.tpl`), and there's no hook for a plugin to
+  inject JS/HTML into the auto-generated form (`PluginController::renderMenu()`
+  fetches `tpl_inc/plugin_options.tpl` directly) — so neither "always-visible
+  descriptions" nor "only show the encryption password once its checkbox is
+  on" were possible there, both explicitly requested. The native Settingslink
+  can't be removed outright either (`SettingsLinks::install()` always creates
+  a menu entry for it, no headless option) — demoted to "Erweiterte
+  Einstellungen (Rohformular)", sorted last, same fields, stock rendering,
+  kept only as a fallback. The new tab reuses the native save mechanism
+  entirely: it POSTs to the same page (`action=""`, like every other form
+  here) with the same hidden fields the native form sends
+  (`Setting=1`/`kPluginAdminMenu`/`jtl_token`), which `PluginController::
+  getResponse()` processes via `actionConfig()` *before* this Customlink file
+  even renders — confirmed nothing about persistence, encryption, or the
+  checkbox convention needed reimplementing (including the "empty encrypted
+  field keeps the existing value" behavior). `kPluginAdminMenu` for the
+  demoted Settingslink is looked up at runtime (`configurable === true`),
+  never hardcoded.
+- **New**: cron job scope is now configurable (Einstellungen → "Cronjob-
+  Einstellungen") — which presets it backs up, and whether to also include
+  "Komplett" (default: off, matching the previous hardcoded behavior).
+  `Cron/BackupCronJob.php` now reads this via two new
+  `SettingsRepository` methods instead of always looping every preset.
+- Translation catalog grown to 227 entries.
 
 <!-- Next bump also needs explicit confirmation. -->

@@ -1,0 +1,143 @@
+{include file="`$tplDir`/_partials/style.tpl"}
+{* Custom "Einstellungen" tab — see Controller\SettingsPageController's own
+   docblock for the full why/how (replaces the native Settingslink form,
+   which can only show <Description> as a hover tooltip and gives plugins no
+   hook for conditional fields — both requested and impossible there).
+   Variables assigned by Controller\SettingsPageController::render():
+     $jtlToken (string, raw <input> HTML from JTL\Helpers\Form::getTokenInput()),
+     $kPlugin (int), $kPluginAdminMenu (int, the demoted Settingslink's own ID),
+     $flashMessage (string|null), $flashSuccess (bool),
+     $connectionTestResult (array{ok,message}|null),
+     $sections (array of {title, description?, connectionTest?, fields: [...]})
+       field shapes:
+         text/number: {type, name, label, description, value}
+         checkbox: {type, name, label, description, checked, revealsField?}
+         encrypted: {type, name, label, description, hasValue, revealedBy?}
+         select: {type, name, label, description, options, value}
+         checkboxGroup: {type, name, label, description, options, selected}
+   This form POSTs to action="" like every other form in this plugin — see
+   this tab's own docblock for why that's enough (no special target URL
+   needed, actionConfig() runs as part of THIS SAME request/page). *}
+<div class="dbbackup-page">
+
+{if $flashMessage}
+<div class="alert alert-dismissible {if $flashSuccess}alert-success{else}alert-danger{/if} shadow-sm">
+    {$flashMessage|escape}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
+</div>
+{/if}
+
+{if $connectionTestResult}
+<div class="alert alert-dismissible {if $connectionTestResult.ok}alert-success{else}alert-danger{/if} shadow-sm">
+    {$connectionTestResult.message|escape}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
+</div>
+{/if}
+
+<form method="post" action="" id="dbbackup-settings-form">
+    <input type="hidden" name="cPluginTab" value="Einstellungen">
+    {$jtlToken}
+    <input type="hidden" name="kPlugin" value="{$kPlugin|escape}">
+    <input type="hidden" name="kPluginAdminMenu" value="{$kPluginAdminMenu|escape}">
+    <input type="hidden" name="Setting" value="1">
+
+    {foreach $sections as $section}
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-1">{$section.title|escape}</h5>
+            {if $section.description}<p class="small text-muted mb-3">{$section.description|escape}</p>{/if}
+
+            {foreach $section.fields as $field}
+            <div class="form-group form-row align-items-start mb-3 dbbackup-setting-row" {if $field.revealedBy}data-revealed-by="{$field.revealedBy|escape}" style="display:none;"{/if}>
+                <label class="col-sm-3 col-form-label" for="{$field.name}">{$field.label|escape}</label>
+                <div class="col-sm-9">
+                    {if $field.type === 'text'}
+                        <input type="text" class="form-control" id="{$field.name}" name="{$field.name}" value="{$field.value|escape}">
+                    {elseif $field.type === 'number'}
+                        <input type="number" class="form-control" id="{$field.name}" name="{$field.name}" value="{$field.value|escape}" style="max-width:10rem;">
+                    {elseif $field.type === 'checkbox'}
+                        <div class="form-check">
+                            <input class="form-check-input dbbackup-setting-checkbox" type="checkbox" id="{$field.name}" name="{$field.name}"
+                                   {if $field.checked}checked{/if} {if $field.revealsField}data-reveals="{$field.revealsField|escape}"{/if}>
+                            <label class="form-check-label" for="{$field.name}"></label>
+                        </div>
+                    {elseif $field.type === 'encrypted'}
+                        <input type="password" class="form-control" id="{$field.name}" name="{$field.name}" value="" autocomplete="new-password"
+                               placeholder="{if $field.hasValue}{d__('jtl_dbbackup_tool', '•••• (gespeichert — zum Ändern neu eingeben)')}{else}{d__('jtl_dbbackup_tool', 'nicht gesetzt')}{/if}">
+                    {elseif $field.type === 'select'}
+                        <select class="form-control" id="{$field.name}" name="{$field.name}" style="max-width:14rem;">
+                            {foreach $field.options as $optValue => $optLabel}
+                            <option value="{$optValue|escape}" {if $field.value === $optValue}selected{/if}>{$optLabel|escape}</option>
+                            {/foreach}
+                        </select>
+                    {elseif $field.type === 'checkboxGroup'}
+                        <input type="hidden" name="{$field.name}" id="{$field.name}-value" value="{$field.selectedCsv|escape}">
+                        <div class="d-flex flex-wrap" style="gap:.4rem .9rem;">
+                        {foreach $field.options as $optValue => $optLabel}
+                            <div class="form-check">
+                                <input class="form-check-input dbbackup-cron-preset-checkbox" type="checkbox" id="{$field.name}-{$optValue}"
+                                       data-preset="{$optValue|escape}" {if in_array($optValue, $field.selected, true)}checked{/if}>
+                                <label class="form-check-label" for="{$field.name}-{$optValue}">{$optLabel|escape}</label>
+                            </div>
+                        {/foreach}
+                        </div>
+                    {/if}
+                    {if $field.description}<small class="form-text text-muted">{$field.description|escape}</small>{/if}
+                </div>
+            </div>
+            {/foreach}
+
+            {if $section.connectionTest}
+            <div class="mt-2">
+                <button type="submit" form="dbbackup-test-connection-form" class="btn btn-outline-primary btn-sm">
+                    <i class="fal fa-plug mr-1"></i>{d__('jtl_dbbackup_tool', 'Verbindung testen')}
+                </button>
+                <span class="small text-muted ml-2">{d__('jtl_dbbackup_tool', 'Testet die zuletzt gespeicherten Zugangsdaten — noch nicht gespeicherte Änderungen oben zuerst speichern.')}</span>
+            </div>
+            {/if}
+        </div>
+    </div>
+    {/foreach}
+
+    <button type="submit" class="btn btn-primary">
+        <i class="fal fa-save mr-1"></i>{d__('jtl_dbbackup_tool', 'Speichern')}
+    </button>
+</form>
+
+<form method="post" action="" id="dbbackup-test-connection-form" class="d-none">
+    <input type="hidden" name="cPluginTab" value="Einstellungen">
+    {$jtlToken}
+    <input type="hidden" name="test_connection" value="1">
+</form>
+
+<script>
+(function () {
+    function applyReveal(checkboxName, revealed) {
+        document.querySelectorAll('.dbbackup-setting-row[data-revealed-by="' + checkboxName + '"]').forEach(function (row) {
+            row.style.display = revealed ? '' : 'none';
+        });
+    }
+
+    document.querySelectorAll('.dbbackup-setting-checkbox[data-reveals]').forEach(function (cb) {
+        applyReveal(cb.id, cb.checked);
+        cb.addEventListener('change', function () { applyReveal(cb.id, cb.checked); });
+    });
+
+    var cronHidden = document.getElementById('cron_backup_presets-value');
+    function syncCronPresets() {
+        if (!cronHidden) { return; }
+        var selected = [];
+        document.querySelectorAll('.dbbackup-cron-preset-checkbox:checked').forEach(function (cb) {
+            selected.push(cb.dataset.preset);
+        });
+        cronHidden.value = selected.join(',');
+    }
+    document.querySelectorAll('.dbbackup-cron-preset-checkbox').forEach(function (cb) {
+        cb.addEventListener('change', syncCronPresets);
+    });
+    var settingsForm = document.getElementById('dbbackup-settings-form');
+    if (settingsForm) { settingsForm.addEventListener('submit', syncCronPresets); }
+})();
+</script>
+
+</div>

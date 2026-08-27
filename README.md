@@ -48,14 +48,13 @@ plugins/<PluginID>/
                         FTPS/SFTP upload services
   Cron/                Recurring scheduled backup job
   Controller/          Backend tab controllers (Dashboard, Backup, Backups/Manager (class
-                        still named HistoryController — see its docblock), Settings)
+                        still named HistoryController — see its docblock), Settings —
+                        SettingsPageController, a fully custom tab, not the native
+                        <Settingslink> rendering — see "Confirmed against a real
+                        running install" below)
   Migrations/           Plugin's own schema migrations (audit log, backup history tables)
   adminmenu/            Adminmenu <Customlink> entry points + their templates
                         (verified location: PFAD_PLUGIN_ADMINMENU = 'adminmenu/')
-  templates/settings.tpl
-                        Settings-tab extra (connection-test button) — the
-                        Settingslink render/hook mechanism itself is NOT
-                        verified yet, see "Known gaps"
 ```
 
 `<PluginID>` is currently the placeholder `jtl_dbbackup_tool` — rename before
@@ -131,9 +130,6 @@ trusting it with real data:
   job wasn't verified in time. Fine in practice for every preset (small
   tables); "Komplett" on a very large database could hit a PHP request
   timeout. The recurring cron job (`BackupCronJob`) is unaffected.
-- The "Verbindung testen" button's connection-test *logic*
-  (`SettingsController::handleConnectionTest()`) is complete, but isn't
-  wired into the Settingslink-rendered form yet (see project layout above).
 - The audit log's own list (not the Backups tab, which now has real
   pagination) is still a plain, un-paginated table rather than reusing
   core's `pagination.tpl`/`$oBlaetterNavi` component — it has no admin UI of
@@ -229,6 +225,22 @@ documented in detail in `CHANGELOG.md`):
   Dashboard/Backups page load and re-adds a history row for any backup file
   found on disk (via its `.manifest.json` sidecar) that isn't already
   tracked — additive only, never touches an existing row.
+- **"Einstellungen" can't show always-visible help text or a conditional
+  field (e.g. only reveal the encryption password once its checkbox is
+  on) via the native `<Settingslink>` form.** Confirmed against
+  `admin/templates/bootstrap/tpl_inc/plugin_options.tpl` and
+  `help_description.tpl`: `<Setting><Description>` always renders as a
+  hover-only tooltip, and `PluginController::renderMenu()` gives plugins no
+  hook to inject their own JS/HTML into that auto-generated form. Replaced
+  it with a fully custom Customlink tab (`SettingsPageController`) that
+  POSTs to the exact same native save endpoint
+  (`PluginController::actionConfig()`, reached via the same
+  `action=""` + `Setting=1`/`kPluginAdminMenu`/`jtl_token` fields the native
+  form itself sends) — persistence, encryption, and the checkbox convention
+  are all still 100% the untouched native mechanism. The native Settingslink
+  can't be deleted outright (`SettingsLinks::install()` always creates it a
+  menu entry, no headless option), so it's demoted to "Erweiterte
+  Einstellungen (Rohformular)", sorted last, as a fallback.
 
 ## Next steps
 

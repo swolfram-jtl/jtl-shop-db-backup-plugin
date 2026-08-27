@@ -148,7 +148,7 @@
                     <li>{d__('jtl_dbbackup_tool', 'Intervall in Stunden festlegen (z. B. 24 für täglich) sowie eine Startzeit außerhalb der Stoßzeiten (z. B. nachts).')}</li>
                     <li>{d__('jtl_dbbackup_tool', 'Speichern — der Auftrag erscheint danach in der Übersicht und läuft ab dann automatisch.')}</li>
                 </ol>
-                <p class="small text-muted mb-0 mt-2">{d__('jtl_dbbackup_tool', 'Der Cronjob sichert automatisch jedes einzelne Preset (Kundenimport, Newsletter usw.), aber nie „Komplett" — das bleibt bewusst ein manueller Klick, da es die Performance sichtbar beeinflussen kann.')}</p>
+                <p class="small text-muted mb-0 mt-2">{d__('jtl_dbbackup_tool', 'Welche Presets der Cronjob sichert (und ob zusätzlich „Komplett" dazugehört) legst du unter „Einstellungen" → „Cronjob-Einstellungen" fest — Standard ist jedes Preset einzeln, „Komplett" bewusst nicht (Performance).')}</p>
             </div>
         </div>
     </div>

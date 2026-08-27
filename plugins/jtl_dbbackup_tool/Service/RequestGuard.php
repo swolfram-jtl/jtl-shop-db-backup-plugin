@@ -25,6 +25,7 @@ final class RequestGuard
     private static bool $restoreActionHandled = false;
     private static bool $deleteActionHandled = false;
     private static bool $commentActionHandled = false;
+    private static bool $testConnectionActionHandled = false;
 
     public static function claimBackupTrigger(): bool
     {
@@ -66,6 +67,17 @@ final class RequestGuard
         }
 
         self::$commentActionHandled = true;
+
+        return true;
+    }
+
+    public static function claimTestConnectionAction(): bool
+    {
+        if (self::$testConnectionActionHandled) {
+            return false;
+        }
+
+        self::$testConnectionActionHandled = true;
 
         return true;
     }

@@ -591,3 +591,96 @@ msgstr "The cronjob automatically backs up every individual preset (customer imp
 msgid "zuletzt"
 msgstr "last"
 
+msgid "FTP/SFTP-Ziel"
+msgstr "FTP/SFTP Target"
+
+msgid "Klartext-FTP wird aus Sicherheitsgründen nicht unterstützt."
+msgstr "Plain-text FTP is not supported for security reasons."
+
+msgid "Leer lassen für den Standard-Port (FTPS: 21, SFTP: 22)."
+msgstr "Leave empty for the default port (FTPS: 21, SFTP: 22)."
+
+msgid "Für FTPS immer nötig; für SFTP nur, wenn kein privater Schlüssel hinterlegt ist."
+msgstr "Always required for FTPS; for SFTP only if no private key is set."
+
+msgid "Alternative zum Passwort, nur für SFTP. Einzeiliges Feld — den Schlüssel ggf. extern zu einer Zeile zusammenhängend kopieren."
+msgstr "An alternative to the password, SFTP only. Single-line field — join the key into one line externally first if needed."
+
+msgid "Nur nötig, wenn der obige private Schlüssel selbst mit einer Passphrase geschützt ist."
+msgstr "Only needed if the private key above is itself protected by a passphrase."
+
+msgid "Verzeichnis auf dem Server, in das Backups hochgeladen werden."
+msgstr "Directory on the server that backups are uploaded into."
+
+msgid "Verschlüsselung"
+msgstr "Encryption"
+
+msgid "Verschlüsselt die Backup-Datei zusätzlich mit XChaCha20-Poly1305, bevor sie lokal gespeichert bzw. hochgeladen wird."
+msgstr "Additionally encrypts the backup file with XChaCha20-Poly1305 before it's stored locally or uploaded."
+
+msgid "Wichtig: dieses Passwort verloren = betroffene Backups unlesbar, es gibt keine Wiederherstellung ohne es."
+msgstr "Important: lose this password and the affected backups become unreadable — there is no recovery without it."
+
+msgid "Backup-Verhalten"
+msgstr "Backup Behavior"
+
+msgid "Reiner Kunden-Komfort (verhindert Bestellungen mitten im Backup) — keine technische Konsistenzgarantie für die Backup-Datei selbst."
+msgstr "Pure customer-facing convenience (prevents orders mid-backup) — not a technical consistency guarantee for the backup file itself."
+
+msgid "Ältere Backups werden automatisch gelöscht, sobald mehr als diese Anzahl vorhanden ist."
+msgstr "Older backups are automatically deleted once more than this many exist."
+
+msgid "Backups älter als diese Anzahl Tage werden automatisch gelöscht (0 = kein Limit)."
+msgstr "Backups older than this many days are automatically deleted (0 = no limit)."
+
+msgid "Info-E-Mail bei Fehlschlag"
+msgstr "Notify by Email on Failure"
+
+msgid "E-Mail-Adresse für eine automatische Infomail, sobald ein Backup oder Upload fehlschlägt. Leer lassen für keine E-Mail."
+msgstr "Email address for an automatic notification once a backup or upload fails. Leave empty for no email."
+
+msgid "Legt vor jedem Restore automatisch ein Backup des aktuellen Stands an, damit ein missglückter Restore selbst rückgängig gemacht werden kann. Nur abschalten, wenn du genau weißt, warum."
+msgstr "Automatically creates a backup of the current state before every restore, so a failed restore can itself be undone. Only turn off if you know exactly why."
+
+msgid "Prüft nach einem Teil-Restore (z. B. nur Kunden) andere Tabellen auf möglicherweise verwaiste Datensätze und zeigt sie als Hinweis an."
+msgstr "After a partial restore (e.g. customers only), checks other tables for possibly orphaned records and shows them as a notice."
+
+msgid "Blockiert Restore hart, wenn sich die Tabellenstruktur seit dem Backup geändert hat (z. B. durch ein Shop-Update), statt nur zu warnen. Ein Restore lässt sich dann nur mit ausdrücklicher Bestätigung erzwingen."
+msgstr "Hard-blocks restore if the table structure has changed since the backup (e.g. due to a shop update), instead of just warning. A restore can then only be forced with explicit confirmation."
+
+msgid "Cronjob-Einstellungen"
+msgstr "Cronjob Settings"
+
+msgid "Legt fest, was der wiederkehrende Cronjob sichert — den Cronjob selbst richtest du in JTL-Shops eigener Cron-Verwaltung ein (siehe Hinweis im Dashboard)."
+msgstr "Sets what the recurring cronjob backs up — you set up the cronjob itself in JTL-Shop's own cron management (see the note on the Dashboard)."
+
+msgid "Presets im Cronjob"
+msgstr "Presets in the Cronjob"
+
+msgid "Welche Presets der Cronjob bei jedem Lauf einzeln sichert."
+msgstr "Which presets the cronjob backs up individually on every run."
+
+msgid "„Komplett\" im Cronjob einschließen"
+msgstr "Include \"Complete\" in the Cronjob"
+
+msgid "Standard: aus — ein wiederkehrendes Komplett-Backup kann die Performance auf einer großen Datenbank spürbar beeinträchtigen."
+msgstr "Default: off — a recurring complete backup can noticeably affect performance on a large database."
+
+msgid "Welche Presets der Cronjob sichert (und ob zusätzlich „Komplett\" dazugehört) legst du unter „Einstellungen\" → „Cronjob-Einstellungen\" fest — Standard ist jedes Preset einzeln, „Komplett\" bewusst nicht (Performance)."
+msgstr "Which presets the cronjob backs up (and whether \"Complete\" is included too) is set under \"Einstellungen\" → \"Cronjob-Einstellungen\" — the default is every preset individually, deliberately not \"Complete\" (performance)."
+
+msgid "•••• (gespeichert — zum Ändern neu eingeben)"
+msgstr "•••• (saved — retype to change)"
+
+msgid "nicht gesetzt"
+msgstr "not set"
+
+msgid "Verbindung testen"
+msgstr "Test Connection"
+
+msgid "Testet die zuletzt gespeicherten Zugangsdaten — noch nicht gespeicherte Änderungen oben zuerst speichern."
+msgstr "Tests the most recently saved credentials — save any unsaved changes above first."
+
+msgid "Einstellungen gespeichert."
+msgstr "Settings saved."
+

@@ -37,12 +37,12 @@
 {if $overviewTiles}
 <div class="d-flex flex-wrap mb-4" style="gap:.6rem;">
     {foreach $overviewTiles as $tile}
-    <div class="dbbackup-summary-chip {if $tile.presetKey === 'full'}dbbackup-summary-chip--full{/if}">
+    <div class="dbbackup-summary-chip {if $tile.presetKey === 'full'}dbbackup-summary-chip--full{/if}"
+         data-toggle="collapse" data-target="#group-{$tile.presetKey|escape}" role="button"
+         onclick="var t=document.getElementById('group-{$tile.presetKey|escape}'); if(t){setTimeout(function(){t.scrollIntoView({behavior:'smooth', block:'start'});}, 150);}">
         <div class="dbbackup-summary-chip-label">{$tile.presetLabel|escape}</div>
-        <div class="d-flex align-items-baseline" style="gap:.4rem;">
-            <span class="dbbackup-summary-chip-count">{$tile.count}</span>
-            <span class="small text-muted">{d__('jtl_dbbackup_tool', 'zuletzt')}: {$tile.lastCreated|escape}</span>
-        </div>
+        <div class="dbbackup-summary-chip-count">{$tile.count}</div>
+        <div class="dbbackup-summary-chip-meta">{d__('jtl_dbbackup_tool', 'zuletzt')}: {$tile.lastCreated|escape}</div>
     </div>
     {/foreach}
 </div>
