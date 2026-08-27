@@ -1,11 +1,14 @@
 {include file="`$tplDir`/_partials/style.tpl"}
 {* Custom "Einstellungen" tab — see Controller\SettingsPageController's own
-   docblock for the full why/how (replaces the native Settingslink form,
-   which can only show <Description> as a hover tooltip and gives plugins no
-   hook for conditional fields — both requested and impossible there).
+   docblock for the full why/how. Settings live in this plugin's OWN table
+   now (SettingsStore) — the native <Settingslink> form/schema this tab
+   originally reused for persistence is gone entirely (that's what made
+   removing the "Erweiterte Einstellungen (Rohformular)" fallback tab
+   possible; it could never be removed while anything still depended on its
+   <Setting> schema). This tab does its own CSRF check (Form::validateToken(),
+   against the same $jtlToken below) and its own save logic.
    Variables assigned by Controller\SettingsPageController::render():
      $jtlToken (string, raw <input> HTML from JTL\Helpers\Form::getTokenInput()),
-     $kPlugin (int), $kPluginAdminMenu (int, the demoted Settingslink's own ID),
      $flashMessage (string|null), $flashSuccess (bool),
      $connectionTestResult (array{ok,message}|null),
      $sections (array of {title, description?, connectionTest?, fields: [...]})
@@ -16,8 +19,9 @@
          select: {type, name, label, description, options, value}
          checkboxGroup: {type, name, label, description, options, selected}
    This form POSTs to action="" like every other form in this plugin — see
-   this tab's own docblock for why that's enough (no special target URL
-   needed, actionConfig() runs as part of THIS SAME request/page).
+   dashboard.tpl's header comment for why (every Adminmenu tab file executes
+   on every request; a relative action keeps the submit on whichever URL is
+   actually loaded).
    Single form, two submit buttons ("Speichern" / "Speichern und Verbindung
    testen" — spec: like the shop's own mail-server settings) — fixed a real
    reported bug where a SEPARATE test-connection form (posting none of the
@@ -38,9 +42,7 @@
 <form method="post" action="" id="dbbackup-settings-form">
     <input type="hidden" name="cPluginTab" value="Einstellungen">
     {$jtlToken}
-    <input type="hidden" name="kPlugin" value="{$kPlugin|escape}">
-    <input type="hidden" name="kPluginAdminMenu" value="{$kPluginAdminMenu|escape}">
-    <input type="hidden" name="Setting" value="1">
+    <input type="hidden" name="save_settings" value="1">
 
     {foreach $sections as $section}
     <div class="card shadow-sm mb-4">

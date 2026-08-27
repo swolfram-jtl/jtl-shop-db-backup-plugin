@@ -74,7 +74,7 @@ final class HistoryController
         $previewDecryptionPassphrase = null;
 
         $restoreService = $this->buildRestoreService($plugin, $db);
-        $settings = new SettingsRepository($plugin);
+        $settings = new SettingsRepository($db);
         $adminAccountId = (int) ($_SESSION['AdminAccount']->kAdminlogin ?? 0);
 
         // Self-healing for a real reported gap: an uninstall/reinstall (or

@@ -38,7 +38,7 @@ final class BackupTrigger
      */
     public function trigger(string $presetKey, int $adminAccountId, array $formOptions = []): array
     {
-        $settings = new SettingsRepository($this->plugin);
+        $settings = new SettingsRepository($this->db);
         $backupService = BackupServiceFactory::build($this->plugin, $this->db);
 
         if ($presetKey === 'full') {

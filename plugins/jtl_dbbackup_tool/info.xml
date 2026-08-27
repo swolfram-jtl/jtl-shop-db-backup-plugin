@@ -96,202 +96,35 @@
             <Customlink sort="4">
                 <Name>Einstellungen</Name>
                 <Filename>settings.php</Filename>
-                <!-- CUSTOM settings tab (Controller\SettingsPageController),
-                     not the native Settingslink-rendered form — verified
-                     against admin/templates/bootstrap/tpl_inc/plugin_options.tpl
-                     and help_description.tpl that the native form ALWAYS
-                     renders a Setting's <Description> as a hover-only tooltip
-                     icon and gives plugins no hook to inject custom JS/HTML
-                     (conditional fields, always-visible help text) into it —
-                     both were explicitly requested and impossible there.
-                     This custom tab instead POSTs directly to the exact same
-                     native save endpoint every Settingslink form uses
-                     (JTL\Router\Controller\Backend\PluginController::actionConfig(),
-                     reached at Shop::getAdminURL(true).'plugin/'.$plugin->getID()),
-                     with the same kPlugin/kPluginAdminMenu/Setting=1/jtl_token
-                     hidden fields and each field posted under name="<ValueName>" —
-                     so persistence is 100% the untouched native mechanism
-                     (including the "empty encrypted field = keep existing
-                     value" behavior confirmed in PluginController::handleEncryptedInput()),
-                     only the rendering is custom. See SettingsPageController's
-                     own docblock for the full mechanics. -->
+                <!-- CUSTOM settings tab (Controller\SettingsPageController) —
+                     fully self-contained persistence, its own table
+                     (Service\SettingsStore, see Migration20260827140000),
+                     not a native <Setting>/<Settingslink> anywhere in this
+                     file. Originally reused the native PluginController::
+                     actionConfig() save endpoint (which required keeping a
+                     demoted, sorted-last <Settingslink> around purely for
+                     its <Setting> schema) — moved off that entirely once the
+                     demoted tab itself was no longer wanted, since a
+                     <Settingslink> can never register that schema without
+                     ALSO creating a visible menu tab for it (confirmed
+                     against SettingsLinks::install()). See
+                     SettingsPageController's own docblock for the full
+                     mechanics, including how encrypted fields (FTP password
+                     etc.) are still stored via the shop's own
+                     CryptoServiceInterface, same as before. -->
             </Customlink>
-            <Settingslink sort="5">
-                <Name>Erweiterte Einstellungen (Rohformular)</Name>
-                <!-- Renamed from "Einstellungen" — this native Settingslink
-                     tab can't be removed (SettingsLinks::install() always
-                     creates ONE tpluginadminmenu row per <Settingslink>, with
-                     no "headless"/schema-only option — confirmed against
-                     includes/src/Plugin/Admin/Installation/Items/SettingsLinks.php),
-                     so instead of two same-named tabs it's demoted to an
-                     out-of-the-way fallback: same fields, JTL's own stock
-                     rendering (hover-only descriptions, no conditional
-                     fields), sorted last. The real, intended settings
-                     experience is the "Einstellungen" Customlink above. All
-                     <Setting> children below are UNCHANGED from before this
-                     split — they still register the exact same schema/
-                     storage (tplugineinstellungenconf/tplugineinstellungen)
-                     that SettingsRepository AND the new custom tab both read
-                     from identically. -->
-
-                <Setting type="text" initialValue="" conf="N" sort="1">
-                    <Name>Backup-Einstellungen</Name>
-                    <ValueName>section_backup</ValueName>
-                    <Description></Description>
-                    <!-- conf="N" = section heading (Config::TYPE_NOT_CONFIGURABLE),
-                         CONFIRMED against tpl_inc/plugin_options.tpl: the
-                         heading text shown is $confItem->niceName, which maps
-                         to THIS <Name> element — NOT <Description> and NOT
-                         initialValue (a conf="N" item's stored value is never
-                         read/displayed at all). Originally had this backwards
-                         (a snake_case key in <Name>, the real heading text
-                         wasted on initialValue) — that key was shown verbatim
-                         since translatePluginOrCoreMessage() only maps to
-                         another string if a matching gettext entry exists,
-                         otherwise returns the original unchanged (the admin
-                         theme's .subheading1 CSS then uppercases it, hence
-                         "SECTION_BACKUP" on screen). -->
-                </Setting>
-                <Setting type="selectbox" initialValue="ftps" conf="Y" sort="2">
-                    <Name>Übertragungsprotokoll</Name>
-                    <ValueName>ftp_protocol</ValueName>
-                    <Description>Klartext-FTP wird aus Sicherheitsgruenden nicht unterstuetzt — nur FTPS oder SFTP.</Description>
-                    <SelectboxOptions>
-                        <Option value="ftps" sort="0">FTPS</Option>
-                        <Option value="sftp" sort="1">SFTP</Option>
-                    </SelectboxOptions>
-                    <!-- Confirmed schema against docs/de/docs/shop_plugins/infoxml.md
-                         lines 879-993 + SettingsLinks.php — real dropdown now,
-                         not free text. <Name> changed from the raw ValueName
-                         ("ftp_protocol") to a real title — same fix as the
-                         section headings below, applied to every setting in
-                         this file: tpl_inc/plugin_options.tpl shows THIS
-                         element as the field label, not <ValueName>. -->
-                </Setting>
-                <Setting type="text" initialValue="" conf="Y" sort="3">
-                    <Name>Host</Name>
-                    <ValueName>ftp_host</ValueName>
-                    <Description>Adresse des FTPS/SFTP-Servers, z. B. backup.example.com</Description>
-                </Setting>
-                <Setting type="text" initialValue="" conf="Y" sort="4">
-                    <Name>Port</Name>
-                    <ValueName>ftp_port</ValueName>
-                    <Description>Leer lassen fuer den Standard-Port (FTPS: 21, SFTP: 22).</Description>
-                </Setting>
-                <Setting type="text" initialValue="" conf="Y" sort="5">
-                    <Name>Benutzername</Name>
-                    <ValueName>ftp_username</ValueName>
-                    <Description></Description>
-                </Setting>
-                <Setting type="encrypted" initialValue="" conf="Y" sort="6">
-                    <Name>Passwort</Name>
-                    <ValueName>ftp_password</ValueName>
-                    <Description>Fuer FTPS immer noetig; fuer SFTP nur, wenn unten kein privater Schluessel hinterlegt ist.</Description>
-                </Setting>
-                <Setting type="encrypted" initialValue="" conf="Y" sort="7">
-                    <Name>SFTP: Privater Schlüssel</Name>
-                    <ValueName>ftp_private_key</ValueName>
-                    <Description>Alternative zum Passwort, nur fuer SFTP. Einzeiliges Eingabefeld — den Schluessel ggf. extern zu einer Zeile zusammenhaengend kopieren.</Description>
-                </Setting>
-                <Setting type="encrypted" initialValue="" conf="Y" sort="8">
-                    <Name>SFTP: Passphrase des Schlüssels</Name>
-                    <ValueName>ftp_private_key_passphrase</ValueName>
-                    <Description>Nur noetig, wenn der obige private Schluessel selbst mit einer Passphrase geschuetzt ist.</Description>
-                </Setting>
-                <Setting type="text" initialValue="/" conf="Y" sort="9">
-                    <Name>Zielverzeichnis</Name>
-                    <ValueName>ftp_remote_dir</ValueName>
-                    <Description>Verzeichnis auf dem FTPS/SFTP-Server, in das Backups hochgeladen werden.</Description>
-                </Setting>
-                <Setting type="checkbox" initialValue="" conf="Y" sort="10">
-                    <Name>Backup verschlüsseln</Name>
-                    <ValueName>encryption_enabled</ValueName>
-                    <Description>Backup-Datei zusaetzlich mit XChaCha20-Poly1305 verschluesseln, bevor sie lokal gespeichert bzw. hochgeladen wird. Standard: aus. Passwort unten festlegen — ohne dieses Passwort ist ein verschluesseltes Backup spaeter nicht mehr lesbar.</Description>
-                    <!-- CONFIRMED against tpl_inc/plugin_options.tpl: the core's
-                         own checkbox <input> has no value= attribute, so a
-                         checked box always POSTs the literal string "on"
-                         (browser default), and the template re-checks the box
-                         only if the stored value === "on" — "Y"/"N" was never
-                         a real convention here, just an incorrect assumption
-                         carried over from elsewhere. An unchecked box sends
-                         nothing at all, so PluginController::actionConfig()
-                         stores NULL for "off", not "N" — default-off is
-                         therefore an empty initialValue, not "N". -->
-                </Setting>
-                <Setting type="encrypted" initialValue="" conf="Y" sort="11">
-                    <Name>Verschlüsselungs-Passwort</Name>
-                    <ValueName>encryption_passphrase</ValueName>
-                    <Description>Nur wirksam, wenn "Backup verschluesseln" oben aktiviert ist. Wichtig: dieses Passwort verloren = betroffene Backups unlesbar, es gibt keine Wiederherstellung ohne es.</Description>
-                </Setting>
-                <Setting type="checkbox" initialValue="on" conf="Y" sort="12">
-                    <Name>Wartungsmodus während des Backups</Name>
-                    <ValueName>maintenance_mode_enabled</ValueName>
-                    <Description>Shop waehrend des Backups kurz in den Wartungsmodus versetzen. Reiner Kunden-Komfort (verhindert Bestellungen mitten im Backup) — keine technische Konsistenzgarantie fuer die Backup-Datei selbst. Standard: an.</Description>
-                </Setting>
-                <Setting type="text" initialValue="10" conf="Y" sort="13">
-                    <Name>Max. Anzahl Backups</Name>
-                    <ValueName>retention_max_count</ValueName>
-                    <Description>Aeltere Backups werden automatisch geloescht, sobald mehr als diese Anzahl vorhanden ist (die zuletzt erstellten bleiben immer erhalten).</Description>
-                </Setting>
-                <Setting type="text" initialValue="90" conf="Y" sort="14">
-                    <Name>Max. Alter in Tagen</Name>
-                    <ValueName>retention_max_age_days</ValueName>
-                    <Description>Backups, die aelter als diese Anzahl Tage sind, werden automatisch geloescht (0 = kein Alterslimit).</Description>
-                </Setting>
-                <Setting type="text" initialValue="" conf="Y" sort="15">
-                    <Name>Info-E-Mail bei Fehlschlag</Name>
-                    <ValueName>notify_email_on_failure</ValueName>
-                    <Description>E-Mail-Adresse, an die eine automatische Infomail geht, sobald ein Backup oder Upload fehlschlaegt. Leer lassen, um keine E-Mail zu erhalten.</Description>
-                </Setting>
-
-                <Setting type="text" initialValue="" conf="N" sort="16">
-                    <Name>Wiederherstellen-Einstellungen</Name>
-                    <ValueName>section_restore</ValueName>
-                    <Description></Description>
-                </Setting>
-                <Setting type="checkbox" initialValue="on" conf="Y" sort="17">
-                    <Name>Vorab-Snapshot vor Restore</Name>
-                    <ValueName>pre_restore_snapshot_enabled</ValueName>
-                    <Description>Vor jedem Restore automatisch ein Backup des aktuellen Stands anlegen, damit ein missglueckter Restore selbst rueckgaengig gemacht werden kann. Standard: an — nur abschalten, wenn du genau weisst, warum.</Description>
-                </Setting>
-                <Setting type="checkbox" initialValue="on" conf="Y" sort="18">
-                    <Name>Konsistenzprüfung nach Restore</Name>
-                    <ValueName>post_restore_consistency_check_enabled</ValueName>
-                    <Description>Nach einem Teil-Restore (z. B. nur Kunden) auf moeglicherweise verwaiste Datensaetze in anderen Tabellen pruefen und als Hinweis anzeigen. Standard: an.</Description>
-                </Setting>
-                <Setting type="checkbox" initialValue="on" conf="Y" sort="19">
-                    <Name>Bei Strukturabweichung blockieren</Name>
-                    <ValueName>version_fingerprint_block_enabled</ValueName>
-                    <Description>Restore hart blockieren, wenn sich die Tabellenstruktur seit dem Backup geaendert hat (z. B. durch ein Shop-Update), statt nur zu warnen. Standard: an — sicherer, aber ein Restore laesst sich dann nur mit ausdruecklicher Bestaetigung erzwingen.</Description>
-                </Setting>
-
-                <Setting type="text" initialValue="" conf="N" sort="20">
-                    <Name>Cronjob-Einstellungen</Name>
-                    <ValueName>section_cron</ValueName>
-                    <Description></Description>
-                </Setting>
-                <Setting type="text" initialValue="customer_import,newsletter_import,zip_import,redirect_import,coupon_import,review_import,language_import" conf="Y" sort="21">
-                    <Name>Presets im Cronjob (kommagetrennt)</Name>
-                    <ValueName>cron_backup_presets</ValueName>
-                    <Description>Preset-Schluessel, die der wiederkehrende Cronjob sichert, kommagetrennt. Bearbeitung ueber den Haupt-Tab "Einstellungen" empfohlen (dort als Checkbox-Liste) — dieses Rohfeld ist der direkte Speicherwert.</Description>
-                    <!-- Comma-joined list rather than a native multi-select
-                         <Setting> (type="selectbox" multiple="Y") deliberately:
-                         the custom "Einstellungen" tab renders this as real
-                         checkboxes and posts a joined string, which is simpler
-                         and more robust than replicating core's TYPE_DYNAMIC
-                         serialize()'d-array convention for a field this tab
-                         doesn't even use the native rendering for. Default =
-                         every PresetRegistry key, matching this plugin's
-                         previous (hardcoded, unconfigurable) cron behavior —
-                         upgrading an existing install changes nothing until
-                         the admin deliberately edits this. -->
-                </Setting>
-                <Setting type="checkbox" initialValue="" conf="Y" sort="22">
-                    <Name>„Komplett" im Cronjob einschließen</Name>
-                    <ValueName>cron_backup_include_full</ValueName>
-                    <Description>Zusaetzlich zu den oben ausgewaehlten Presets bei jedem Cronjob-Lauf auch ein volles "Komplett"-Backup anlegen. Standard: aus — ein wiederkehrendes Komplett-Backup kann die Performance auf einer grossen Datenbank spuerbar beeintraechtigen, das bleibt bewusst eine bewusste Entscheidung.</Description>
-                </Setting>
-            </Settingslink>
+            <!-- No <Settingslink> here anymore, deliberately: it used to
+                 exist purely to keep the <Setting> schema registered (a
+                 demoted "Erweiterte Einstellungen (Rohformular)" fallback
+                 tab, since a <Settingslink> can never register that schema
+                 without ALSO creating a visible menu tab for it — confirmed
+                 against SettingsLinks::install()). Settings now live in this
+                 plugin's own table instead (Service\SettingsStore, added by
+                 Migration20260827140000, which also carries over anything an
+                 existing install already saved through this native form) —
+                 see Controller\SettingsPageController's docblock for the
+                 full why. That removed the only reason this tab had to
+                 exist at all. -->
         </Adminmenu>
     </Install>
 </jtlshopplugin>

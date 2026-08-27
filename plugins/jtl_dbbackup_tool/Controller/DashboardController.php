@@ -43,7 +43,7 @@ final class DashboardController
         $history = new BackupHistoryRepository($db);
         $storage = new StorageService(\dirname($plugin->getPaths()->getAdminPath()));
         $lock = new LockService($storage->baseDirectory() . '/.lock');
-        $settings = new SettingsRepository($plugin);
+        $settings = new SettingsRepository($db);
         $manifestService = new ManifestService($db);
         $instanceId = \substr($manifestService->instanceId(), 0, 32);
 

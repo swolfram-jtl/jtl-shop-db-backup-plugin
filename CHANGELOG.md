@@ -524,5 +524,32 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   `admin/templates/bootstrap/tpl_inc/einstellungen_bearbeiten.tpl`, the
   mail-server settings page's own save-and-test button) instead of this
   plugin's usual outline-primary.
+- **Removed the "Erweiterte Einstellungen (Rohformular)" fallback tab
+  entirely**, by moving settings storage off the native `<Settingslink>`
+  mechanism altogether. CONFIRMED against `includes/src/Plugin/Admin/
+  Installation/Items/SettingsLinks.php::install()`: a `<Settingslink>` can
+  never register its `<Setting>` schema without ALSO unconditionally
+  creating a visible `tpluginadminmenu` menu row for it — there is no
+  headless/schema-only registration path in this shop version, which is
+  exactly why that fallback tab existed at all despite being unwanted.
+  Settings now live in a new plugin-owned table (`Service\SettingsStore`,
+  `Migration20260827140000`) instead of `tplugineinstellungen*`. Encrypted
+  fields (FTP password, SFTP key/passphrase, backup encryption passphrase)
+  keep the exact same storage shape — `base64(XTEA(plaintext))` via the
+  shop's own `CryptoServiceInterface` — so no new key management was
+  introduced and an existing install's already-configured values decrypt
+  correctly with zero conversion. The migration also does a one-time,
+  idempotent copy of whatever was already saved through the native form
+  (`ON DUPLICATE KEY UPDATE`, safe to re-run, a no-op on a fresh install) —
+  a real install already has live FTP credentials configured, and upgrading
+  must not silently lose them. `Controller\SettingsPageController` now does
+  its own CSRF check (`Form::validateToken()`) and its own save logic
+  (deriving field name/type from the SAME `$sections` structure already
+  used for rendering, not a second hardcoded field list), since it no
+  longer routes through `PluginController::actionConfig()` at all.
+  `SettingsRepository`'s public API (every `SettingsRepository::xyz()`
+  method every other class already calls) is completely unchanged — only
+  its constructor (`DbInterface` instead of `PluginInterface`, plumbed
+  through 6 call sites) and internal storage changed.
 
 <!-- Next bump also needs explicit confirmation. -->

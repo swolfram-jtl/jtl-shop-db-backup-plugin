@@ -18,7 +18,7 @@ final class BackupServiceFactory
 {
     public static function build(PluginInterface $plugin, DbInterface $db): BackupService
     {
-        $settings = new SettingsRepository($plugin);
+        $settings = new SettingsRepository($db);
         $storage = new StorageService(\dirname($plugin->getPaths()->getAdminPath()));
         $manifest = new ManifestService($db);
         $history = new BackupHistoryRepository($db);

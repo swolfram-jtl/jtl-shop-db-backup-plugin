@@ -732,3 +732,15 @@ msgstr "Customers"
 msgid "Coupons"
 msgstr "Coupons"
 
+msgid "Sicherheits-Token ungültig oder abgelaufen — bitte die Seite neu laden und erneut versuchen."
+msgstr "Security token invalid or expired — please reload the page and try again."
+
+msgid "Legt fest, was der erste, wiederkehrende Cronjob-Typ sichert — die Cronjobs selbst richtest du in JTL-Shops eigener Cron-Verwaltung ein (siehe Hinweis im Dashboard). Ein zweiter, unabhängiger Job-Typ sichert immer „Komplett\", ohne dass er hier konfiguriert wird."
+msgstr "Sets what the first, recurring cron job type backs up — the cron jobs themselves are set up in JTL-Shop's own Cron admin (see the hint on the Dashboard). A second, independent job type always backs up \"Komplett\", without being configured here."
+
+msgid "„Komplett\" zusätzlich in DIESEN Cronjob einschließen"
+msgstr "Also include \"Komplett\" in THIS cron job"
+
+msgid "Standard: aus — ein wiederkehrendes Komplett-Backup kann die Performance auf einer großen Datenbank spürbar beeinträchtigen. Der zweite, unabhängige Cronjob-Typ für „Komplett\" ist meist die bessere Wahl für ein eigenes Zeitfenster."
+msgstr "Default: off — a recurring full backup can noticeably impact performance on a large database. The second, independent cron job type for \"Komplett\" is usually the better choice for its own time window."
+

@@ -48,7 +48,7 @@ final class BackupCronJob extends Job implements JobInterface
 
             $db = Shop::Container()->getDB();
             $trigger = new BackupTrigger($plugin, $db);
-            $settings = new SettingsRepository($plugin);
+            $settings = new SettingsRepository($db);
 
             foreach ($settings->cronBackupPresets() as $presetKey) {
                 $trigger->trigger($presetKey, 0);

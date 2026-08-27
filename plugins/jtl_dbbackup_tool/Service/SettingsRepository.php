@@ -4,20 +4,31 @@ declare(strict_types=1);
 
 namespace Plugin\jtl_dbbackup_tool\Service;
 
-use JTL\Plugin\PluginInterface;
+use JTL\DB\DbInterface;
+use JTL\Shop;
 use Plugin\jtl_dbbackup_tool\Service\Upload\FtpsUploadTarget;
 use Plugin\jtl_dbbackup_tool\Service\Upload\SftpUploadTarget;
 use Plugin\jtl_dbbackup_tool\Service\Upload\UploadTargetInterface;
 
 /**
- * Wraps JTL\Plugin\Data\Config, verified via includes/src/Plugin/Data/Config.php
- * and includes/src/Plugin/PluginInterface.php: a plugin reads its own settings
- * via $plugin->getConfig()->getValue($name), and — critically, for the
- * type="encrypted" fields declared in info.xml — MUST call
- * getDecryptedValue($name) instead to get real plaintext; getValue() on an
- * encrypted field returns the still-encrypted stored blob. This class is the
- * one place that distinction is applied, so callers never have to think
- * about it.
+ * Reads this plugin's own settings table (SettingsStore) — NOT
+ * $plugin->getConfig(), a deliberate move away from the native
+ * <Settingslink>/tplugineinstellungen* mechanism (see
+ * Controller\SettingsPageController's own docblock, and
+ * Migration20260827140000's, for the full why: that native mechanism can't
+ * register its <Setting> schema without ALSO creating a permanent, visible
+ * "Erweiterte Einstellungen (Rohformular)" menu tab, confirmed against
+ * SettingsLinks::install()).
+ *
+ * Encrypted fields need one extra step this class still owns exactly like
+ * before: values are stored as base64(XTEA(plaintext)) — the SAME shape
+ * JTL\Plugin\Data\Config::getDecryptedValue()/PluginController::
+ * handleEncryptedInput() already used natively (CONFIRMED against both),
+ * reusing the shop's own CryptoServiceInterface (Shop::Container()->
+ * getCryptoService()) rather than inventing new key management. This also
+ * means the one-time-migrated values from an existing native install
+ * decrypt correctly without any format conversion — see the migration's
+ * docblock.
  *
  * CONFIRMED against admin/templates/bootstrap/tpl_inc/plugin_options.tpl and
  * Router\Controller\Backend\PluginController::actionConfig(): a checkbox
@@ -28,26 +39,45 @@ use Plugin\jtl_dbbackup_tool\Service\Upload\UploadTargetInterface;
  * submits nothing, so the stored value becomes NULL, not "N". Earlier
  * assumed 'Y'/'N' here (wrong) — that's why every checkbox toggle in this
  * plugin silently read as permanently disabled even when info.xml declared
- * initialValue="Y" and the admin UI showed it checked.
+ * initialValue="Y" and the admin UI showed it checked. Controller\
+ * SettingsPageController's own save logic (the only writer) still follows
+ * this exact same convention.
  */
 final class SettingsRepository
 {
-    public function __construct(private readonly PluginInterface $plugin)
+    private readonly SettingsStore $store;
+
+    public function __construct(DbInterface $db)
     {
+        $this->store = new SettingsStore($db);
     }
 
     private function value(string $name): ?string
     {
-        $v = $this->plugin->getConfig()->getValue($name);
+        $v = $this->store->get($name);
 
-        return \is_string($v) && $v !== '' ? $v : null;
+        return $v !== null && $v !== '' ? $v : null;
     }
 
     private function decrypted(string $name): ?string
     {
-        $v = $this->plugin->getConfig()->getDecryptedValue($name);
+        $stored = $this->store->get($name);
+        if ($stored === null || $stored === '') {
+            return null;
+        }
 
-        return \is_string($v) && $v !== '' ? $v : null;
+        $decoded = \base64_decode($stored, true);
+        if ($decoded === false) {
+            return null;
+        }
+
+        try {
+            $plain = \rtrim(Shop::Container()->getCryptoService()->decryptXTEA($decoded));
+
+            return $plain !== '' ? $plain : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function checkbox(string $name): bool
