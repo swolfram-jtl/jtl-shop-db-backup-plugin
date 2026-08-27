@@ -110,7 +110,12 @@
     <input type="hidden" name="test_connection" value="1">
 </form>
 
+{* {literal}...{/literal}: see history.tpl's script block for why — Smarty's
+   own delimiters are also "{"/"}", plain JS braces can be mis-parsed as
+   malformed Smarty tags otherwise. No Smarty variables are needed inside
+   this block, so wrapping all of it is safe. *}
 <script>
+{literal}
 (function () {
     function applyReveal(checkboxName, revealed) {
         document.querySelectorAll('.dbbackup-setting-row[data-revealed-by="' + checkboxName + '"]').forEach(function (row) {
@@ -138,6 +143,7 @@
     var settingsForm = document.getElementById('dbbackup-settings-form');
     if (settingsForm) { settingsForm.addEventListener('submit', syncCronPresets); }
 })();
+{/literal}
 </script>
 
 </div>

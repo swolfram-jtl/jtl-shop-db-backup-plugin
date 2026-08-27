@@ -6,8 +6,15 @@
    shop's own Bootstrap classes for light/dark-theme safety — only accent
    colors (buttons, badges, borders, icons) are overridden, since those read
    fine on both a light and a dark admin theme by design (that's what an
-   "accent" color is for). *}
+   "accent" color is for).
+   {literal}...{/literal} wraps the whole block: Smarty's own delimiters are
+   also "{"/"}", so CSS rules can in principle be mis-parsed as (usually
+   malformed) Smarty tags the same way plain JS was on a real install (see
+   history.tpl's script block for the confirmed failure) — this file has no
+   Smarty variables to interpolate, so wrapping all of it is the safe,
+   non-fragile fix rather than relying on incidental spacing. *}
 <style>
+{literal}
 .dbbackup-page {
     --jtl-dark-blue: #0B1B45;
     --jtl-sand: #EEEEE7;
@@ -274,4 +281,5 @@
     border-top: none;
     border-bottom-width: 1px;
 }
+{/literal}
 </style>

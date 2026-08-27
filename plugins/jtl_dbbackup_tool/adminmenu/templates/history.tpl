@@ -37,9 +37,8 @@
 {if $overviewTiles}
 <div class="d-flex flex-wrap mb-4" style="gap:.6rem;">
     {foreach $overviewTiles as $tile}
-    <div class="dbbackup-summary-chip {if $tile.presetKey === 'full'}dbbackup-summary-chip--full{/if}"
-         data-toggle="collapse" data-target="#group-{$tile.presetKey|escape}" role="button"
-         onclick="var t=document.getElementById('group-{$tile.presetKey|escape}'); if(t){setTimeout(function(){t.scrollIntoView({behavior:'smooth', block:'start'});}, 150);}">
+    <div class="dbbackup-summary-chip dbbackup-scroll-to-group {if $tile.presetKey === 'full'}dbbackup-summary-chip--full{/if}"
+         data-toggle="collapse" data-target="#group-{$tile.presetKey|escape}" role="button">
         <div class="dbbackup-summary-chip-label">{$tile.presetLabel|escape}</div>
         <div class="dbbackup-summary-chip-count">{$tile.count}</div>
         <div class="dbbackup-summary-chip-meta">{d__('jtl_dbbackup_tool', 'zuletzt')}: {$tile.lastCreated|escape}</div>
@@ -297,7 +296,16 @@
 </div>
 {/if}
 
+{* {literal}...{/literal} below: Smarty's own delimiters are also "{"/"}",
+   so plain JS curly braces get mis-parsed as (usually malformed) Smarty
+   tags otherwise — confirmed the hard way on a real install with a single
+   dense inline onclick ("unknown function 'function'"), even though this
+   block's own braces (mostly preceded by a space/newline) hadn't tripped
+   Smarty's tag-start heuristic. {literal} is the standard, non-fragile fix
+   rather than relying on incidental spacing. The one exception that must
+   stay OUTSIDE {literal} is the real Smarty {if $previewBackupId} below. *}
 <script>
+{literal}
 (function () {
     function updateBulkBar() {
         var checked = document.querySelectorAll('.dbbackup-row-check:checked').length;
@@ -352,11 +360,24 @@
 
     updateBulkBar();
 
+    document.querySelectorAll('.dbbackup-scroll-to-group').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            var target = document.querySelector(chip.dataset.target);
+            if (target) {
+                setTimeout(function () { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150);
+            }
+        });
+    });
+{/literal}
     {if $previewBackupId}
+    {literal}
     var restoreModalEl = document.getElementById('restoreModal');
     if (restoreModalEl && window.jQuery) { window.jQuery(restoreModalEl).modal('show'); }
+    {/literal}
     {/if}
+{literal}
 })();
+{/literal}
 </script>
 
 </div>
