@@ -21,6 +21,7 @@ use Plugin\jtl_dbbackup_tool\Service\Upload\UploadTargetInterface;
  *     encryptionPassphrase: ?string,
  *     uploadTarget: ?UploadTargetInterface,
  *     adminAccountId: int,
+ *     comment?: ?string,
  * }
  */
 final class BackupService
@@ -54,7 +55,7 @@ final class BackupService
      * @param array{
      *     label: string, maintenanceMode: bool, encrypt: bool,
      *     encryptionPassphrase: ?string, uploadTarget: ?UploadTargetInterface,
-     *     adminAccountId: int,
+     *     adminAccountId: int, comment?: ?string,
      * } $options
      */
     public function createBackup(array $tables, string $presetKey, array $options): int
@@ -80,7 +81,14 @@ final class BackupService
         $filename = "{$presetKey}_{$timestamp}_{$instanceId}.sql.gz";
         $finalPath = $dir . '/' . $filename;
 
-        $historyId = $this->history->create($presetKey, $options['label'], $filename, $instanceId, $options['encrypt']);
+        $historyId = $this->history->create(
+            $presetKey,
+            $options['label'],
+            $filename,
+            $instanceId,
+            $options['encrypt'],
+            $options['comment'] ?? null,
+        );
         $maintenanceEnabled = false;
 
         try {

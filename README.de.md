@@ -1,21 +1,37 @@
-# JTL-Shop DB-Backup- & Restore-Plugin
+# DB Backup Manager für JTL-Shop 5.8
 
 Ein JTL-Shop-5.8-Plugin, mit dem Shop-Betreiber gezielte oder vollständige
-Datenbank-Backups anlegen können — lokal und/oder auf ein FTPS/SFTP-Ziel —
-und diese wieder einspielen können, damit ein Fehler bei einer der
-eingebauten CSV-Import-Funktionen des Shops (Kunden, Newsletter-Empfänger,
-PLZ/Ort, Weiterleitungen, Gutscheine, Bewertungen, Sprachvariablen) schnell
-rückgängig gemacht werden kann.
+Datenbank-Backups anlegen können — lokal und/oder auf ein FTPS/SFTP-Ziel —,
+sie organisieren, kommentieren und löschen können, und sie wieder einspielen
+können, damit ein Fehler bei einer der eingebauten CSV-Import-Funktionen des
+Shops (Kunden, Newsletter-Empfänger, PLZ/Ort, Weiterleitungen, Gutscheine,
+Bewertungen, Sprachvariablen) schnell rückgängig gemacht werden kann. Der
+**Backups**-Tab ist ein vollständiger Manager: Backups sind nach Preset/Typ
+gruppiert, filter- und sortierbar, einzeln oder als Mehrfachauswahl löschbar
+(nur die lokale Kopie — siehe „Bekannte Lücken" unten), und können einen
+Freitext-Kommentar tragen (bei Anlage gesetzt oder jederzeit nachträglich
+editiert), der dokumentiert, *warum* ein Backup existiert.
+
+Umbenannt von „Database Export Import Backup Tool" — die PluginID
+(`jtl_dbbackup_tool`) bleibt unverändert, das ist also nur eine
+Anzeige-/Doku-Umbenennung, kein Breaking Change für eine bereits installierte
+Instanz.
 
 English version: [README.md](README.md)
 
-> **Status:** funktional vollständige erste Implementierung, **noch nicht
-> gegen eine echte JTL-Shop-Instanz getestet** (in der Umgebung, in der dies
-> entstanden ist, stand keine PHP-Laufzeit/kein Shop zur Verfügung — siehe
-> „Bekannte Lücken" unten für das, was zuerst zu prüfen ist). Die Architektur
-> und ~56 einzelne Design-Entscheidungen dahinter wurden in einer eigenen
-> Design-Review erarbeitet, siehe `docs/architecture-spec.html`. Siehe
-> `CHANGELOG.md` für ein laufendes Protokoll der Änderungen.
+> **Status:** installiert und lauffähig gegen eine echte
+> JTL-Shop-5.8.0-rc3-Instanz — Dashboard, Backup jetzt, Backups (Manager +
+> Restore) und Einstellungen rendern alle, der manuelle Backup-Ablauf
+> funktioniert Ende-zu-Ende. In aktiver Iteration gegen echten Einsatz; siehe
+> `CHANGELOG.md` für das laufende Protokoll gefundener und behobener Bugs
+> (mehrere — ein Doppel-Trigger-Bug, ein falscher Rückgabetyp, eine
+> Ephemere-Zugangsdaten-UI, die zuvor ein No-Op war, ein
+> Restore-Lock-Selbst-Deadlock — siehe `Service/RequestGuard.php`s Docblock
+> für einen besonders unauffälligen: **jede Adminmenu-Tab-PHP-Datei läuft bei
+> JEDER einzelnen Anfrage**, nicht nur beim sichtbaren Tab, was für jeden
+> künftigen Controller relevant ist, der `$_POST` liest). Die Architektur und
+> ~56 einzelne Design-Entscheidungen dahinter wurden in einer eigenen
+> Design-Review erarbeitet, siehe `docs/architecture-spec.html`.
 
 ## Was das ist (und was nicht)
 
@@ -34,7 +50,8 @@ plugins/<PluginID>/
                         Verschlüsselungs-, Retention-, Benachrichtigungs-,
                         Settings- und FTPS/SFTP-Upload-Services
   Cron/                Wiederkehrender geplanter Backup-Job
-  Controller/          Backend-Tab-Controller (Dashboard, Backup, Historie & Restore, Einstellungen)
+  Controller/          Backend-Tab-Controller (Dashboard, Backup, Backups/Manager (Klasse
+                        heißt weiterhin HistoryController — siehe deren Docblock), Einstellungen)
   Migrations/           Eigene Schema-Migrationen (Audit-Log, Backup-Historie)
   adminmenu/            Adminmenü-<Customlink>-Einstiegspunkte + deren Templates
                         (verifizierter Ort: PFAD_PLUGIN_ADMINMENU = 'adminmenu/')
@@ -75,8 +92,15 @@ Nebenläufigkeits-Sperre, Speicherplatz-Vorabprüfung, optionale
 XChaCha20-Poly1305-Verschlüsselung, FTPS/SFTP-Upload inkl. ephemerer
 Zugangsdaten-Option, Retention-/Rotationsregel, wiederkehrender Cron-Job,
 ein Audit-Log, das strukturell vom eigenen Restore-Umfang ausgeschlossen
-ist, sowie eine Dashboard-/Backup-/Historie-Oberfläche mit echten
-Smarty-Templates.
+ist, sowie eine Dashboard-/Backup-/Manager-Oberfläche mit echten
+Smarty-Templates. Der **Backups**-Tab bietet zusätzlich: Gruppierung nach
+Preset mit Mehrfachauswahl pro Gruppe, Filtern (Preset/Status/Speicherort)
+und Sortieren (Datum/Größe/Status), echte serverseitige Pagination,
+Freitext-Kommentare (bei Anlage setzbar, jederzeit inline editierbar),
+Einzel- und Mehrfach-Löschen (lokale Datei + Manifest + Historie-Zeile —
+abgesichert durch Bestätigungsdialog/-Checkbox und gesperrt, während ein
+Backup oder Restore läuft), sowie den Restore-Vorschau/Bestätigen-Ablauf in
+einem Modal.
 
 ## Bekannte Lücken — vor Produktiveinsatz prüfen
 
@@ -117,8 +141,17 @@ aber noch kein einziges Mal gelaufen. Vor echtem Vertrauen mit echten Daten:
 - Die Verbindungstest-**Logik** (`SettingsController::handleConnectionTest()`)
   ist fertig, aber noch nicht ins Settingslink-gerenderte Formular
   eingehängt (siehe Projektstruktur oben).
-- Backup-Historie/Audit-Log-Listen sind einfache, unpaginierte Tabellen statt
-  der Core-Komponente `pagination.tpl`/`$oBlaetterNavi`.
+- Nur das Audit-Log (nicht der Backups-Tab, der jetzt echte Pagination hat)
+  ist noch eine einfache, unpaginierte Tabelle statt der Core-Komponente
+  `pagination.tpl`/`$oBlaetterNavi` — dafür gibt es bislang gar keine eigene
+  Admin-Oberfläche.
+- Das Löschen eines Backups entfernt IMMER nur die **lokale** Kopie (Datei +
+  Manifest + Historie-Zeile) — eine bewusste Entscheidung, kein Versehen:
+  FTP/SFTP ist als unabhängige Offsite-Sicherheitskopie gedacht, ein
+  einzelner Löschen-Klick darf niemals beide Kopien gleichzeitig vernichten
+  können. Es gibt aktuell keine UI, um eine Remote-Kopie zu löschen (bräuchte
+  eine neue `delete()`-Methode auf `UploadTargetInterface`, nicht
+  implementiert).
 - Die Shop-Instanz-Kennung (`ManifestService::instanceId()`) wird aus
   `Shop::getURL()` abgeleitet, mit `method_exists()` abgesichert — fällt auf
   einen statischen `'unknown-instance'`-String zurück (nicht pro Installation
@@ -172,6 +205,37 @@ Ursache und Fix klären ließen (Details jeweils in `CHANGELOG.md`):
   älteren Version: die betroffenen Checkboxen einmal im Einstellungen-Tab neu
   anhaken und speichern — ein Plugin-Update schreibt bereits gespeicherte
   Konfigurationswerte nicht rückwirkend um.
+- **Restore schlug immer fehl mit „Es läuft bereits ein Backup oder
+  Restore".** `RestoreService::restore()` holt sich die Datei-Sperre des
+  Plugins, ruft dann — wenn die Vorab-Snapshot-Option aktiv ist (Standard) —
+  `BackupService::createBackup()` auf, die sich über eine eigene, separat
+  konstruierte `LockService`-Instanz DIESELBE Sperr-Datei erneut zu holen
+  versucht. `flock()` hängt am offenen Datei-Handle, nicht am Prozess — ein
+  zweites `fopen()`+`flock()` auf denselben Pfad aus demselben PHP-Prozess
+  sieht die eigene bereits gehaltene Sperre nicht und schlägt sofort fehl.
+  Behoben mit prozessweiter wiedereintrittsfähiger Sperrlogik in
+  `LockService` (ein pfadbasierter Tiefenzähler) — Details in dessen
+  Docblock.
+- **Plugin wirkte nie mehrsprachig, selbst mit Admin-Konto auf Englisch.**
+  Die komplette Lade-Kette wurde gegen den echten
+  `includes/src/L10n/GetText.php`/`Translator.php`-Code sowie das
+  `gettext/gettext`-Paket (`Loader/MoLoader.php`,
+  `Generator/ArrayGenerator.php`) neu verifiziert: Pfad
+  `locale/<sprache>/base.mo` und die flache Struktur (kein `LC_MESSAGES`)
+  waren bereits korrekt, und `admin/locale/` einer echten 5.8.0-Version
+  bestätigt `en-GB` (nicht `en-US`, obwohl das in der öffentlichen Doku als
+  Beispiel steht) als richtigen Ordnernamen. Der echte, behebbare Befund:
+  `Gettext\Translator` sucht Plugin-Strings über eine Domain, und die Domain
+  kommt aus einem `X-Domain`-Header INNERHALB der .po/.mo-Metadaten — ohne
+  ihn kann JTL-Shop das teilweise über einen Fallback auf eine gemeinsame
+  Standard-Domain kompensieren, aber das ist fragil. `base.po`/`base.mo`
+  werden jetzt mit explizit gesetztem `X-Domain: jtl_dbbackup_tool` gebaut,
+  und der neue .mo-Writer wurde Byte für Byte gegen `MoLoader.php`s
+  tatsächliche Parser-Logik zurückverifiziert. Falls danach immer noch nicht
+  übersetzt wird: prüfen, ob das Test-Admin-Konto wirklich auf Englisch
+  steht, und einmalig den Sprach-Cache des Shops (`DIR_LOCALE_CACHE`) leeren
+  — JTL cacht geparste .mo-→-PHP-Array-Konvertierungen anhand der
+  Datei-mtime.
 
 ## Nächste Schritte
 

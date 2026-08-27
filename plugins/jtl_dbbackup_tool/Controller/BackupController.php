@@ -29,8 +29,10 @@ final class BackupController
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['preset']) && RequestGuard::claimBackupTrigger()) {
             $adminAccountId = (int) ($_SESSION['AdminAccount']->kAdminlogin ?? 0);
 
+            $comment = \trim((string) ($_POST['comment'] ?? ''));
             $formOptions = [
                 'encrypt_override' => isset($_POST['encrypt_override']),
+                'comment'          => $comment !== '' ? $comment : null,
             ];
 
             if (isset($_POST['use_ephemeral_credentials']) && (string) ($_POST['eph_host'] ?? '') !== '') {

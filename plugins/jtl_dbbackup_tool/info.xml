@@ -31,12 +31,18 @@
 -->
 <jtlshopplugin>
     <XMLVersion>102</XMLVersion>
-    <Name>Database Export Import Backup Tool</Name>
-    <!-- Was "Database Ex/Importer Backup Tool" — the "/" triggered error
-         code 6 ("Der Plugin-Name entspricht nicht der Konvention"). Renamed
-         to letters/spaces only; likely a restricted character set for
-         <Name> (exact allowed regex unconfirmed). -->
-    <Description>Backup- und Restore-Sicherheitsnetz fuer die CSV-Import-Funktionen des JTL-Shop-Backends (Kunden, Newsletter, PLZ/Ort, Weiterleitungen, Gutscheine, Bewertungen, Sprachvariablen).</Description>
+    <Name>DB Backup Manager</Name>
+    <!-- Renamed from "Database Export Import Backup Tool" (was itself renamed
+         from "Database Ex/Importer Backup Tool" — the "/" triggered error
+         code 6, "Der Plugin-Name entspricht nicht der Konvention"; likely a
+         restricted character set for <Name>, exact allowed regex
+         unconfirmed). This second rename reflects the plugin's growth from a
+         pure backup/restore safety net into a full backup MANAGER (grouped,
+         filterable, sortable overview; inline comments; delete). Display
+         name/description/docs only — PluginID stays jtl_dbbackup_tool
+         (changing it would make an already-installed instance's settings and
+         history orphaned, effectively requiring a reinstall). -->
+    <Description>Backup- und Restore-Sicherheitsnetz fuer die CSV-Import-Funktionen des JTL-Shop-Backends (Kunden, Newsletter, PLZ/Ort, Weiterleitungen, Gutscheine, Bewertungen, Sprachvariablen) — inklusive Backup-Manager mit Gruppierung, Filtern, Sortierung, Kommentaren und Loeschen.</Description>
     <Author>Sirko Wolfram</Author>
     <URL>https://github.com/swolfram-jtl/jtl-shop-db-backup-plugin</URL>
     <!-- CONFIRMED fatal-error fix, not just the warning: <URL> is documented
@@ -64,13 +70,18 @@
                 <Filename>backup.php</Filename>
             </Customlink>
             <Customlink sort="3">
-                <Name>Wiederherstellen</Name>
+                <Name>Backups</Name>
                 <Filename>history.php</Filename>
-                <!-- Renamed from "Historie & Restore" on request — restore is
-                     now framed as its own destination, not an add-on to a
-                     history list (file/class names stay history.php/
-                     HistoryController internally, only the visible label
-                     changed, to limit churn during a fast iteration pass). -->
+                <!-- Renamed from "Historie & Restore" to "Wiederherstellen",
+                     now renamed again to "Backups" — this tab grew from a
+                     restore-only flow into the full DB Backup Manager
+                     (grouped/filtered/sorted list, comments, delete, restore
+                     still here too). File/class names deliberately stay
+                     history.php/HistoryController internally to limit churn;
+                     only the visible label changed. Every form's hidden
+                     cPluginTab field across this plugin's templates must
+                     match this <Name> EXACTLY (see dashboard.tpl's header
+                     comment for why) — updated to "Backups" everywhere. -->
             </Customlink>
             <Settingslink sort="4">
                 <Name>Einstellungen</Name>

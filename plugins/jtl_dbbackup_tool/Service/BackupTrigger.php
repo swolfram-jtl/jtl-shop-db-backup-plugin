@@ -32,7 +32,7 @@ final class BackupTrigger
     }
 
     /**
-     * @param array{use_ephemeral_credentials?: bool, encrypt_override?: bool} $formOptions
+     * @param array{use_ephemeral_credentials?: bool, encrypt_override?: bool, comment?: ?string} $formOptions
      *
      * @return array{success: bool, message: string}
      */
@@ -69,6 +69,7 @@ final class BackupTrigger
                 'encryptionPassphrase' => $settings->encryptionPassphrase(),
                 'uploadTarget'         => $uploadTarget,
                 'adminAccountId'       => $adminAccountId,
+                'comment'              => $formOptions['comment'] ?? null,
             ]);
 
             $storage = new StorageService(\dirname($this->plugin->getPaths()->getAdminPath()));

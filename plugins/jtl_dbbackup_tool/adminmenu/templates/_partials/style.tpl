@@ -57,7 +57,11 @@
 .dbbackup-page .badge-success { background-color: var(--jtl-green); color: #fff; }
 .dbbackup-page .badge-danger { background-color: var(--jtl-red); color: #fff; }
 
-/* KPI tiles */
+/* KPI tiles — full brand-colored background per the approved JTL Brand text/
+   background combinations (not just a colored icon circle), so the tile
+   itself reads as "on-brand" and text contrast is guaranteed correct for
+   each background rather than relying on a generic grey (which read poorly
+   on a plain white card). */
 .dbbackup-tile {
     border-radius: .7rem;
     border: none;
@@ -72,6 +76,26 @@
     line-height: 1.15;
 }
 .dbbackup-kpi-unit { font-size: .95rem; font-weight: 500; color: #7788AA; }
+
+/* Dark-Blue / Tech-Blue tiles: white text (approved combo) */
+.dbbackup-tile--blue, .dbbackup-tile--tech {
+    background: var(--jtl-dark-blue);
+    color: #fff;
+}
+.dbbackup-tile--tech { background: var(--jtl-tech-blue); }
+.dbbackup-tile--blue .dbbackup-eyebrow, .dbbackup-tile--tech .dbbackup-eyebrow { color: #fff; opacity: .8; }
+.dbbackup-tile--blue .dbbackup-kpi-value, .dbbackup-tile--tech .dbbackup-kpi-value { color: #fff; }
+.dbbackup-tile--blue .dbbackup-kpi-unit, .dbbackup-tile--tech .dbbackup-kpi-unit,
+.dbbackup-tile--blue .text-muted, .dbbackup-tile--tech .text-muted { color: rgba(255,255,255,.75) !important; }
+
+/* Light-Blue / Sand tiles: Dark-Blue text (approved combo) */
+.dbbackup-tile--light { background: var(--jtl-light-blue); }
+.dbbackup-tile--sand { background: var(--jtl-sand); }
+.dbbackup-tile--light .dbbackup-eyebrow, .dbbackup-tile--sand .dbbackup-eyebrow { color: var(--jtl-dark-blue); opacity: .7; }
+.dbbackup-tile--light .dbbackup-kpi-value, .dbbackup-tile--sand .dbbackup-kpi-value { color: var(--jtl-dark-blue); }
+.dbbackup-tile--light .dbbackup-kpi-unit, .dbbackup-tile--sand .dbbackup-kpi-unit,
+.dbbackup-tile--light .text-muted, .dbbackup-tile--sand .text-muted { color: rgba(11,27,69,.65) !important; }
+
 .dbbackup-icon-circle {
     width: 2.75rem;
     height: 2.75rem;
@@ -82,11 +106,39 @@
     font-size: 1.15rem;
     flex-shrink: 0;
 }
+/* On dark tile backgrounds (blue/tech): a translucent white circle so the
+   icon stays visible instead of disappearing into a same-color background. */
+.dbbackup-tile--blue .dbbackup-icon-circle, .dbbackup-tile--tech .dbbackup-icon-circle {
+    background: rgba(255,255,255,.2); color: #fff;
+}
+/* On light tile backgrounds (light-blue/sand): a translucent dark-blue circle. */
+.dbbackup-tile--light .dbbackup-icon-circle, .dbbackup-tile--sand .dbbackup-icon-circle {
+    background: rgba(11,27,69,.15); color: var(--jtl-dark-blue);
+}
+/* Standalone icon circles used OUTSIDE a colored KPI tile (e.g. preset cards). */
 .dbbackup-icon-circle--blue { background: var(--jtl-dark-blue); color: #fff; }
 .dbbackup-icon-circle--tech { background: var(--jtl-tech-blue); color: #fff; }
 .dbbackup-icon-circle--light { background: var(--jtl-light-blue); color: var(--jtl-dark-blue); }
 .dbbackup-icon-circle--sand { background: var(--jtl-sand); color: var(--jtl-dark-blue); }
 .dbbackup-icon-circle--orange { background: var(--jtl-orange); color: #fff; }
+
+/* "Schnellzugriff" section: distinct card so it doesn't read as a settings
+   panel — a single click on a button in here immediately starts a backup. */
+.dbbackup-quickaccess {
+    border-radius: .7rem;
+    border: 2px solid var(--jtl-orange) !important;
+    background: #fff;
+}
+.dbbackup-quickaccess .btn-outline-secondary {
+    color: var(--jtl-dark-blue);
+    border-color: rgba(11,27,69,.25);
+    font-weight: 600;
+}
+.dbbackup-quickaccess .btn-outline-secondary:hover {
+    background: var(--jtl-dark-blue);
+    border-color: var(--jtl-dark-blue);
+    color: #fff;
+}
 
 /* Preset cards */
 .dbbackup-preset-card { border-radius: .7rem; border-color: rgba(11,27,69,.12) !important; transition: box-shadow .15s ease, border-color .15s ease; }

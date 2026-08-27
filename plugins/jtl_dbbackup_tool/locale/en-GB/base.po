@@ -79,16 +79,13 @@ msgid "Leg dein erstes Backup an, bevor du eine der CSV-Import-Funktionen des Sh
 msgstr "Create your first backup before using one of the shop's CSV import features."
 
 msgid "Tipp: unter „Einstellungen” lässt sich zusätzlich ein tägliches/wöchentliches Cron-Backup aktivieren."
-msgstr "Tip: a daily/weekly cron backup can also be enabled under “Settings”."
+msgstr "Tip: a daily/weekly cron backup can also be enabled under \"Settings\"."
 
 msgid "Schnellzugriff"
 msgstr "Quick access"
 
 msgid "Erstellt"
 msgstr "Created"
-
-msgid "Bezeichnung"
-msgstr "Label"
 
 msgid "Status"
 msgstr "Status"
@@ -102,20 +99,8 @@ msgstr "Encrypted"
 msgid "Download"
 msgstr "Download"
 
-msgid "Wiederherstellen…"
-msgstr "Restore…"
-
-msgid "nicht verfügbar"
-msgstr "not available"
-
 msgid "Noch keine Backups vorhanden."
 msgstr "No backups yet."
-
-msgid "Ja"
-msgstr "Yes"
-
-msgid "Nein"
-msgstr "No"
 
 msgid "Wiederherstellung vorbereiten — dieser Vorgang überschreibt aktuelle Daten"
 msgstr "Prepare restore — this action overwrites current data"
@@ -189,10 +174,8 @@ msgstr "Encryption enabled, but no password provided."
 msgid "Backup fehlgeschlagen"
 msgstr "Backup failed"
 
-msgid "Preset: %s
-Fehler: %s"
-msgstr "Preset: %s
-Error: %s"
+msgid "Preset: %s\nFehler: %s"
+msgstr "Preset: %s\nError: %s"
 
 msgid "Zu wenig freier Speicherplatz für dieses Backup (benötigt ca. %.1f MB, verfügbar %.1f MB)."
 msgstr "Not enough free disk space for this backup (needs approx. %.1f MB, %.1f MB available)."
@@ -200,12 +183,8 @@ msgstr "Not enough free disk space for this backup (needs approx. %.1f MB, %.1f 
 msgid "Backup-Upload fehlgeschlagen"
 msgstr "Backup upload failed"
 
-msgid "Datei: %s
-Fehler: %s
-Lokales Backup ist weiterhin vorhanden."
-msgstr "File: %s
-Error: %s
-The local backup is still available."
+msgid "Datei: %s\nFehler: %s\nLokales Backup ist weiterhin vorhanden."
+msgstr "File: %s\nError: %s\nThe local backup is still available."
 
 msgid "Automatisches Backup vor Plugin-Update"
 msgstr "Automatic backup before plugin update"
@@ -329,4 +308,142 @@ msgstr "Backup file not found."
 
 msgid "%d Zeile(n) in `%s` verweisen über `%s` auf nicht (mehr) vorhandene Einträge in `%s`."
 msgstr "%d row(s) in `%s` reference, via `%s`, entries that no longer exist in `%s`."
+
+msgid "%d Backup(s) gelöscht, %d fehlgeschlagen: %s"
+msgstr "%d backup(s) deleted, %d failed: %s"
+
+msgid "%d Backup(s) gelöscht."
+msgstr "%d backup(s) deleted."
+
+msgid "Aktionen"
+msgstr "Actions"
+
+msgid "Alle"
+msgstr "All"
+
+msgid "Alle auswählen (auf dieser Seite)"
+msgstr "Select all (on this page)"
+
+msgid "ausgewählt"
+msgstr "selected"
+
+msgid "Ausgewählte Backups wirklich unwiderruflich löschen? (Nur lokal — eine eventuelle FTP/SFTP-Kopie bleibt bestehen.)"
+msgstr "Really permanently delete the selected backups? (Local only — any FTP/SFTP copy remains.)"
+
+msgid "Ausgewählte löschen"
+msgstr "Delete selected"
+
+msgid "Backup gelöscht."
+msgstr "Backup deleted."
+
+msgid "Backups gesamt"
+msgstr "backups total"
+
+msgid "Bezeichnung / Kommentar"
+msgstr "Label / comment"
+
+msgid "Dieses Backup wirklich unwiderruflich löschen? (Nur lokal — eine eventuelle FTP/SFTP-Kopie bleibt bestehen.)"
+msgstr "Really permanently delete this backup? (Local only — any FTP/SFTP copy remains.)"
+
+msgid "Ein Backup oder Restore läuft gerade — Löschen ist bis dahin gesperrt."
+msgstr "A backup or restore is currently running — deleting is disabled until it finishes."
+
+msgid "Ein Klick startet SOFORT ein Backup mit den Standard-Einstellungen — hier werden keine Optionen geöffnet."
+msgstr "One click starts a backup IMMEDIATELY with the default settings — this doesn't open any options."
+
+msgid "Eine Wiederherstellung könnte inkonsistente Daten erzeugen."
+msgstr "A restore could produce inconsistent data."
+
+msgid "eintippen"
+msgstr "type"
+
+msgid "fehlgeschlagen"
+msgstr "failed"
+
+msgid "Filtern"
+msgstr "Filter"
+
+msgid "hochgeladen"
+msgstr "uploaded"
+
+msgid "Ja, ich möchte die ausgewählten Backups unwiderruflich löschen."
+msgstr "Yes, I want to permanently delete the selected backups."
+
+msgid "Jetzt sichern"
+msgstr "Back up now"
+
+msgid "Jetzt sichern: Komplett"
+msgstr "Back up now: Complete"
+
+msgid "kein Kommentar"
+msgstr "no comment"
+
+msgid "Keine Backups gefunden, die zu den aktuellen Filtern passen."
+msgstr "No backups found matching the current filters."
+
+msgid "Kommentar (optional)"
+msgstr "Comment (optional)"
+
+msgid "Kommentar bearbeiten"
+msgstr "Edit comment"
+
+msgid "Kommentar gespeichert."
+msgstr "Comment saved."
+
+msgid "Löschen"
+msgstr "Delete"
+
+msgid "Löschen fehlgeschlagen: %s"
+msgstr "Delete failed: %s"
+
+msgid "Löschen ist momentan gesperrt, da ein Backup oder Restore läuft."
+msgstr "Deleting is currently disabled because a backup or restore is running."
+
+msgid "Mögliche verwaiste Datensätze nach dieser Wiederherstellung:"
+msgstr "Possible orphaned records after this restore:"
+
+msgid "nur lokal"
+msgstr "local only"
+
+msgid "ok"
+msgstr "ok"
+
+msgid "Preset"
+msgstr "Preset"
+
+msgid "Seite"
+msgstr "Page"
+
+msgid "Shop-Update oder andere Migration seitdem"
+msgstr "shop update or other migration since then"
+
+msgid "Speichern"
+msgstr "Save"
+
+msgid "Speicherort"
+msgstr "Storage location"
+
+msgid "Suche in Kommentar/Bezeichnung"
+msgstr "Search in comment/label"
+
+msgid "Tabellenstruktur weicht vom Backup-Zeitpunkt ab"
+msgstr "Table structure differs from when the backup was taken"
+
+msgid "von"
+msgstr "of"
+
+msgid "Wiederherstellen"
+msgstr "Restore"
+
+msgid "z. B. „vor Preis-Update Q3“"
+msgstr "e.g. \"before Q3 price update\""
+
+msgid "Zum Bestätigen"
+msgstr "To confirm, type"
+
+msgid "Zurücksetzen"
+msgstr "Reset"
+
+msgid "zusätzlich hochgeladen"
+msgstr "additionally uploaded"
 

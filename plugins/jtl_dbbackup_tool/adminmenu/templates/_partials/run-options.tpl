@@ -11,6 +11,12 @@
             <input type="hidden" name="cPluginTab" value="Backup jetzt">
             <input type="hidden" name="preset" value="{$presetKey|escape}">
 
+            <div class="form-group mb-2">
+                <label for="comment-{$presetKey}" class="small mb-1">{d__('jtl_dbbackup_tool', 'Kommentar (optional)')}</label>
+                <input type="text" name="comment" id="comment-{$presetKey}" class="form-control form-control-sm"
+                       maxlength="255" placeholder="{d__('jtl_dbbackup_tool', 'z. B. „vor Preis-Update Q3“')}">
+            </div>
+
             <div class="form-check mb-1">
                 <input class="form-check-input dbbackup-eph-toggle" type="checkbox" name="use_ephemeral_credentials"
                        id="eph-{$presetKey}" onchange="document.getElementById('eph-fields-{$presetKey}').style.display = this.checked ? 'flex' : 'none';">

@@ -24,11 +24,38 @@ namespace Plugin\jtl_dbbackup_tool\Service;
  * does the actually-correct thing for a truly stuck lock — unlink the file
  * so any still-alive holder is left writing to an orphaned, no-longer-
  * referenced inode, and a fresh acquire() gets a clean new one.
+ *
+ * Fixed a second real bug (reported: restore ALWAYS failed with "Es läuft
+ * bereits ein Backup oder Restore"): RestoreService::restore() acquires this
+ * lock, then — when the pre-restore-snapshot option is on (its default is
+ * "on") — calls BackupService::createBackup(), which acquires the SAME lock
+ * file again through its OWN, separately-constructed LockService instance
+ * (BackupServiceFactory::build() always points at the identical
+ * `.../.lock` path). flock() is tied to the open file DESCRIPTOR, not the
+ * process — a second fopen()+flock() on the same path from the same process
+ * does NOT see its own already-held lock and fails immediately (LOCK_NB).
+ * So every restore with the default settings deadlocked against itself on
+ * the very first line of its own safety-snapshot step.
+ * Fix: process-wide reentrant locking, keyed by the lock file path (a plain
+ * string key is enough — every call site in this plugin builds this exact
+ * path via StorageService::baseDirectory() . '/.lock', so no realpath()
+ * normalization is needed). The first acquire() for a given path does the
+ * real flock(); any nested acquire() for the SAME path within the same
+ * request just bumps a depth counter and returns immediately. release()
+ * mirrors this: only the depth-reaching-zero release actually unlocks.
  */
 final class LockService
 {
     /** @var resource|null */
     private $handle;
+
+    /** @var array<string, int> depth per lock file path, shared across every LockService instance in this request */
+    private static array $depth = [];
+
+    /** @var array<string, resource> the real flock()'d handle for each path, owned by whichever instance acquired depth 0→1 */
+    private static array $sharedHandles = [];
+
+    private bool $isNestedAcquire = false;
 
     public function __construct(private readonly string $lockFilePath)
     {
@@ -39,6 +66,16 @@ final class LockService
      */
     public function acquire(): void
     {
+        if ((self::$depth[$this->lockFilePath] ?? 0) > 0) {
+            // Already held by this same PHP process/request (e.g. a restore's
+            // pre-restore-snapshot step calling into BackupService::createBackup())
+            // — just extend the existing hold, no second flock() call.
+            self::$depth[$this->lockFilePath]++;
+            $this->isNestedAcquire = true;
+
+            return;
+        }
+
         $handle = \fopen($this->lockFilePath, 'c+');
         if ($handle === false) {
             throw new \RuntimeException(
@@ -61,13 +98,31 @@ final class LockService
         \touch($this->lockFilePath);
 
         $this->handle = $handle;
+        self::$sharedHandles[$this->lockFilePath] = $handle;
+        self::$depth[$this->lockFilePath] = 1;
+        $this->isNestedAcquire = false;
     }
 
     public function release(): void
     {
-        if ($this->handle !== null) {
-            \flock($this->handle, \LOCK_UN);
-            \fclose($this->handle);
+        if (!isset(self::$depth[$this->lockFilePath])) {
+            return;
+        }
+
+        self::$depth[$this->lockFilePath]--;
+
+        if ($this->isNestedAcquire) {
+            // This instance never held the real handle — nothing to unlock.
+            return;
+        }
+
+        if (self::$depth[$this->lockFilePath] <= 0) {
+            $handle = self::$sharedHandles[$this->lockFilePath] ?? $this->handle;
+            if ($handle !== null) {
+                \flock($handle, \LOCK_UN);
+                \fclose($handle);
+            }
+            unset(self::$depth[$this->lockFilePath], self::$sharedHandles[$this->lockFilePath]);
             $this->handle = null;
         }
     }

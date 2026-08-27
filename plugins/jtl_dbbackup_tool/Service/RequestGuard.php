@@ -23,6 +23,8 @@ final class RequestGuard
 {
     private static bool $backupTriggered = false;
     private static bool $restoreActionHandled = false;
+    private static bool $deleteActionHandled = false;
+    private static bool $commentActionHandled = false;
 
     public static function claimBackupTrigger(): bool
     {
@@ -42,6 +44,28 @@ final class RequestGuard
         }
 
         self::$restoreActionHandled = true;
+
+        return true;
+    }
+
+    public static function claimDeleteAction(): bool
+    {
+        if (self::$deleteActionHandled) {
+            return false;
+        }
+
+        self::$deleteActionHandled = true;
+
+        return true;
+    }
+
+    public static function claimCommentAction(): bool
+    {
+        if (self::$commentActionHandled) {
+            return false;
+        }
+
+        self::$commentActionHandled = true;
 
         return true;
     }

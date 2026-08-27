@@ -253,5 +253,71 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   which the core already localizes on its own. Expanded
   `locale/en-GB/base.po`/`.mo` to 108 entries.
 
+- Renamed the plugin to **"DB Backup Manager"** (`info.xml` `<Name>` and
+  `<Description>` only — `PluginID` stays `jtl_dbbackup_tool`, changing that
+  would orphan an already-installed instance's settings/history). Reflects
+  the plugin's growth from a pure backup/restore safety net into a full
+  backup manager. `<Version>` intentionally left at `0.1.0` per the note
+  below — a bump needs explicit confirmation.
+- Fixed a real self-deadlock bug: **restore always failed** with "Es läuft
+  bereits ein Backup oder Restore", because `RestoreService::restore()`
+  holds the plugin's file lock and then — with the (default-on)
+  pre-restore-snapshot option — calls `BackupService::createBackup()`, which
+  acquires the *same* lock file again through a separate `LockService`
+  instance; `flock()` is tied to the open file descriptor, not the process,
+  so the second acquire always failed instantly. `LockService` is now
+  process-wide reentrant (a depth counter keyed by the lock file path) — see
+  its docblock for the full mechanics.
+- Investigated the "plugin isn't multi-language" report against the real
+  JTL-Shop 5.8.0 core source (`includes/src/L10n/GetText.php`/`Translator.php`,
+  the `gettext/gettext` package's `MoLoader.php`/`ArrayGenerator.php`, and a
+  real install's `admin/locale/` directory). Confirmed the `locale/en-GB/`
+  path, flat (no `LC_MESSAGES`) layout, and `base.mo`/`base.po` filenames
+  were already correct (an initial guess that `en-US` might be the right
+  folder name, based on the public docs' example, turned out wrong —
+  `en-GB` is what a real 5.8.0 release actually ships). Rebuilt
+  `locale/en-GB/base.po`/`.mo` from scratch with a hand-written, spec-verified
+  binary `.mo` writer (`build-mo.ps1`, byte-for-byte round-trip-tested against
+  `MoLoader.php`'s actual parsing logic) that explicitly sets
+  `X-Domain: jtl_dbbackup_tool` in the catalog header — `Gettext\Translator`
+  looks translations up by this domain, and it comes from the .po/.mo file's
+  own metadata, not the filename. 149 entries (was 108 — the previous count
+  was stale/lost along with the build script between sessions and has been
+  fully reconstructed from the current source).
+- Dashboard: the 4 KPI tiles are now fully brand-colored per the approved
+  JTL Brand text/background combinations (Dark Blue, Light Blue, Tech Blue,
+  Light Sand — not just a colored icon circle on an otherwise plain white
+  card, which read poorly with generic grey text). "Schnellzugriff" is now
+  its own clearly-bordered card with an explicit "ein Klick startet SOFORT
+  ein Backup" hint and bolt-icon buttons — it previously sat as a bare
+  heading + button row that could read as a settings/options area rather
+  than an immediate-action zone.
+- Built the **"Backups" tab into a full DB Backup Manager** (renamed from
+  "Wiederherstellen" — same file/class names as before, only the visible
+  label and scope changed):
+  - Backups are grouped into a collapsible accordion by preset/type, with
+    filtering (preset/status/storage) and sorting (date/size/status) via a
+    GET form, and real server-side pagination (20/page) — replacing the old
+    flat, un-paginated, ungrouped list.
+  - New optional free-text **comment** per backup (`cComment` column, new
+    migration `Migration20260827130000`) — settable when triggering a
+    manual backup (`_partials/run-options.tpl`) and inline-editable at any
+    time from the Manager.
+  - New **delete** (single + bulk, with a per-group "select all" shortcut)
+    via `BackupDeletionService` — local file + `.manifest.json` + history
+    row only, deliberately never the FTP/SFTP copy (an offsite safety copy
+    that a single delete click must never be able to wipe out together with
+    the local one). Blocked while a backup/restore is running; single delete
+    uses a plain confirm dialog, bulk delete uses a confirmation checkbox
+    gate mirroring the pattern from JTL-Shop's own "Datenbank bereinigen"
+    admin screen (row checkboxes, a master "select all", a checkbox gate
+    before the destructive action enables). Every delete is audit-logged
+    like backup/restore already were.
+  - The restore preview/type-to-confirm flow moved from an inline page
+    section into a modal, triggered per-row.
+  - `BackupHistoryRepository::search()` is the new filtered/sorted/paginated
+    query backing all of this; `RequestGuard` gained `claimDeleteAction()`/
+    `claimCommentAction()` alongside its existing backup/restore guards.
+
 <!-- No version number assigned yet: first bump happens after explicit
      confirmation, once there's something real to release. -->

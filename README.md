@@ -1,25 +1,33 @@
-# JTL-Shop DB Backup & Restore Plugin
+# DB Backup Manager for JTL-Shop 5.8
 
 A JTL-Shop 5.8 plugin that lets shop admins take targeted or full database
-backups — locally and/or to an FTPS/SFTP destination — and restore them again,
-so a mistake made while using one of the shop's built-in CSV import screens
-(customers, newsletter recipients, ZIP/city codes, redirects, coupons,
-reviews, language variables) can be undone quickly.
+backups — locally and/or to an FTPS/SFTP destination — organize, comment on,
+and delete them, and restore them again, so a mistake made while using one of
+the shop's built-in CSV import screens (customers, newsletter recipients,
+ZIP/city codes, redirects, coupons, reviews, language variables) can be undone
+quickly. The **Backups** tab is a full manager: backups are grouped by
+preset/type, filterable and sortable, individually or bulk-deletable (local
+copy only — see "Known gaps" below), and can carry a free-text comment (set at
+creation or edited later) documenting *why* a given backup exists.
+
+Renamed from "Database Export Import Backup Tool" — the PluginID
+(`jtl_dbbackup_tool`) is unchanged, so this is a display/docs-only rename, not
+a breaking change for an already-installed instance.
 
 Deutsche Version: [README.de.md](README.de.md)
 
 > **Status:** installed and running against a real JTL-Shop 5.8.0-rc3
-> instance — Dashboard, Backup, Wiederherstellen (restore), and Settings
-> tabs all render and the manual backup flow works end-to-end. Under active
-> real-usage iteration; see `CHANGELOG.md` for the running log of bugs found
-> and fixed this way (several — a duplicate-trigger bug, a wrong return
-> type, an ephemeral-credentials UI that was previously a no-op — see
-> `Service/RequestGuard.php`'s docblock for one especially non-obvious one:
-> **every Adminmenu tab's PHP file runs on every single request**, not just
-> the visible tab, which matters for any future controller that reads
-> `$_POST`). The architecture and ~56 individual design decisions behind
-> this plugin were worked out in a dedicated design review; see
-> `docs/architecture-spec.html`.
+> instance — Dashboard, Backup jetzt, Backups (manager + restore), and
+> Settings tabs all render and the manual backup flow works end-to-end. Under
+> active real-usage iteration; see `CHANGELOG.md` for the running log of bugs
+> found and fixed this way (several — a duplicate-trigger bug, a wrong return
+> type, an ephemeral-credentials UI that was previously a no-op, a restore
+> lock self-deadlock — see `Service/RequestGuard.php`'s docblock for one
+> especially non-obvious one: **every Adminmenu tab's PHP file runs on every
+> single request**, not just the visible tab, which matters for any future
+> controller that reads `$_POST`). The architecture and ~56 individual design
+> decisions behind this plugin were worked out in a dedicated design review;
+> see `docs/architecture-spec.html`.
 
 ## What this is (and isn't)
 
@@ -38,7 +46,8 @@ plugins/<PluginID>/
                         encryption, retention, notification, settings, and
                         FTPS/SFTP upload services
   Cron/                Recurring scheduled backup job
-  Controller/          Backend tab controllers (Dashboard, Backup, History & Restore, Settings)
+  Controller/          Backend tab controllers (Dashboard, Backup, Backups/Manager (class
+                        still named HistoryController — see its docblock), Settings)
   Migrations/           Plugin's own schema migrations (audit log, backup history tables)
   adminmenu/            Adminmenu <Customlink> entry points + their templates
                         (verified location: PFAD_PLUGIN_ADMINMENU = 'adminmenu/')
@@ -80,8 +89,14 @@ type-to-confirm), atomic writes, a backup self-test, a concurrency lock,
 disk-space pre-checks, opt-in XChaCha20-Poly1305 encryption, FTPS/SFTP
 upload with an ephemeral-credentials option, a retention/rotation policy, a
 recurring cron job, an audit log that's structurally excluded from the
-plugin's own restore scope, and a Dashboard/Backup/History UI wired to real
-Smarty templates.
+plugin's own restore scope, and a Dashboard/Backup/Manager UI wired to real
+Smarty templates. The **Backups** tab additionally provides: grouping by
+preset with per-group bulk-select, filtering (preset/status/storage) and
+sorting (date/size/status), real server-side pagination, free-text comments
+(settable at creation, inline-editable any time), single and bulk delete
+(local file + manifest + history row — gated by a confirmation dialog/
+checkbox and blocked while a backup or restore is running), and the restore
+preview/confirm flow in a modal.
 
 ## Known gaps — verify before relying on this in production
 
@@ -118,8 +133,16 @@ trusting it with real data:
 - The "Verbindung testen" button's connection-test *logic*
   (`SettingsController::handleConnectionTest()`) is complete, but isn't
   wired into the Settingslink-rendered form yet (see project layout above).
-- Backup history/audit log lists are plain, un-paginated tables rather than
-  reusing core's `pagination.tpl`/`$oBlaetterNavi` component.
+- The audit log's own list (not the Backups tab, which now has real
+  pagination) is still a plain, un-paginated table rather than reusing
+  core's `pagination.tpl`/`$oBlaetterNavi` component — it has no admin UI of
+  its own yet at all.
+- Deleting a backup only ever removes the **local** copy (file + manifest +
+  history row) — a deliberate choice, not an oversight: FTP/SFTP is meant as
+  an independent offsite safety copy, so a single delete click must never be
+  able to wipe out both copies at once. There is currently no UI to delete a
+  remote copy at all (would need a new `delete()` method on
+  `UploadTargetInterface`, not implemented).
 - The shop-instance identifier (`ManifestService::instanceId()`) is derived
   from `Shop::getURL()`, guarded with `method_exists()` — falls back to a
   static `'unknown-instance'` string (not persisted per-install) if that
@@ -168,6 +191,35 @@ documented in detail in `CHANGELOG.md`):
   you already installed an earlier version, re-check and re-save the
   affected checkboxes once — a plugin update doesn't retroactively rewrite
   already-stored config values.
+- **Restore always failed with "a backup or restore is already running."**
+  `RestoreService::restore()` acquires the plugin's file lock, then — when
+  the pre-restore-snapshot option is on (its default) — calls
+  `BackupService::createBackup()`, which acquires the *same* lock file again
+  through its own, separately-constructed `LockService` instance. `flock()`
+  is tied to the open file descriptor, not the process, so a second
+  `fopen()`+`flock()` on the same path from the same PHP process doesn't see
+  its own already-held lock and fails immediately. Fixed with process-wide
+  reentrant locking in `LockService` (a depth counter keyed by the lock file
+  path) — see its docblock for the full mechanics.
+- **Plugin never appeared multi-language, even with the admin account set to
+  English.** Re-verified the entire loading chain against the real
+  `includes/src/L10n/GetText.php` / `Translator.php` and the
+  `gettext/gettext` package's `Loader/MoLoader.php` and
+  `Generator/ArrayGenerator.php`: the `locale/<lang>/base.mo` path and flat
+  (no `LC_MESSAGES`) directory structure were already correct, and
+  `admin/locale/` on a real 5.8.0 release confirms `en-GB` (not `en-US`, despite
+  that being the example in the public docs) is the right folder name. The
+  real, fixable finding: `Gettext\Translator` looks up a plugin's strings by
+  domain, and the domain comes from an `X-Domain` header *inside* the .po/.mo
+  file's own metadata — without it, JTL-Shop can still often paper over this
+  via a shared-default-domain fallback, but it's fragile. `base.po`/`base.mo`
+  are now rebuilt with `X-Domain: jtl_dbbackup_tool` set explicitly (see
+  `build-mo.ps1` in the repo history / CHANGELOG), and the new `.mo` writer
+  was round-trip-verified byte-for-byte against `MoLoader.php`'s actual
+  parsing logic. If it's *still* not translating after this: check the
+  testing admin account's language really is set to English, and clear the
+  shop's locale cache (`DIR_LOCALE_CACHE`) once after deploying — JTL caches
+  parsed `.mo` → PHP-array conversions keyed by file mtime.
 
 ## Next steps
 

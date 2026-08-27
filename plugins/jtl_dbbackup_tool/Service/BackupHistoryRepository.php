@@ -26,11 +26,13 @@ final class BackupHistoryRepository
         string $filename,
         string $instanceId,
         bool $encrypted,
+        ?string $comment = null,
     ): int {
         $row = (object) [
             'dCreated'               => \date('Y-m-d H:i:s'),
             'cPresetKey'             => $presetKey,
             'cLabel'                 => $label,
+            'cComment'               => $comment !== '' ? $comment : null,
             'cFilename'              => $filename,
             'cManifestFormatVersion' => ManifestService::MANIFEST_FORMAT_VERSION,
             'nSizeBytes'             => 0,
@@ -42,6 +44,16 @@ final class BackupHistoryRepository
         ];
 
         return $this->db->insert(self::TABLE, $row);
+    }
+
+    /**
+     * Spec decision "Kommentar jederzeit editierbar": inline-edit target from
+     * the Manager tab, independent of `create()` — see class docblock.
+     */
+    public function updateComment(int $id, ?string $comment): void
+    {
+        $row = (object) ['cComment' => $comment !== '' ? $comment : null];
+        $this->db->update(self::TABLE, 'kID', $id, $row);
     }
 
     public function markResult(int $id, string $status, int $sizeBytes, ?string $error = null): void
@@ -85,6 +97,69 @@ final class BackupHistoryRepository
         $rows = $this->db->getObjects('SELECT * FROM ' . self::TABLE . ' ORDER BY dCreated DESC LIMIT 1');
 
         return $rows[0] ?? null;
+    }
+
+    /**
+     * Filtered, sorted, paginated query for the DB Backup Manager tab. Primary
+     * sort is always `cPresetKey ASC` so same-preset rows stay contiguous
+     * within a page (the Manager renders them as an accordion group per
+     * preset) — $sortField only controls the order WITHIN each group. A
+     * preset group can still be split across a page boundary; that's an
+     * accepted trade-off of combining real pagination with grouping (the same
+     * trade-off any admin list with both makes).
+     *
+     * @param array{presetKey?: ?string, status?: ?string, storage?: ?string, search?: ?string} $filters
+     * @return array{rows: object[], total: int}
+     */
+    public function search(array $filters, string $sortField, string $sortDir, int $page, int $perPage): array
+    {
+        $where = [];
+        $params = [];
+
+        if (!empty($filters['presetKey'])) {
+            $where[] = 'cPresetKey = :presetKey';
+            $params['presetKey'] = $filters['presetKey'];
+        }
+        if (!empty($filters['status'])) {
+            $where[] = 'cStatus = :status';
+            $params['status'] = $filters['status'];
+        }
+        if (!empty($filters['storage'])) {
+            // 'uploaded' = also present on FTP/SFTP, 'local' = local-only —
+            // every backup is always local, this only ever narrows by bUploaded.
+            $where[] = 'bUploaded = :storage';
+            $params['storage'] = $filters['storage'] === 'uploaded' ? 1 : 0;
+        }
+        if (!empty($filters['search'])) {
+            $where[] = '(cComment LIKE :search OR cLabel LIKE :search)';
+            $params['search'] = '%' . $filters['search'] . '%';
+        }
+
+        $whereSql = $where !== [] ? 'WHERE ' . \implode(' AND ', $where) : '';
+
+        $sortColumn = match ($sortField) {
+            'size'   => 'nSizeBytes',
+            'status' => 'cStatus',
+            default  => 'dCreated',
+        };
+        $sortDirSql = \strtoupper($sortDir) === 'ASC' ? 'ASC' : 'DESC';
+
+        $total = (int) $this->db->getSingleInt(
+            'SELECT COUNT(*) AS cnt FROM ' . self::TABLE . ' ' . $whereSql,
+            'cnt',
+            $params,
+        );
+
+        $perPage = \max(1, $perPage);
+        $offset = \max(0, ($page - 1) * $perPage);
+        $rows = $this->db->getObjects(
+            'SELECT * FROM ' . self::TABLE . ' ' . $whereSql
+            . ' ORDER BY cPresetKey ASC, ' . $sortColumn . ' ' . $sortDirSql
+            . ' LIMIT ' . $perPage . ' OFFSET ' . $offset,
+            $params,
+        );
+
+        return ['rows' => $rows, 'total' => $total];
     }
 
     /**

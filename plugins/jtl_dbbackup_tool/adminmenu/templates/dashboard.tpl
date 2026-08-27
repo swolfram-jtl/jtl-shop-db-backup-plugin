@@ -75,11 +75,11 @@
 <div class="dbbackup-widgets-wrap mb-4">
     <div class="row no-gutters" style="gap: 0;">
         <div class="col-md-3 pr-md-2 mb-3">
-            <div class="card dbbackup-tile shadow-sm h-100 {if !$hasAnyBackup}dbbackup-tile--placeholder{/if}">
+            <div class="card dbbackup-tile dbbackup-tile--blue shadow-sm h-100 {if !$hasAnyBackup}dbbackup-tile--placeholder{/if}">
                 <div class="card-body d-flex align-items-center" style="gap: .9rem;">
-                    <div class="dbbackup-icon-circle dbbackup-icon-circle--blue"><i class="fal fa-calendar-check"></i></div>
+                    <div class="dbbackup-icon-circle"><i class="fal fa-calendar-check"></i></div>
                     <div class="w-100" style="min-width:0;">
-                        <div class="dbbackup-eyebrow text-muted mb-1">{d__('jtl_dbbackup_tool', 'Letztes Backup')}</div>
+                        <div class="dbbackup-eyebrow mb-1">{d__('jtl_dbbackup_tool', 'Letztes Backup')}</div>
                         <div class="dbbackup-kpi-value" style="font-size: 1.15rem;">{if $lastBackup}{$lastBackup.dCreated|escape}{else}—{/if}</div>
                         {if $lastBackup}
                         <span class="badge {if $lastBackup.cStatus === 'ok'}badge-success{else}badge-danger{/if}">{$lastBackup.cStatus|escape}</span>
@@ -91,22 +91,22 @@
             </div>
         </div>
         <div class="col-md-3 pr-md-2 mb-3">
-            <div class="card dbbackup-tile shadow-sm h-100 {if !$hasAnyBackup}dbbackup-tile--placeholder{/if}">
+            <div class="card dbbackup-tile dbbackup-tile--light shadow-sm h-100 {if !$hasAnyBackup}dbbackup-tile--placeholder{/if}">
                 <div class="card-body d-flex align-items-center" style="gap: .9rem;">
-                    <div class="dbbackup-icon-circle dbbackup-icon-circle--light"><i class="fal fa-clock"></i></div>
+                    <div class="dbbackup-icon-circle"><i class="fal fa-clock"></i></div>
                     <div class="w-100" style="min-width:0;">
-                        <div class="dbbackup-eyebrow text-muted mb-1">{d__('jtl_dbbackup_tool', 'Nächstes geplantes Backup')}</div>
-                        <div class="dbbackup-kpi-value" style="font-size: 1.15rem;">{if $nextScheduled}{$nextScheduled|escape}{else}<span class="text-muted" style="font-size:1rem; font-weight: 500;">{d__('jtl_dbbackup_tool', 'kein Cron-Backup aktiv')}</span>{/if}</div>
+                        <div class="dbbackup-eyebrow mb-1">{d__('jtl_dbbackup_tool', 'Nächstes geplantes Backup')}</div>
+                        <div class="dbbackup-kpi-value" style="font-size: 1.15rem;">{if $nextScheduled}{$nextScheduled|escape}{else}<span style="font-size:1rem; font-weight: 500;">{d__('jtl_dbbackup_tool', 'kein Cron-Backup aktiv')}</span>{/if}</div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3 pr-md-2 mb-3">
-            <div class="card dbbackup-tile shadow-sm h-100 {if !$hasAnyBackup}dbbackup-tile--placeholder{/if}">
+            <div class="card dbbackup-tile dbbackup-tile--tech shadow-sm h-100 {if !$hasAnyBackup}dbbackup-tile--placeholder{/if}">
                 <div class="card-body d-flex align-items-center" style="gap: .9rem;">
-                    <div class="dbbackup-icon-circle dbbackup-icon-circle--tech"><i class="fal fa-hdd"></i></div>
+                    <div class="dbbackup-icon-circle"><i class="fal fa-hdd"></i></div>
                     <div class="w-100" style="min-width:0;">
-                        <div class="dbbackup-eyebrow text-muted mb-1">{d__('jtl_dbbackup_tool', 'Speicherverbrauch')}</div>
+                        <div class="dbbackup-eyebrow mb-1">{d__('jtl_dbbackup_tool', 'Speicherverbrauch')}</div>
                         <div class="dbbackup-kpi-value">{$storageLocalBytes|string_format:"%.1f"}<span class="dbbackup-kpi-unit"> MB</span></div>
                         <div class="text-muted small">{d__('jtl_dbbackup_tool', 'lokal')}{if $storageFtpBytes !== null} · {$storageFtpBytes|string_format:"%.1f"} MB FTP{/if}</div>
                     </div>
@@ -114,11 +114,11 @@
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="card dbbackup-tile shadow-sm h-100 {if !$hasAnyBackup}dbbackup-tile--placeholder{/if}">
+            <div class="card dbbackup-tile dbbackup-tile--sand shadow-sm h-100 {if !$hasAnyBackup}dbbackup-tile--placeholder{/if}">
                 <div class="card-body d-flex align-items-center" style="gap: .9rem;">
-                    <div class="dbbackup-icon-circle dbbackup-icon-circle--sand"><i class="fal fa-layer-group"></i></div>
+                    <div class="dbbackup-icon-circle"><i class="fal fa-layer-group"></i></div>
                     <div class="w-100" style="min-width:0;">
-                        <div class="dbbackup-eyebrow text-muted mb-1">{d__('jtl_dbbackup_tool', 'Anzahl Backups')}</div>
+                        <div class="dbbackup-eyebrow mb-1">{d__('jtl_dbbackup_tool', 'Anzahl Backups')}</div>
                         <div class="dbbackup-kpi-value">{$backupCount}</div>
                     </div>
                 </div>
@@ -164,20 +164,30 @@
     {/if}
 </div>
 
-<h5 class="mb-3">{d__('jtl_dbbackup_tool', 'Schnellzugriff')}</h5>
-<div class="d-flex flex-wrap align-items-center mb-4" style="gap: .5rem;">
-    <form method="post" action="">
-        <input type="hidden" name="cPluginTab" value="Dashboard">
-        <input type="hidden" name="preset" value="full">
-        <button type="submit" class="btn btn-primary"><i class="fal fa-database mr-1"></i> {d__('jtl_dbbackup_tool', 'Komplett')}</button>
-    </form>
-    {foreach $presets as $presetKey => $presetLabel}
-    <form method="post" action="">
-        <input type="hidden" name="cPluginTab" value="Dashboard">
-        <input type="hidden" name="preset" value="{$presetKey|escape}">
-        <button type="submit" class="btn btn-outline-secondary">{$presetLabel|escape}</button>
-    </form>
-    {/foreach}
+<div class="card dbbackup-quickaccess shadow-sm mb-4">
+    <div class="card-body">
+        <div class="d-flex align-items-start mb-3" style="gap:.6rem;">
+            <i class="fal fa-bolt text-primary mt-1"></i>
+            <div>
+                <h5 class="mb-1">{d__('jtl_dbbackup_tool', 'Schnellzugriff')}</h5>
+                <div class="small text-muted">{d__('jtl_dbbackup_tool', 'Ein Klick startet SOFORT ein Backup mit den Standard-Einstellungen — hier werden keine Optionen geöffnet.')}</div>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap align-items-center" style="gap: .5rem;">
+            <form method="post" action="">
+                <input type="hidden" name="cPluginTab" value="Dashboard">
+                <input type="hidden" name="preset" value="full">
+                <button type="submit" class="btn btn-primary"><i class="fal fa-bolt mr-1"></i> {d__('jtl_dbbackup_tool', 'Jetzt sichern: Komplett')}</button>
+            </form>
+            {foreach $presets as $presetKey => $presetLabel}
+            <form method="post" action="">
+                <input type="hidden" name="cPluginTab" value="Dashboard">
+                <input type="hidden" name="preset" value="{$presetKey|escape}">
+                <button type="submit" class="btn btn-outline-secondary"><i class="fal fa-bolt mr-1"></i> {d__('jtl_dbbackup_tool', 'Jetzt sichern')}: {$presetLabel|escape}</button>
+            </form>
+            {/foreach}
+        </div>
+    </div>
 </div>
 
 <div class="alert alert-info shadow-sm d-flex" style="gap: .75rem; background-color: var(--jtl-sand, #EEEEE7); border-color: rgba(11,27,69,.15); color: var(--jtl-dark-blue, #0B1B45);">
