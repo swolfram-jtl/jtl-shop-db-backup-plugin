@@ -8,7 +8,10 @@ namespace Plugin\jtl_dbbackup_tool\Service;
  * Spec decision "Retention-Policy": configurable combo rule — max. count AND
  * max. age, oldest deleted first, with a minimum-keep floor so an aggressive
  * setting (e.g. "max age 1 day") can never wipe out every single backup and
- * leave the admin with no fallback at all.
+ * leave the admin with no fallback at all. Applied PER preset/backup type
+ * (see BackupHistoryRepository::findExpired()'s own docblock), not globally
+ * across every backup combined — a frequently-run preset can never crowd out
+ * a rarely-run one by filling a single shared limit.
  */
 final class RetentionService
 {

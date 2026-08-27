@@ -615,5 +615,20 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   favorite's deep-link (`{adminURL}/plugin/{id}?cPluginTab=Dashboard`) was
   verified against the real route registration (`Route::PLUGIN . '/{id}'`
   in `Collection.php`, read by `PluginController::getResponse()`).
+- **Retention ("Max. Anzahl Backups" / "Max. Alter in Tagen") now applies
+  PER backup type, not globally across every backup combined.**
+  `BackupHistoryRepository::findExpired()` used to sort ALL backups
+  together regardless of preset and apply the count/age/min-keep rule to
+  that one combined list — a preset that runs often (e.g. daily) could
+  crowd out and get a rarely-run preset's older backups deleted too, purely
+  by filling the shared limit faster. Now groups by `cPresetKey` first
+  (including "Komplett" and the automatic pre-update snapshot, both just
+  preset keys like any other) and applies the same count/age/min-keep rule
+  independently within each group, so every backup type keeps its own
+  configured number regardless of how often other types run. Default for
+  "Max. Anzahl Backups" raised from 10 to 15 (now per type, so the
+  effective total went up correspondingly with more preset types in use).
+  Both settings' labels/descriptions updated to make the per-type scope
+  explicit rather than implicit.
 
 <!-- Next bump also needs explicit confirmation. -->

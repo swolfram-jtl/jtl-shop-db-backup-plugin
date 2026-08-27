@@ -140,7 +140,7 @@ final class SettingsRepository
 
     public function retentionMaxCount(): int
     {
-        return (int) ($this->value('retention_max_count') ?? '10');
+        return (int) ($this->value('retention_max_count') ?? '15');
     }
 
     public function retentionMaxAgeDays(): int

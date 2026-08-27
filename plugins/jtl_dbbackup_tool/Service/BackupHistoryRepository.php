@@ -252,28 +252,47 @@ final class BackupHistoryRepository
      * or beyond the max count, EXCEPT the minimum number of most recent ones
      * that must always survive regardless of age/count settings.
      *
+     * Applied PER `cPresetKey` (spec: "gilt pro Backup-Art"), not globally
+     * across every backup combined — each preset (including "Komplett" and
+     * the automatic pre-update snapshot, both just preset keys like any
+     * other) keeps up to $maxCount of ITS OWN most recent backups, so a
+     * type that runs often (e.g. a daily preset) can never crowd out a
+     * type that runs rarely by filling up one shared, combined limit. The
+     * $minKeep floor applies per preset the same way, for the same reason
+     * findExpired() always protected a minimum regardless of settings —
+     * "at least 3 of THIS type always survive", not just 3 total.
+     *
      * @return object[] rows to delete (caller also deletes the actual files)
      */
     public function findExpired(int $maxCount, int $maxAgeDays, int $minKeep): array
     {
-        $all = $this->all(100000);
-        if (\count($all) <= $minKeep) {
-            return [];
+        $byPreset = [];
+        foreach ($this->all(100000) as $row) {
+            // all() is already ORDER BY dCreated DESC — grouping preserves
+            // that relative order within each preset's own list, which the
+            // slicing below depends on (index 0 = most recent of this type).
+            $byPreset[$row->cPresetKey][] = $row;
         }
 
-        $protected = \array_slice($all, 0, $minKeep);
-        $protectedIds = \array_map(static fn ($r) => $r->kID, $protected);
-        $candidates = \array_slice($all, $minKeep);
-
-        $cutoff = \strtotime('-' . $maxAgeDays . ' days');
         $expired = [];
+        foreach ($byPreset as $rows) {
+            if (\count($rows) <= $minKeep) {
+                continue;
+            }
 
-        foreach ($candidates as $index => $row) {
-            $tooOld = $maxAgeDays > 0 && \strtotime($row->dCreated) < $cutoff;
-            $overCount = ($index + $minKeep) >= $maxCount;
+            $protected = \array_slice($rows, 0, $minKeep);
+            $protectedIds = \array_map(static fn ($r) => $r->kID, $protected);
+            $candidates = \array_slice($rows, $minKeep);
 
-            if (($tooOld || $overCount) && !\in_array($row->kID, $protectedIds, true)) {
-                $expired[] = $row;
+            $cutoff = \strtotime('-' . $maxAgeDays . ' days');
+
+            foreach ($candidates as $index => $row) {
+                $tooOld = $maxAgeDays > 0 && \strtotime($row->dCreated) < $cutoff;
+                $overCount = ($index + $minKeep) >= $maxCount;
+
+                if (($tooOld || $overCount) && !\in_array($row->kID, $protectedIds, true)) {
+                    $expired[] = $row;
+                }
             }
         }
 

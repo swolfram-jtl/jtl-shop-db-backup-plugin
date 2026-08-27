@@ -774,3 +774,15 @@ msgstr "In favorites"
 msgid "Zu Favoriten hinzufügen"
 msgstr "Add to favorites"
 
+msgid "Max. Anzahl Backups pro Backup-Art"
+msgstr "Max. number of backups per backup type"
+
+msgid "Gilt getrennt je Backup-Art (z. B. „Komplett\", „Kunden\", …) — sobald von EINER Art mehr als diese Anzahl vorhanden ist, werden davon die ältesten automatisch gelöscht. Andere Arten sind davon unberührt. Die letzten 3 pro Art bleiben immer erhalten."
+msgstr "Applies separately per backup type (e.g. \"Komplett\", \"Kunden\", …) — once ONE type has more than this many, its oldest ones are automatically deleted. Other types are unaffected. The last 3 per type are always kept."
+
+msgid "Max. Alter in Tagen pro Backup-Art"
+msgstr "Max. age in days per backup type"
+
+msgid "Ebenfalls getrennt je Backup-Art: Backups dieser Art, die älter als diese Anzahl Tage sind, werden automatisch gelöscht (0 = kein Alterslimit). Die letzten 3 pro Art bleiben immer erhalten."
+msgstr "Also applied separately per backup type: backups of that type older than this many days are automatically deleted (0 = no age limit). The last 3 per type are always kept."
+
