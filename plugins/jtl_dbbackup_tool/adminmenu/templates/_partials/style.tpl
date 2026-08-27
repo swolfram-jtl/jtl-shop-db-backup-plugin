@@ -140,6 +140,38 @@
     color: #fff;
 }
 
+/* Manager quick-overview chips (one per preset: label, count, last-created) —
+   compact by design since there can be up to ~9 of them (7 presets + Komplett
+   + the automatic pre-update snapshot), unlike the 4 big Dashboard KPI tiles. */
+.dbbackup-summary-chip {
+    background: #fff;
+    border: 1px solid rgba(11,27,69,.12);
+    border-radius: .6rem;
+    padding: .5rem .85rem;
+    min-width: 11rem;
+}
+.dbbackup-summary-chip--full {
+    border-color: var(--jtl-orange);
+    border-width: 2px;
+    background: var(--jtl-sand);
+}
+.dbbackup-summary-chip-label {
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--jtl-dark-blue);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dbbackup-summary-chip-count {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--jtl-dark-blue);
+    line-height: 1;
+}
+
 /* Preset cards */
 .dbbackup-preset-card { border-radius: .7rem; border-color: rgba(11,27,69,.12) !important; transition: box-shadow .15s ease, border-color .15s ease; }
 .dbbackup-preset-card:hover { box-shadow: 0 .4rem 1rem rgba(11,27,69,.08); border-color: var(--jtl-tech-blue) !important; }
@@ -198,4 +230,41 @@
 
 .dbbackup-recent-row:not(:last-child) { border-bottom: 1px solid rgba(11,27,69,.08); }
 .dbbackup-recent-row { padding: .5rem 0; }
+
+/* Manager accordion group tables: Bootstrap's default table-cell padding
+   (.75rem) is narrower than .card-header's (.75rem 1.25rem) — without this,
+   the first/last column's content sits further out than the group header
+   above it, reading as misaligned. Match the outer inset on both sides. */
+.dbbackup-preset-card .table th:first-child,
+.dbbackup-preset-card .table td:first-child { padding-left: 1.25rem; }
+.dbbackup-preset-card .table th:last-child,
+.dbbackup-preset-card .table td:last-child { padding-right: 1.25rem; }
+
+/* Restore modal: brand-consistent styling instead of Bootstrap's stock
+   alert red, which clashed with the rest of this plugin's palette. */
+.dbbackup-restore-modal-header {
+    background: var(--jtl-dark-blue);
+    color: #fff;
+    border-bottom: 3px solid var(--jtl-orange);
+}
+.dbbackup-restore-modal .alert-warning {
+    background: #fff7ed;
+    border-color: rgba(251,88,31,.35);
+    color: var(--jtl-dark-blue);
+    border-left: 4px solid var(--jtl-orange);
+    border-radius: .5rem;
+}
+.dbbackup-restore-modal code {
+    background: var(--jtl-sand);
+    color: var(--jtl-dark-blue);
+    border: 1px solid rgba(11,27,69,.15);
+    padding: .1rem .4rem;
+    border-radius: .3rem;
+    font-weight: 700;
+}
+.dbbackup-restore-modal .table thead th {
+    color: var(--jtl-dark-blue);
+    border-top: none;
+    border-bottom-width: 1px;
+}
 </style>

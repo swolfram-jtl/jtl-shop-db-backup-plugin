@@ -100,6 +100,9 @@
                     <div class="w-100" style="min-width:0;">
                         <div class="dbbackup-eyebrow mb-1">{d__('jtl_dbbackup_tool', 'Nächstes geplantes Backup')}</div>
                         <div class="dbbackup-kpi-value" style="font-size: 1.15rem;">{if $nextScheduled}{$nextScheduled|escape}{else}<span style="font-size:1rem; font-weight: 500;">{d__('jtl_dbbackup_tool', 'kein Cron-Backup aktiv')}</span>{/if}</div>
+                        {if !$nextScheduled}
+                        <a href="#" class="small" data-toggle="collapse" data-target="#dbbackup-cron-guide" onclick="event.stopPropagation();">{d__('jtl_dbbackup_tool', 'Einrichten →')}</a>
+                        {/if}
                     </div>
                 </div>
             </div>
@@ -131,6 +134,25 @@
             </a>
         </div>
     </div>
+
+    {if !$nextScheduled}
+    <div class="collapse mb-3" id="dbbackup-cron-guide">
+        <div class="card border-0 shadow-sm" style="background:var(--jtl-sand);">
+            <div class="card-body">
+                <strong>{d__('jtl_dbbackup_tool', 'Automatisches Backup per Cronjob einrichten')}</strong>
+                <p class="small text-muted mb-2 mt-1">{d__('jtl_dbbackup_tool', 'Dieses Plugin plant nichts von selbst — JTL-Shop hat dafür eine eigene, zentrale Cron-Verwaltung, in der auch dieser Backup-Job eingetragen wird:')}</p>
+                <ol class="small mb-0" style="padding-left:1.2rem;">
+                    <li>{d__('jtl_dbbackup_tool', 'Im Backend links im Menü zu „Cron" gehen.')}</li>
+                    <li>{d__('jtl_dbbackup_tool', 'Dort den Reiter zum Anlegen eines neuen Auftrags öffnen.')}</li>
+                    <li>{d__('jtl_dbbackup_tool', 'Im Feld „Typ" den Eintrag „Datenbank-Backup (Plugin)" auswählen.')}</li>
+                    <li>{d__('jtl_dbbackup_tool', 'Intervall in Stunden festlegen (z. B. 24 für täglich) sowie eine Startzeit außerhalb der Stoßzeiten (z. B. nachts).')}</li>
+                    <li>{d__('jtl_dbbackup_tool', 'Speichern — der Auftrag erscheint danach in der Übersicht und läuft ab dann automatisch.')}</li>
+                </ol>
+                <p class="small text-muted mb-0 mt-2">{d__('jtl_dbbackup_tool', 'Der Cronjob sichert automatisch jedes einzelne Preset (Kundenimport, Newsletter usw.), aber nie „Komplett" — das bleibt bewusst ein manueller Klick, da es die Performance sichtbar beeinflussen kann.')}</p>
+            </div>
+        </div>
+    </div>
+    {/if}
 
     <div class="card shadow-sm {if !$hasAnyBackup}dbbackup-tile--placeholder{/if}">
         <div class="card-body">

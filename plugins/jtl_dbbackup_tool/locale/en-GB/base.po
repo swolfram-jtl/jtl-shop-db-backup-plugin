@@ -561,3 +561,33 @@ msgstr "Block on Structure Mismatch"
 msgid "Restore hart blockieren, wenn sich die Tabellenstruktur seit dem Backup geaendert hat (z. B. durch ein Shop-Update), statt nur zu warnen. Standard: an — sicherer, aber ein Restore laesst sich dann nur mit ausdruecklicher Bestaetigung erzwingen."
 msgstr "Hard-blocks restore if the table structure has changed since the backup (e.g. due to a shop update), instead of just warning. Default: on — safer, but a restore can then only be forced with explicit confirmation."
 
+msgid "Einrichten →"
+msgstr "Set up →"
+
+msgid "Automatisches Backup per Cronjob einrichten"
+msgstr "Set Up Automatic Backups via Cronjob"
+
+msgid "Dieses Plugin plant nichts von selbst — JTL-Shop hat dafür eine eigene, zentrale Cron-Verwaltung, in der auch dieser Backup-Job eingetragen wird:"
+msgstr "This plugin doesn't schedule anything by itself — JTL-Shop has its own central cron management, where this backup job gets entered too:"
+
+msgid "Im Backend links im Menü zu „Cron\" gehen."
+msgstr "In the backend, go to \"Cron\" in the left-hand menu."
+
+msgid "Dort den Reiter zum Anlegen eines neuen Auftrags öffnen."
+msgstr "Open the tab for creating a new job there."
+
+msgid "Im Feld „Typ\" den Eintrag „Datenbank-Backup (Plugin)\" auswählen."
+msgstr "In the \"Type\" field, select the \"Datenbank-Backup (Plugin)\" entry."
+
+msgid "Intervall in Stunden festlegen (z. B. 24 für täglich) sowie eine Startzeit außerhalb der Stoßzeiten (z. B. nachts)."
+msgstr "Set the interval in hours (e.g. 24 for daily) and a start time outside peak hours (e.g. at night)."
+
+msgid "Speichern — der Auftrag erscheint danach in der Übersicht und läuft ab dann automatisch."
+msgstr "Save — the job then appears in the overview and runs automatically from then on."
+
+msgid "Der Cronjob sichert automatisch jedes einzelne Preset (Kundenimport, Newsletter usw.), aber nie „Komplett\" — das bleibt bewusst ein manueller Klick, da es die Performance sichtbar beeinflussen kann."
+msgstr "The cronjob automatically backs up every individual preset (customer import, newsletter, etc.), but never \"Complete\" — that stays a deliberate manual click, since it can noticeably affect performance."
+
+msgid "zuletzt"
+msgstr "last"
+

@@ -151,6 +151,34 @@ final class BackupHistoryRepository
     }
 
     /**
+     * One row per distinct preset actually present in the table — the quick-
+     * overview tiles at the top of the Manager tab (spec: "welches Backup,
+     * wann zuletzt, wie viele davon"). Deliberately ignores the Manager's
+     * current filters — this is meant as a stable reference point, not a
+     * number that shifts every time the filter bar changes.
+     *
+     * @return array<string, array{presetKey: string, count: int, lastCreated: string}> keyed by cPresetKey
+     */
+    public function summaryByPreset(): array
+    {
+        $rows = $this->db->getObjects(
+            'SELECT cPresetKey, COUNT(*) AS cnt, MAX(dCreated) AS lastCreated FROM ' . self::TABLE
+            . ' GROUP BY cPresetKey',
+        );
+
+        $summary = [];
+        foreach ($rows as $row) {
+            $summary[$row->cPresetKey] = [
+                'presetKey'   => $row->cPresetKey,
+                'count'       => (int) $row->cnt,
+                'lastCreated' => $row->lastCreated,
+            ];
+        }
+
+        return $summary;
+    }
+
+    /**
      * Filtered, sorted, paginated query for the DB Backup Manager tab. Primary
      * sort always puts `cPresetKey = 'full'` ("Komplett") rows first — spec
      * decision "Komplett ist am wichtigsten" — then groups the rest by

@@ -201,9 +201,9 @@
                     <Description>Backups, die aelter als diese Anzahl Tage sind, werden automatisch geloescht (0 = kein Alterslimit).</Description>
                 </Setting>
                 <Setting type="text" initialValue="" conf="Y" sort="15">
-                    <Name>Benachrichtigung bei Fehlschlag</Name>
+                    <Name>Info-E-Mail bei Fehlschlag</Name>
                     <ValueName>notify_email_on_failure</ValueName>
-                    <Description>E-Mail-Adresse, an die eine Nachricht geht, wenn ein Backup oder Upload fehlschlaegt. Leer lassen, um keine Benachrichtigung zu erhalten.</Description>
+                    <Description>E-Mail-Adresse, an die eine automatische Infomail geht, sobald ein Backup oder Upload fehlschlaegt. Leer lassen, um keine E-Mail zu erhalten.</Description>
                 </Setting>
 
                 <Setting type="text" initialValue="" conf="N" sort="16">

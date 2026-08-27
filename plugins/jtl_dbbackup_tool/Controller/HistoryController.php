@@ -184,6 +184,26 @@ final class HistoryController
         );
 
         $presetLabels = PresetLabelResolver::all();
+
+        // Quick-overview tiles at the top of the page — spec: "welches
+        // Backup, wann zuletzt, wie viele davon". Deliberately built from
+        // summaryByPreset() (unfiltered, whole table) rather than $groups
+        // below, which only reflects the current filter/page.
+        $overviewTiles = [];
+        foreach ($history->summaryByPreset() as $key => $summary) {
+            $overviewTiles[] = [
+                'presetKey'   => $key,
+                'presetLabel' => $presetLabels[$key] ?? $key,
+                'count'       => $summary['count'],
+                'lastCreated' => $summary['lastCreated'],
+            ];
+        }
+        \usort($overviewTiles, static fn ($a, $b) => match (true) {
+            $a['presetKey'] === 'full' => -1,
+            $b['presetKey'] === 'full' => 1,
+            default                    => 0,
+        });
+
         $groups = [];
         foreach ($result['rows'] as $row) {
             $key = $row->cPresetKey;
@@ -210,7 +230,7 @@ final class HistoryController
         $pageNumbers = \range(1, $totalPages);
 
         $baseParams = \array_filter([
-            'cPluginTab' => 'Backups',
+            'cPluginTab' => 'Backups verwalten (Historie)',
             'f_preset'   => $filterPreset,
             'f_status'   => $filterStatus,
             'f_storage'  => $filterStorage,
@@ -230,6 +250,7 @@ final class HistoryController
 
         $smarty->assign('tplDir', \dirname(__DIR__) . '/adminmenu/templates')
             ->assign('groups', \array_values($groups))
+            ->assign('overviewTiles', $overviewTiles)
             ->assign('presetOptions', $presetLabels)
             ->assign('filterPreset', $filterPreset)
             ->assign('filterStatus', $filterStatus)

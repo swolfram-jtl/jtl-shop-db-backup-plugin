@@ -3,6 +3,8 @@
    Controller\HistoryController::render():
      $groups (array of {presetKey, presetLabel, rows: [{id, dCreated, cLabel,
        cComment, cStatus, nSizeBytes(MB), bEncrypted, bUploaded}, ...]}),
+     $overviewTiles (array of {presetKey, presetLabel, count, lastCreated} —
+       quick-overview chips, unfiltered/whole-table, "Komplett" always first),
      $presetOptions (array<string,string> key=>label, for the filter dropdown),
      $filterPreset/$filterStatus/$filterStorage/$search (string, current GET values),
      $sortField/$sortDir (string), $sortLinks (array<string,string> field=>href),
@@ -29,6 +31,20 @@
 <div class="alert alert-warning shadow-sm d-flex align-items-center" style="gap:.6rem; border-left: 4px solid var(--jtl-orange);">
     <i class="fal fa-spinner fa-spin"></i>
     <div>{d__('jtl_dbbackup_tool', 'Ein Backup oder Restore läuft gerade — Löschen ist bis dahin gesperrt.')}</div>
+</div>
+{/if}
+
+{if $overviewTiles}
+<div class="d-flex flex-wrap mb-4" style="gap:.6rem;">
+    {foreach $overviewTiles as $tile}
+    <div class="dbbackup-summary-chip {if $tile.presetKey === 'full'}dbbackup-summary-chip--full{/if}">
+        <div class="dbbackup-summary-chip-label">{$tile.presetLabel|escape}</div>
+        <div class="d-flex align-items-baseline" style="gap:.4rem;">
+            <span class="dbbackup-summary-chip-count">{$tile.count}</span>
+            <span class="small text-muted">{d__('jtl_dbbackup_tool', 'zuletzt')}: {$tile.lastCreated|escape}</span>
+        </div>
+    </div>
+    {/foreach}
 </div>
 {/if}
 
@@ -67,7 +83,7 @@
             </div>
             <div class="col-md-3 mb-2 d-flex" style="gap:.4rem;">
                 <button type="submit" class="btn btn-primary btn-sm">{d__('jtl_dbbackup_tool', 'Filtern')}</button>
-                <a href="?cPluginTab=Backups" class="btn btn-outline-secondary btn-sm">{d__('jtl_dbbackup_tool', 'Zurücksetzen')}</a>
+                <a href="?cPluginTab={'Backups verwalten (Historie)'|escape:'url'}" class="btn btn-outline-secondary btn-sm">{d__('jtl_dbbackup_tool', 'Zurücksetzen')}</a>
             </div>
         </form>
     </div>
@@ -211,10 +227,10 @@
 {/if}
 
 {if $previewBackupId}
-<div class="modal fade" id="restoreModal" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade dbbackup-restore-modal" id="restoreModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header dbbackup-restore-modal-header">
                 <h5 class="modal-title"><i class="fal fa-exclamation-triangle mr-2"></i>{d__('jtl_dbbackup_tool', 'Wiederherstellung vorbereiten — dieser Vorgang überschreibt aktuelle Daten')}</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
@@ -292,6 +308,22 @@
         if (btn) {
             var locked = btn.dataset.locked === '1';
             btn.disabled = locked || !(checked > 0 && confirmBox && confirmBox.checked);
+        }
+
+        // Keep every group checkbox (and the master "select all") in sync
+        // with what's actually selected within it — checked when the whole
+        // group/page is selected, indeterminate when only some rows are.
+        document.querySelectorAll('.dbbackup-group-select').forEach(function (groupCb) {
+            var rows = document.querySelectorAll('.dbbackup-row-check[data-group="' + groupCb.dataset.group + '"]');
+            var checkedRows = document.querySelectorAll('.dbbackup-row-check[data-group="' + groupCb.dataset.group + '"]:checked');
+            groupCb.checked = rows.length > 0 && checkedRows.length === rows.length;
+            groupCb.indeterminate = checkedRows.length > 0 && checkedRows.length < rows.length;
+        });
+        var selectAllCb = document.getElementById('dbbackup-select-all');
+        if (selectAllCb) {
+            var allRows = document.querySelectorAll('.dbbackup-row-check');
+            selectAllCb.checked = allRows.length > 0 && checked === allRows.length;
+            selectAllCb.indeterminate = checked > 0 && checked < allRows.length;
         }
     }
 
