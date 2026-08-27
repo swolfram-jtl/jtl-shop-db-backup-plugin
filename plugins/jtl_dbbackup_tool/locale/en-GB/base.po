@@ -786,3 +786,18 @@ msgstr "Max. age in days per backup type"
 msgid "Ebenfalls getrennt je Backup-Art: Backups dieser Art, die älter als diese Anzahl Tage sind, werden automatisch gelöscht (0 = kein Alterslimit). Die letzten 3 pro Art bleiben immer erhalten."
 msgstr "Also applied separately per backup type: backups of that type older than this many days are automatically deleted (0 = no age limit). The last 3 per type are always kept."
 
+msgid "Automatische Bereinigung alter Backups"
+msgstr "Automatic cleanup of old backups"
+
+msgid "Standard: aus. Solange deaktiviert, sammeln sich alle Backups unbegrenzt an — es wird nie automatisch etwas gelöscht. Erst nach Aktivierung greifen die beiden Regeln unten."
+msgstr "Default: off. While disabled, all backups accumulate indefinitely — nothing is ever deleted automatically. The two rules below only take effect once this is enabled."
+
+msgid "Automatisches Backup"
+msgstr "Automatic backup"
+
+msgid "DB Backup Manager – Standard-Backup"
+msgstr "DB Backup Manager – Scheduled backup"
+
+msgid "DB Backup Manager – Komplettbackup"
+msgstr "DB Backup Manager – Full backup"
+

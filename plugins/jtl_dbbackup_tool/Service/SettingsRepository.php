@@ -138,6 +138,19 @@ final class SettingsRepository
         return $this->checkbox('version_fingerprint_block_enabled', true);
     }
 
+    /**
+     * Spec decision "Bereinigung ist opt-in": default OFF, same pattern as
+     * encryptionEnabled() — an admin must explicitly turn this on before any
+     * backup is ever automatically deleted. Reported live: retention used to
+     * always apply (10/90-day defaults baked in with no way to disable it),
+     * which is a genuinely dangerous default for a BACKUP tool — silently
+     * pruning an admin's safety net is worse than never pruning it at all.
+     */
+    public function autoCleanupEnabled(): bool
+    {
+        return $this->checkbox('auto_cleanup_enabled');
+    }
+
     public function retentionMaxCount(): int
     {
         return (int) ($this->value('retention_max_count') ?? '15');

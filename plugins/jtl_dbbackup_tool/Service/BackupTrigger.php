@@ -75,12 +75,18 @@ final class BackupTrigger
             $storage = new StorageService(\dirname($this->plugin->getPaths()->getAdminPath()));
             $manifest = new ManifestService($this->db);
             $history = new BackupHistoryRepository($this->db);
-            $retention = new RetentionService($history, $storage);
-            $retention->apply(
-                $settings->retentionMaxCount(),
-                $settings->retentionMaxAgeDays(),
-                \substr($manifest->instanceId(), 0, 32),
-            );
+
+            // Spec "Bereinigung ist opt-in": see SettingsRepository::
+            // autoCleanupEnabled()'s own docblock — no backup is ever
+            // automatically deleted unless this is explicitly turned on.
+            if ($settings->autoCleanupEnabled()) {
+                $retention = new RetentionService($history, $storage);
+                $retention->apply(
+                    $settings->retentionMaxCount(),
+                    $settings->retentionMaxAgeDays(),
+                    \substr($manifest->instanceId(), 0, 32),
+                );
+            }
 
             // Spec: "ausführliche Meldung" — filename + size + completion
             // time, not just "erfolgreich erstellt". createBackup() has

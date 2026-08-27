@@ -13,7 +13,8 @@
      $connectionTestResult (array{ok,message}|null),
      $sections (array of {title, description?, connectionTest?, fields: [...]})
        field shapes:
-         text/number: {type, name, label, description, value}
+         text: {type, name, label, description, value}
+         number: {type, name, label, description, value, revealedBy?}
          checkbox: {type, name, label, description, checked, revealsField?}
          encrypted: {type, name, label, description, hasValue, revealedBy?}
          select: {type, name, label, description, options, value}

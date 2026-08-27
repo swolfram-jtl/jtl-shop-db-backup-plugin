@@ -140,7 +140,23 @@ final class HistoryController
                 }
             }
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'comment' && isset($_POST['id']) && RequestGuard::claimCommentAction()) {
-            $history->updateComment((int) $_POST['id'], \trim((string) ($_POST['comment'] ?? '')));
+            $commentId = (int) $_POST['id'];
+            $comment = \trim((string) ($_POST['comment'] ?? ''));
+            $comment = $comment !== '' ? $comment : null;
+            $history->updateComment($commentId, $comment);
+
+            // Spec "Kommentare unabhängig nachvollziehbar": also patch the
+            // manifest sidecar next to the backup file itself, not only this
+            // plugin's own DB row — see ManifestService::updateComment()'s
+            // own docblock for why.
+            $commentRow = $history->find($commentId);
+            if ($commentRow !== null) {
+                $manifestService->updateComment(
+                    $storage->backupDirFor($instanceId) . '/' . $commentRow->cFilename . '.manifest.json',
+                    $comment,
+                );
+            }
+
             $flashMessage = \d__('jtl_dbbackup_tool', 'Kommentar gespeichert.');
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'delete' && isset($_POST['id']) && RequestGuard::claimDeleteAction()) {
             try {

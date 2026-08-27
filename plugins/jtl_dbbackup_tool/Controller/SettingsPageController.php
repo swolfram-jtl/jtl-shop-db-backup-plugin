@@ -229,10 +229,15 @@ final class SettingsPageController
                 'fields' => [
                     $this->checkbox('maintenance_mode_enabled', \d__('jtl_dbbackup_tool', 'Wartungsmodus während des Backups'), $settings->maintenanceModeEnabled(),
                         \d__('jtl_dbbackup_tool', 'Reiner Kunden-Komfort (verhindert Bestellungen mitten im Backup) — keine technische Konsistenzgarantie für die Backup-Datei selbst. Standard: an.')),
+                    $this->checkbox('auto_cleanup_enabled', \d__('jtl_dbbackup_tool', 'Automatische Bereinigung alter Backups'), $settings->autoCleanupEnabled(),
+                        \d__('jtl_dbbackup_tool', 'Standard: aus. Solange deaktiviert, sammeln sich alle Backups unbegrenzt an — es wird nie automatisch etwas gelöscht. Erst nach Aktivierung greifen die beiden Regeln unten.'),
+                        'retention_max_count'),
                     $this->number('retention_max_count', \d__('jtl_dbbackup_tool', 'Max. Anzahl Backups pro Backup-Art'), $store,
-                        \d__('jtl_dbbackup_tool', 'Gilt getrennt je Backup-Art (z. B. „Komplett", „Kunden", …) — sobald von EINER Art mehr als diese Anzahl vorhanden ist, werden davon die ältesten automatisch gelöscht. Andere Arten sind davon unberührt. Die letzten 3 pro Art bleiben immer erhalten.'), (string) $settings->retentionMaxCount()),
+                        \d__('jtl_dbbackup_tool', 'Gilt getrennt je Backup-Art (z. B. „Komplett", „Kunden", …) — sobald von EINER Art mehr als diese Anzahl vorhanden ist, werden davon die ältesten automatisch gelöscht. Andere Arten sind davon unberührt. Die letzten 3 pro Art bleiben immer erhalten.'), (string) $settings->retentionMaxCount(),
+                        'auto_cleanup_enabled'),
                     $this->number('retention_max_age_days', \d__('jtl_dbbackup_tool', 'Max. Alter in Tagen pro Backup-Art'), $store,
-                        \d__('jtl_dbbackup_tool', 'Ebenfalls getrennt je Backup-Art: Backups dieser Art, die älter als diese Anzahl Tage sind, werden automatisch gelöscht (0 = kein Alterslimit). Die letzten 3 pro Art bleiben immer erhalten.'), (string) $settings->retentionMaxAgeDays()),
+                        \d__('jtl_dbbackup_tool', 'Ebenfalls getrennt je Backup-Art: Backups dieser Art, die älter als diese Anzahl Tage sind, werden automatisch gelöscht (0 = kein Alterslimit). Die letzten 3 pro Art bleiben immer erhalten.'), (string) $settings->retentionMaxAgeDays(),
+                        'auto_cleanup_enabled'),
                     $this->text('notify_email_on_failure', \d__('jtl_dbbackup_tool', 'Info-E-Mail bei Fehlschlag'), $store,
                         \d__('jtl_dbbackup_tool', 'E-Mail-Adresse für eine automatische Infomail, sobald ein Backup oder Upload fehlschlägt. Leer lassen für keine E-Mail.')),
                 ],
@@ -289,11 +294,11 @@ final class SettingsPageController
     /**
      * @return array<string, mixed>
      */
-    private function number(string $name, string $label, SettingsStore $store, string $description, string $default = ''): array
+    private function number(string $name, string $label, SettingsStore $store, string $description, string $default = '', ?string $revealedBy = null): array
     {
         return [
             'type' => 'number', 'name' => $name, 'label' => $label, 'description' => $description,
-            'value' => $this->raw($store, $name) ?? $default,
+            'value' => $this->raw($store, $name) ?? $default, 'revealedBy' => $revealedBy,
         ];
     }
 

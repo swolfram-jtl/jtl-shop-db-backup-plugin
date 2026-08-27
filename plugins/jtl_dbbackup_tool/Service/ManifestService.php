@@ -30,7 +30,7 @@ final class ManifestService
     /**
      * @param string[] $tables
      */
-    public function build(array $tables, string $presetKey, bool $encrypted): array
+    public function build(array $tables, string $presetKey, bool $encrypted, ?string $comment = null): array
     {
         return [
             'formatVersion' => self::MANIFEST_FORMAT_VERSION,
@@ -39,8 +39,32 @@ final class ManifestService
             'instanceId'    => $this->instanceId(),
             'presetKey'     => $presetKey,
             'encrypted'     => $encrypted,
+            'comment'       => $comment,
             'tables'        => $this->fingerprintTables($tables),
         ];
+    }
+
+    /**
+     * Spec decision "Kommentare unabhängig nachvollziehbar": the comment
+     * belongs in the manifest sidecar file, not only in this plugin's own DB
+     * table — a table that's gone the moment the plugin is uninstalled (or
+     * never existed yet, on a fresh install restoring an old backup set).
+     * Keeps BackupHistoryRepository::updateComment() (the DB row, used for
+     * fast listing/search/filter) and this file (the durable, plugin-
+     * independent record) in sync on every edit from the Manager tab's
+     * inline comment field. Best-effort/no-op if the manifest file itself is
+     * missing (e.g. a very old backup predating manifests, or one already
+     * cleaned up) — the DB write still succeeds either way.
+     */
+    public function updateComment(string $manifestPath, ?string $comment): void
+    {
+        $manifest = $this->load($manifestPath);
+        if ($manifest === null) {
+            return;
+        }
+
+        $manifest['comment'] = $comment;
+        $this->save($manifest, $manifestPath);
     }
 
     public function load(string $manifestPath): ?array

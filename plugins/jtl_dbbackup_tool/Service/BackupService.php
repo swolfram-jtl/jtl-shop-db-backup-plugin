@@ -130,7 +130,7 @@ final class BackupService
 
             $this->storage->commit($tmpDumpPath, $finalPath);
 
-            $manifest = $this->manifest->build($tables, $presetKey, $options['encrypt']);
+            $manifest = $this->manifest->build($tables, $presetKey, $options['encrypt'], $options['comment'] ?? null);
             $this->manifest->save($manifest, $finalPath . '.manifest.json');
 
             $sizeBytes = (int) \filesize($finalPath);

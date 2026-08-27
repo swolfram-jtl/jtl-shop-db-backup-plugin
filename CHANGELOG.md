@@ -630,5 +630,60 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   effective total went up correspondingly with more preset types in use).
   Both settings' labels/descriptions updated to make the per-type scope
   explicit rather than implicit.
+- **Fixed a real, likely-severe cron bug reported live: scheduled backups
+  ran on every pseudo-cron trigger (reported roughly every ~2 minutes),
+  completely ignoring the configured interval.** Root cause CONFIRMED
+  against `includes/src/Cron/Queue.php` and every core job under
+  `includes/src/Cron/Job/*.php`: `BackupCronJob`/`FullBackupCronJob` never
+  called `parent::start($queueEntry)` and never called
+  `$this->setFinished(true)` — every core cron job does both. Skipping
+  `setFinished(true)` meant `Queue::run()` never called `$job->delete()`,
+  so the `tjobqueue` row this job's own trigger created was never removed —
+  `Queue::loadQueueFromDB()` unconditionally reloads and re-runs every row
+  still sitting in `tjobqueue` on each pseudo-cron pass, regardless of
+  `tcron.nextStart`/`frequency` (`Checker::check()`, which DOES respect
+  those, only ever decides whether to enqueue a brand-new row — it does
+  nothing to reap one that's already there). Skipping `parent::start()`
+  also meant `tcron.lastStart` was never written, which is why the admin's
+  own Cron overview showed no "zuletzt gelaufen" time either — both
+  symptoms were the same root cause. Fixed by calling both, exactly like
+  every core job (`Job/RedirectCleanup.php`, `Job/TopSeller.php`,
+  `Job/VisitorCount.php`, etc.) already does for a "does its whole job in
+  one pass" cron type.
+- **Cron job type label readability.** CONFIRMED against the gettext
+  translator library and `admin/templates/bootstrap/cron.tpl`: the raw type
+  string (`plugin:jtl_dbbackup_tool_cron`) shown in the admin Cron overview
+  cannot be translated from plugin side — `{__($job->getType())}` always
+  resolves against the ADMIN's own `base.mo` domain (the first one loaded,
+  fixed as the gettext library's "default domain"), which a plugin has no
+  supported way to register strings into without modifying core files. As a
+  practical mitigation, both cron job classes now write a real, readable
+  value into `tcron.name` (a column core itself renders right next to the
+  raw type string, confirmed `NOT NULL` but always populated by core's own
+  add-cron form with a throwaway `manuell@<timestamp>` value — safe to
+  overwrite) on every run.
+- **Backups created by a cron job now get a fixed comment**
+  ("Automatisches Backup") **so they're identifiable in the history list**,
+  passed through `BackupTrigger::trigger()`'s existing `formOptions`.
+- **Backup comments are now also written into the manifest JSON sidecar
+  file next to the backup**, not only this plugin's own DB table — spec:
+  independently traceable even if the plugin was uninstalled and later
+  reinstalled/replaced. `ManifestService::build()` now accepts and stores a
+  `comment`, and a new `ManifestService::updateComment()` keeps the
+  manifest in sync whenever the Manager tab's inline comment field is
+  edited (best-effort/no-op if the manifest file itself is missing, e.g. a
+  very old pre-manifest backup).
+- **"Automatische Bereinigung" (retention/auto-cleanup) is now opt-in,
+  default OFF** — same pattern as encryption. Previously, retention always
+  applied using its default count/age values with no way to turn it off
+  entirely; silently deleting an admin's own backups by default is a
+  dangerous default for a backup tool. A new checkbox
+  (`SettingsRepository::autoCleanupEnabled()`) gates
+  `RetentionService::apply()` in `BackupTrigger::trigger()` — nothing is
+  ever deleted automatically unless explicitly enabled. The two retention
+  fields ("Max. Anzahl Backups" / "Max. Alter in Tagen") are hidden in the
+  settings form until the checkbox is turned on, mirroring the existing
+  encryption-passphrase reveal pattern exactly (`number()`'s field builder
+  gained the same `revealedBy` support `encrypted()` already had).
 
 <!-- Next bump also needs explicit confirmation. -->

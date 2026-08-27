@@ -30,6 +30,15 @@ use Plugin\jtl_dbbackup_tool\Service\BackupTrigger;
  * See BackupCronJob's own docblock for a real bug fixed here too:
  * Helper::getLoaderByPluginID() takes the NUMERIC kPlugin, not this class's
  * string PLUGIN_ID — Helper::getPluginById(string) is the correct method.
+ *
+ * See BackupCronJob's own docblock for a SECOND, more severe bug fixed here
+ * too (identical root cause, this class had the same missing calls): never
+ * calling `parent::start($queueEntry)` and never calling
+ * `$this->setFinished(true)` meant this job's `tjobqueue` row was never
+ * cleaned up, so it re-ran on every single pseudo-cron trigger regardless of
+ * its configured interval, and `tcron.lastStart` never got recorded (why the
+ * admin's Cron overview showed no "zuletzt gelaufen" time). Fixed the same
+ * way, for the same reason.
  */
 final class FullBackupCronJob extends Job implements JobInterface
 {
@@ -37,7 +46,19 @@ final class FullBackupCronJob extends Job implements JobInterface
 
     public function start(QueueEntry $queueEntry): JobInterface
     {
+        parent::start($queueEntry);
+        $this->setFinished(true);
+
         try {
+            $db = Shop::Container()->getDB();
+
+            // See BackupCronJob's own docblock for why this is the best
+            // available lever for a readable label — the raw type string
+            // itself can't be translated from plugin-side.
+            $db->update('tcron', 'cronID', $queueEntry->cronID, (object) [
+                'name' => \d__('jtl_dbbackup_tool', 'DB Backup Manager – Komplettbackup'),
+            ]);
+
             $plugin = Helper::getPluginById(self::PLUGIN_ID);
             if ($plugin === null) {
                 throw new \RuntimeException(
@@ -45,8 +66,9 @@ final class FullBackupCronJob extends Job implements JobInterface
                 );
             }
 
-            $db = Shop::Container()->getDB();
-            (new BackupTrigger($plugin, $db))->trigger('full', 0);
+            (new BackupTrigger($plugin, $db))->trigger('full', 0, [
+                'comment' => \d__('jtl_dbbackup_tool', 'Automatisches Backup'),
+            ]);
         } catch (\Throwable) {
             // Swallowed deliberately: a cron job must never fatal the shop's
             // whole cron queue run over one plugin's failure. Failures are

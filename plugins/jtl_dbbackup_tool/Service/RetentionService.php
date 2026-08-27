@@ -12,6 +12,12 @@ namespace Plugin\jtl_dbbackup_tool\Service;
  * (see BackupHistoryRepository::findExpired()'s own docblock), not globally
  * across every backup combined — a frequently-run preset can never crowd out
  * a rarely-run one by filling a single shared limit.
+ *
+ * Spec decision "Bereinigung ist opt-in": this class itself has no on/off
+ * switch — apply() always deletes whatever findExpired() returns. The actual
+ * opt-in gate lives one level up, in the caller (BackupTrigger::trigger()),
+ * which only constructs/calls this class at all when
+ * SettingsRepository::autoCleanupEnabled() is true. Default: off.
  */
 final class RetentionService
 {
