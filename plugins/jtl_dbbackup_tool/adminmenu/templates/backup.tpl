@@ -8,9 +8,11 @@
    gets executed on each request to pre-render all tabs, so a relative
    action keeps the submit on whichever URL is actually loaded rather than
    guessing at a cross-tab URL scheme). Every form (here and in
-   _partials/run-options.tpl) also carries a hidden cPluginTab="Backup jetzt"
-   field — see dashboard.tpl's header comment for why: without it, a POST
-   from this tab bounces back to the Dashboard tab on reload. *}
+   _partials/run-options.tpl) also carries a hidden cPluginTab="Erstellen"
+   field (tab renamed from "Backup jetzt" — the button labels below keep
+   saying "Backup jetzt" on purpose, that's an action verb, not the tab name)
+   — see dashboard.tpl's header comment for why: without it, a POST from
+   this tab bounces back to the Dashboard tab on reload. *}
 <div class="dbbackup-page">
 
 {if $flashMessage}
@@ -33,7 +35,7 @@
         </div>
         <div class="mt-2 mt-md-0">
             <form method="post" action="" class="d-inline">
-            <input type="hidden" name="cPluginTab" value="Backup jetzt">
+            <input type="hidden" name="cPluginTab" value="Erstellen">
                 <input type="hidden" name="preset" value="full">
                 <button type="submit" class="btn btn-primary">{d__('jtl_dbbackup_tool', 'Backup jetzt')}</button>
             </form>
@@ -52,7 +54,7 @@
         </div>
         <div class="mt-2 mt-md-0">
             <form method="post" action="" class="d-inline">
-            <input type="hidden" name="cPluginTab" value="Backup jetzt">
+            <input type="hidden" name="cPluginTab" value="Erstellen">
                 <input type="hidden" name="preset" value="{$presetKey|escape}">
                 <button type="submit" class="btn btn-primary btn-sm">{d__('jtl_dbbackup_tool', 'Backup jetzt')}</button>
             </form>

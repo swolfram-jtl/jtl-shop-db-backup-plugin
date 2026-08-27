@@ -35,7 +35,7 @@
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <form method="get" action="" class="form-row align-items-end">
-            <input type="hidden" name="cPluginTab" value="Backups">
+            <input type="hidden" name="cPluginTab" value="Backups verwalten (Historie)">
             <div class="col-md-2 mb-2">
                 <label class="small mb-1">{d__('jtl_dbbackup_tool', 'Preset')}</label>
                 <select name="f_preset" class="form-control form-control-sm">
@@ -77,7 +77,7 @@
    own "Datenbank bereinigen" admin screen pattern) — deliberately no extra
    JS confirm() popup on top of it, unlike the single-row delete below. *}
 <form method="post" action="" id="bulk-delete-form">
-    <input type="hidden" name="cPluginTab" value="Backups">
+    <input type="hidden" name="cPluginTab" value="Backups verwalten (Historie)">
     <input type="hidden" name="action" value="bulk_delete">
 </form>
 
@@ -102,6 +102,14 @@
 </div>
 {/if}
 
+{* True single-open accordion (data-parent) so opening one preset group
+   auto-closes whichever was open before — with potentially many presets,
+   letting several stay open at once would recreate the exact clutter
+   collapsing-by-default is meant to avoid. Only "Komplett" starts expanded
+   (spec: "Komplett ist am wichtigsten") — every other group starts
+   collapsed. "Komplett" is also always the first group, guaranteed by
+   BackupHistoryRepository::search()'s ORDER BY, not just this template. *}
+<div id="backupGroupsAccordion">
 {foreach $groups as $group}
 <div class="card shadow-sm mb-3 dbbackup-preset-card">
     <div class="card-header d-flex align-items-center justify-content-between" style="gap:.6rem; cursor:pointer;" data-toggle="collapse" data-target="#group-{$group.presetKey}" role="button">
@@ -112,7 +120,7 @@
         </div>
         <i class="fal fa-chevron-down text-muted"></i>
     </div>
-    <div class="collapse show" id="group-{$group.presetKey}">
+    <div class="collapse{if $group.presetKey === 'full'} show{/if}" id="group-{$group.presetKey}" data-parent="#backupGroupsAccordion">
         <table class="table table-striped table-sm mb-0">
             <thead>
                 <tr>
@@ -137,7 +145,7 @@
                             <a href="#" class="ml-1" onclick="document.getElementById('comment-view-{$row.id}').style.display='none';document.getElementById('comment-edit-{$row.id}').style.display='inline-flex';return false;" title="{d__('jtl_dbbackup_tool', 'Kommentar bearbeiten')}"><i class="fal fa-pencil"></i></a>
                         </span>
                         <form method="post" action="" id="comment-edit-{$row.id}" class="d-none align-items-center" style="gap:.3rem;">
-                            <input type="hidden" name="cPluginTab" value="Backups">
+                            <input type="hidden" name="cPluginTab" value="Backups verwalten (Historie)">
                             <input type="hidden" name="action" value="comment">
                             <input type="hidden" name="id" value="{$row.id}">
                             <input type="text" name="comment" value="{$row.cComment|escape}" maxlength="255" class="form-control form-control-sm" style="width:12rem;">
@@ -154,7 +162,7 @@
                         {if $row.cStatus === 'ok' && $row.nSizeBytes > 0}
                         <a href="?action=download&amp;id={$row.id|escape}" class="btn btn-sm btn-outline-secondary" title="{d__('jtl_dbbackup_tool', 'Download')}"><i class="fal fa-download"></i></a>
                         <form method="post" action="" class="d-inline">
-                            <input type="hidden" name="cPluginTab" value="Backups">
+                            <input type="hidden" name="cPluginTab" value="Backups verwalten (Historie)">
                             <input type="hidden" name="action" value="preview">
                             <input type="hidden" name="id" value="{$row.id|escape}">
                             {if $row.bEncrypted}
@@ -164,7 +172,7 @@
                         </form>
                         {/if}
                         <form method="post" action="" class="d-inline" onsubmit="return confirm('{d__('jtl_dbbackup_tool', 'Dieses Backup wirklich unwiderruflich löschen? (Nur lokal — eine eventuelle FTP/SFTP-Kopie bleibt bestehen.)')|escape:"javascript"}');">
-                            <input type="hidden" name="cPluginTab" value="Backups">
+                            <input type="hidden" name="cPluginTab" value="Backups verwalten (Historie)">
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="id" value="{$row.id|escape}">
                             <button type="submit" class="btn btn-sm btn-outline-danger" title="{d__('jtl_dbbackup_tool', 'Löschen')}" {if $isLocked}disabled{/if}><i class="fal fa-trash-alt"></i></button>
@@ -187,6 +195,7 @@
     </div>
 </div>
 {/foreach}
+</div>
 
 {if $totalPages > 1}
 <nav class="d-flex justify-content-between align-items-center mt-3">
@@ -248,7 +257,7 @@
                 </div>
 
                 <form method="post" action="" class="mt-3">
-                    <input type="hidden" name="cPluginTab" value="Backups">
+                    <input type="hidden" name="cPluginTab" value="Backups verwalten (Historie)">
                     <input type="hidden" name="action" value="restore">
                     <input type="hidden" name="id" value="{$previewBackupId|escape}">
                     {if $previewDecryptionPassphrase}

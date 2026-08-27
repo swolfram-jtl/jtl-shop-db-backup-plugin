@@ -108,6 +108,11 @@ final class DashboardController
             ->assign('storageLocalBytes', $this->dirSizeMb($storage))
             ->assign('storageFtpBytes', null) // remote size isn't queried to avoid a network round-trip on every dashboard load
             ->assign('backupCount', $count)
+            // Exact info.xml <Customlink><Name> of the Manager tab — the
+            // "Anzahl Backups" tile links there via ?cPluginTab=... (a plain
+            // GET works the same way the hidden POST field does elsewhere,
+            // see this class's own header comment / Request::verifyGPDataString()).
+            ->assign('manageTabName', 'Backups verwalten (Historie)')
             ->assign('presets', $presets)
             ->assign('recent', $recent)
             ->assign('isLocked', $lock->isLocked())

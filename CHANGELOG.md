@@ -342,5 +342,34 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   both `HistoryController` and this service) into a shared
   `PresetLabelResolver` so the two can't drift apart.
 
-<!-- No version number assigned yet: first bump happens after explicit
-     confirmation, once there's something real to release. -->
+- Manager UX pass after real-usage feedback ("wird schnell wirr, wenn es
+  viele Backups gibt"):
+  - Preset groups now start **collapsed**, except "Komplett" (spec:
+    "komplette Backups sind die absolut wichtigsten") which starts expanded
+    and is always sorted first — pinned at the SQL level
+    (`ORDER BY (cPresetKey = 'full') DESC, ...`) so it's guaranteed to be on
+    page 1 no matter how many rows other presets have, not just reordered
+    within whatever the current page happened to contain.
+  - Groups are now a true single-open accordion (Bootstrap `data-parent`) —
+    opening one closes whichever was open before, so browsing multiple
+    presets can't recreate the same clutter collapsing-by-default fixes.
+- Dashboard: "Letztes Backup" now also shows which backup it was (preset/
+  label), not just the date+status; the "Anzahl Backups" tile is now a link
+  straight to the Backups tab; "Schnellzugriff" renamed to "Sofort-Backup".
+- Settings tab: every setting's displayed label was the raw internal
+  `ValueName` (e.g. "pre_restore_snapshot_enabled") instead of a real title
+  — same root cause already fixed for the two section headings earlier
+  (`tpl_inc/plugin_options.tpl` shows `<Setting><Name>`, not `<ValueName>`),
+  just not yet applied to the individual settings themselves. All 17 now
+  have a proper human title with `<ValueName>` (and therefore every
+  PHP-side `SettingsRepository` lookup) left untouched; several
+  `<Description>` texts were also tightened/expanded where the extra
+  context is genuinely useful (e.g. what "verloren" actually costs you for
+  the encryption password). New title/description strings added to the
+  translation catalog (186 entries total).
+- Renamed two more tabs for clarity: "Backup jetzt" → "Erstellen",
+  "Backups" → "Backups verwalten (Historie)" — `cPluginTab` hidden fields
+  updated across every template that submits to either tab.
+- `<Version>` bumped to **0.2.0** (first real bump — explicitly confirmed).
+
+<!-- Next bump also needs explicit confirmation. -->

@@ -55,7 +55,7 @@
          here (even "") fixes it; this is a real bug/inconsistency in
          JTL-Shop 5.8.0-rc3 itself, not something wrong in this plugin. -->
     <PluginID>jtl_dbbackup_tool</PluginID>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <CreateDate>2026-08-14</CreateDate>
     <MinShopVersion>5.7.0</MinShopVersion>
 
@@ -66,22 +66,32 @@
                 <Filename>dashboard.php</Filename>
             </Customlink>
             <Customlink sort="2">
-                <Name>Backup jetzt</Name>
+                <Name>Erstellen</Name>
                 <Filename>backup.php</Filename>
+                <!-- Renamed from "Backup jetzt" — shorter, and reads better
+                     next to the other tab names ("Dashboard", "Erstellen",
+                     "Backups verwalten (Historie)", "Einstellungen"). File/
+                     class names deliberately stay backup.php/BackupController
+                     to limit churn; only the visible label changed. Every
+                     form's hidden cPluginTab field in backup.tpl and
+                     _partials/run-options.tpl must match this <Name> EXACTLY
+                     (see dashboard.tpl's header comment for why) — updated to
+                     "Erstellen" everywhere. -->
             </Customlink>
             <Customlink sort="3">
-                <Name>Backups</Name>
+                <Name>Backups verwalten (Historie)</Name>
                 <Filename>history.php</Filename>
-                <!-- Renamed from "Historie & Restore" to "Wiederherstellen",
-                     now renamed again to "Backups" — this tab grew from a
-                     restore-only flow into the full DB Backup Manager
-                     (grouped/filtered/sorted list, comments, delete, restore
-                     still here too). File/class names deliberately stay
-                     history.php/HistoryController internally to limit churn;
-                     only the visible label changed. Every form's hidden
-                     cPluginTab field across this plugin's templates must
-                     match this <Name> EXACTLY (see dashboard.tpl's header
-                     comment for why) — updated to "Backups" everywhere. -->
+                <!-- Renamed from "Historie & Restore" to "Wiederherstellen" to
+                     "Backups", now to "Backups verwalten (Historie)" — makes
+                     explicit that this tab is both the manager (group/filter/
+                     sort/comment/delete) AND where restore lives, not just a
+                     bare label that could read as "the backups" in a vaguer
+                     sense. File/class names deliberately stay history.php/
+                     HistoryController internally to limit churn; only the
+                     visible label changed. Every form's hidden cPluginTab
+                     field across this plugin's templates must match this
+                     <Name> EXACTLY (see dashboard.tpl's header comment for
+                     why) — updated everywhere. -->
             </Customlink>
             <Settingslink sort="4">
                 <Name>Einstellungen</Name>
@@ -105,56 +115,60 @@
                          "SECTION_BACKUP" on screen). -->
                 </Setting>
                 <Setting type="selectbox" initialValue="ftps" conf="Y" sort="2">
-                    <Name>ftp_protocol</Name>
+                    <Name>Übertragungsprotokoll</Name>
                     <ValueName>ftp_protocol</ValueName>
-                    <Description>Uebertragungsprotokoll (Klartext-FTP wird nicht unterstuetzt)</Description>
+                    <Description>Klartext-FTP wird aus Sicherheitsgruenden nicht unterstuetzt — nur FTPS oder SFTP.</Description>
                     <SelectboxOptions>
                         <Option value="ftps" sort="0">FTPS</Option>
                         <Option value="sftp" sort="1">SFTP</Option>
                     </SelectboxOptions>
                     <!-- Confirmed schema against docs/de/docs/shop_plugins/infoxml.md
                          lines 879-993 + SettingsLinks.php — real dropdown now,
-                         not free text. -->
+                         not free text. <Name> changed from the raw ValueName
+                         ("ftp_protocol") to a real title — same fix as the
+                         section headings below, applied to every setting in
+                         this file: tpl_inc/plugin_options.tpl shows THIS
+                         element as the field label, not <ValueName>. -->
                 </Setting>
                 <Setting type="text" initialValue="" conf="Y" sort="3">
-                    <Name>ftp_host</Name>
+                    <Name>Host</Name>
                     <ValueName>ftp_host</ValueName>
-                    <Description>FTPS/SFTP-Host</Description>
+                    <Description>Adresse des FTPS/SFTP-Servers, z. B. backup.example.com</Description>
                 </Setting>
                 <Setting type="text" initialValue="" conf="Y" sort="4">
-                    <Name>ftp_port</Name>
+                    <Name>Port</Name>
                     <ValueName>ftp_port</ValueName>
-                    <Description>Port (FTPS Standard: 21, SFTP Standard: 22)</Description>
+                    <Description>Leer lassen fuer den Standard-Port (FTPS: 21, SFTP: 22).</Description>
                 </Setting>
                 <Setting type="text" initialValue="" conf="Y" sort="5">
-                    <Name>ftp_username</Name>
+                    <Name>Benutzername</Name>
                     <ValueName>ftp_username</ValueName>
-                    <Description>Benutzername</Description>
+                    <Description></Description>
                 </Setting>
                 <Setting type="encrypted" initialValue="" conf="Y" sort="6">
-                    <Name>ftp_password</Name>
+                    <Name>Passwort</Name>
                     <ValueName>ftp_password</ValueName>
-                    <Description>Passwort (FTPS, oder SFTP falls kein Key verwendet wird)</Description>
+                    <Description>Fuer FTPS immer noetig; fuer SFTP nur, wenn unten kein privater Schluessel hinterlegt ist.</Description>
                 </Setting>
                 <Setting type="encrypted" initialValue="" conf="Y" sort="7">
-                    <Name>ftp_private_key</Name>
+                    <Name>SFTP: Privater Schlüssel</Name>
                     <ValueName>ftp_private_key</ValueName>
-                    <Description>SFTP: privater Schluessel (alternativ zu Passwort). Einzeiliges Eingabefeld — Key ggf. extern zusammenhaengend kopieren.</Description>
+                    <Description>Alternative zum Passwort, nur fuer SFTP. Einzeiliges Eingabefeld — den Schluessel ggf. extern zu einer Zeile zusammenhaengend kopieren.</Description>
                 </Setting>
                 <Setting type="encrypted" initialValue="" conf="Y" sort="8">
-                    <Name>ftp_private_key_passphrase</Name>
+                    <Name>SFTP: Passphrase des Schlüssels</Name>
                     <ValueName>ftp_private_key_passphrase</ValueName>
-                    <Description>SFTP: Passphrase des privaten Schluessels (falls vorhanden)</Description>
+                    <Description>Nur noetig, wenn der obige private Schluessel selbst mit einer Passphrase geschuetzt ist.</Description>
                 </Setting>
                 <Setting type="text" initialValue="/" conf="Y" sort="9">
-                    <Name>ftp_remote_dir</Name>
+                    <Name>Zielverzeichnis</Name>
                     <ValueName>ftp_remote_dir</ValueName>
-                    <Description>Zielverzeichnis auf dem FTPS/SFTP-Server</Description>
+                    <Description>Verzeichnis auf dem FTPS/SFTP-Server, in das Backups hochgeladen werden.</Description>
                 </Setting>
                 <Setting type="checkbox" initialValue="" conf="Y" sort="10">
-                    <Name>encryption_enabled</Name>
+                    <Name>Backup verschlüsseln</Name>
                     <ValueName>encryption_enabled</ValueName>
-                    <Description>Backup-Datei zusaetzlich verschluesseln (XChaCha20-Poly1305). Standard: aus.</Description>
+                    <Description>Backup-Datei zusaetzlich mit XChaCha20-Poly1305 verschluesseln, bevor sie lokal gespeichert bzw. hochgeladen wird. Standard: aus. Passwort unten festlegen — ohne dieses Passwort ist ein verschluesseltes Backup spaeter nicht mehr lesbar.</Description>
                     <!-- CONFIRMED against tpl_inc/plugin_options.tpl: the core's
                          own checkbox <input> has no value= attribute, so a
                          checked box always POSTs the literal string "on"
@@ -167,29 +181,29 @@
                          therefore an empty initialValue, not "N". -->
                 </Setting>
                 <Setting type="encrypted" initialValue="" conf="Y" sort="11">
-                    <Name>encryption_passphrase</Name>
+                    <Name>Verschlüsselungs-Passwort</Name>
                     <ValueName>encryption_passphrase</ValueName>
-                    <Description>Passwort fuer die Backup-Verschluesselung (nur falls oben aktiviert). Verloren = Backup unlesbar.</Description>
+                    <Description>Nur wirksam, wenn "Backup verschluesseln" oben aktiviert ist. Wichtig: dieses Passwort verloren = betroffene Backups unlesbar, es gibt keine Wiederherstellung ohne es.</Description>
                 </Setting>
                 <Setting type="checkbox" initialValue="on" conf="Y" sort="12">
-                    <Name>maintenance_mode_enabled</Name>
+                    <Name>Wartungsmodus während des Backups</Name>
                     <ValueName>maintenance_mode_enabled</ValueName>
-                    <Description>Shop waehrend des Backups kurz in den Wartungsmodus versetzen (reiner Kunden-Komfort, keine Konsistenzgarantie). Standard: an.</Description>
+                    <Description>Shop waehrend des Backups kurz in den Wartungsmodus versetzen. Reiner Kunden-Komfort (verhindert Bestellungen mitten im Backup) — keine technische Konsistenzgarantie fuer die Backup-Datei selbst. Standard: an.</Description>
                 </Setting>
                 <Setting type="text" initialValue="10" conf="Y" sort="13">
-                    <Name>retention_max_count</Name>
+                    <Name>Max. Anzahl Backups</Name>
                     <ValueName>retention_max_count</ValueName>
-                    <Description>Max. Anzahl aufzubewahrender Backups</Description>
+                    <Description>Aeltere Backups werden automatisch geloescht, sobald mehr als diese Anzahl vorhanden ist (die zuletzt erstellten bleiben immer erhalten).</Description>
                 </Setting>
                 <Setting type="text" initialValue="90" conf="Y" sort="14">
-                    <Name>retention_max_age_days</Name>
+                    <Name>Max. Alter in Tagen</Name>
                     <ValueName>retention_max_age_days</ValueName>
-                    <Description>Max. Alter aufzubewahrender Backups (Tage)</Description>
+                    <Description>Backups, die aelter als diese Anzahl Tage sind, werden automatisch geloescht (0 = kein Alterslimit).</Description>
                 </Setting>
                 <Setting type="text" initialValue="" conf="Y" sort="15">
-                    <Name>notify_email_on_failure</Name>
+                    <Name>Benachrichtigung bei Fehlschlag</Name>
                     <ValueName>notify_email_on_failure</ValueName>
-                    <Description>E-Mail-Adresse fuer Fehlschlag-Benachrichtigungen (leer = keine)</Description>
+                    <Description>E-Mail-Adresse, an die eine Nachricht geht, wenn ein Backup oder Upload fehlschlaegt. Leer lassen, um keine Benachrichtigung zu erhalten.</Description>
                 </Setting>
 
                 <Setting type="text" initialValue="" conf="N" sort="16">
@@ -198,19 +212,19 @@
                     <Description></Description>
                 </Setting>
                 <Setting type="checkbox" initialValue="on" conf="Y" sort="17">
-                    <Name>pre_restore_snapshot_enabled</Name>
+                    <Name>Vorab-Snapshot vor Restore</Name>
                     <ValueName>pre_restore_snapshot_enabled</ValueName>
-                    <Description>Vor jedem Restore automatisch ein Backup des aktuellen Stands anlegen. Standard: an.</Description>
+                    <Description>Vor jedem Restore automatisch ein Backup des aktuellen Stands anlegen, damit ein missglueckter Restore selbst rueckgaengig gemacht werden kann. Standard: an — nur abschalten, wenn du genau weisst, warum.</Description>
                 </Setting>
                 <Setting type="checkbox" initialValue="on" conf="Y" sort="18">
-                    <Name>post_restore_consistency_check_enabled</Name>
+                    <Name>Konsistenzprüfung nach Restore</Name>
                     <ValueName>post_restore_consistency_check_enabled</ValueName>
-                    <Description>Nach einem Teil-Restore auf moeglicherweise verwaiste Datensaetze pruefen. Standard: an.</Description>
+                    <Description>Nach einem Teil-Restore (z. B. nur Kunden) auf moeglicherweise verwaiste Datensaetze in anderen Tabellen pruefen und als Hinweis anzeigen. Standard: an.</Description>
                 </Setting>
                 <Setting type="checkbox" initialValue="on" conf="Y" sort="19">
-                    <Name>version_fingerprint_block_enabled</Name>
+                    <Name>Bei Strukturabweichung blockieren</Name>
                     <ValueName>version_fingerprint_block_enabled</ValueName>
-                    <Description>Restore bei abweichendem Tabellen-Fingerprint hart blockieren statt nur zu warnen. Standard: an.</Description>
+                    <Description>Restore hart blockieren, wenn sich die Tabellenstruktur seit dem Backup geaendert hat (z. B. durch ein Shop-Update), statt nur zu warnen. Standard: an — sicherer, aber ein Restore laesst sich dann nur mit ausdruecklicher Bestaetigung erzwingen.</Description>
                 </Setting>
             </Settingslink>
         </Adminmenu>

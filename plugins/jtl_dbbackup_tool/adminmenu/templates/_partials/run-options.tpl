@@ -8,7 +8,7 @@
 <div class="collapse" id="opts-{$presetKey}">
     <div class="card-body border-top bg-light">
         <form method="post" action="">
-            <input type="hidden" name="cPluginTab" value="Backup jetzt">
+            <input type="hidden" name="cPluginTab" value="Erstellen">
             <input type="hidden" name="preset" value="{$presetKey|escape}">
 
             <div class="form-group mb-2">

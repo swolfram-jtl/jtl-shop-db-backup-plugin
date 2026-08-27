@@ -20,8 +20,9 @@ Instanz.
 English version: [README.md](README.md)
 
 > **Status:** installiert und lauffähig gegen eine echte
-> JTL-Shop-5.8.0-rc3-Instanz — Dashboard, Backup jetzt, Backups (Manager +
-> Restore) und Einstellungen rendern alle, der manuelle Backup-Ablauf
+> JTL-Shop-5.8.0-rc3-Instanz — Dashboard, Erstellen, Backups verwalten
+> (Historie) (Manager + Restore) und Einstellungen rendern alle, der manuelle
+> Backup-Ablauf
 > funktioniert Ende-zu-Ende. In aktiver Iteration gegen echten Einsatz; siehe
 > `CHANGELOG.md` für das laufende Protokoll gefundener und behobener Bugs
 > (mehrere — ein Doppel-Trigger-Bug, ein falscher Rückgabetyp, eine

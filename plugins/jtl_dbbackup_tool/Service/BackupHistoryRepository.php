@@ -152,12 +152,18 @@ final class BackupHistoryRepository
 
     /**
      * Filtered, sorted, paginated query for the DB Backup Manager tab. Primary
-     * sort is always `cPresetKey ASC` so same-preset rows stay contiguous
-     * within a page (the Manager renders them as an accordion group per
-     * preset) — $sortField only controls the order WITHIN each group. A
-     * preset group can still be split across a page boundary; that's an
-     * accepted trade-off of combining real pagination with grouping (the same
-     * trade-off any admin list with both makes).
+     * sort always puts `cPresetKey = 'full'` ("Komplett") rows first — spec
+     * decision "Komplett ist am wichtigsten" — then groups the rest by
+     * `cPresetKey ASC` so same-preset rows stay contiguous within a page (the
+     * Manager renders them as an accordion group per preset); $sortField only
+     * controls the order WITHIN each group. Putting "full" first at the SQL
+     * level (not just reordering the already-fetched page in PHP) guarantees
+     * it always lands on page 1 regardless of how many rows other presets
+     * have — reordering only the current page wouldn't be enough if an
+     * earlier-alphabetical preset alone had more than a page's worth of rows.
+     * A non-"full" preset group can still be split across a page boundary;
+     * that's an accepted trade-off of combining real pagination with grouping
+     * (the same trade-off any admin list with both makes).
      *
      * @param array{presetKey?: ?string, status?: ?string, storage?: ?string, search?: ?string} $filters
      * @return array{rows: object[], total: int}
@@ -205,7 +211,7 @@ final class BackupHistoryRepository
         $offset = \max(0, ($page - 1) * $perPage);
         $rows = $this->db->getObjects(
             'SELECT * FROM ' . self::TABLE . ' ' . $whereSql
-            . ' ORDER BY cPresetKey ASC, ' . $sortColumn . ' ' . $sortDirSql
+            . " ORDER BY (cPresetKey = 'full') DESC, cPresetKey ASC, " . $sortColumn . ' ' . $sortDirSql
             . ' LIMIT ' . $perPage . ' OFFSET ' . $offset,
             $params,
         );

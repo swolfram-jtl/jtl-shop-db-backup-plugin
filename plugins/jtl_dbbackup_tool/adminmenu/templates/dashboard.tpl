@@ -4,7 +4,9 @@
    Variables assigned by Controller\DashboardController::render():
      $hasAnyBackup (bool), $lastBackup (array|null: dCreated, cStatus, cLabel),
      $nextScheduled (string|null), $storageLocalBytes (float), $storageFtpBytes (float|null),
-     $backupCount (int), $lastRunFailed (bool), $lastRunError (string|null),
+     $backupCount (int), $manageTabName (string, for the "Anzahl Backups"
+       tile's link — must match the Manager Customlink's exact info.xml <Name>),
+     $lastRunFailed (bool), $lastRunError (string|null),
      $presets (array<string,string> key => label),
      $recent (array of id/dCreated/cLabel/cStatus/nSizeBytes, max 5),
      $isLocked (bool), $lockedSince (string|null, "Y-m-d H:i:s"),
@@ -82,6 +84,7 @@
                         <div class="dbbackup-eyebrow mb-1">{d__('jtl_dbbackup_tool', 'Letztes Backup')}</div>
                         <div class="dbbackup-kpi-value" style="font-size: 1.15rem;">{if $lastBackup}{$lastBackup.dCreated|escape}{else}—{/if}</div>
                         {if $lastBackup}
+                        <div class="small text-truncate" style="font-weight:600;" title="{$lastBackup.cLabel|escape}">{$lastBackup.cLabel|escape}</div>
                         <span class="badge {if $lastBackup.cStatus === 'ok'}badge-success{else}badge-danger{/if}">{$lastBackup.cStatus|escape}</span>
                         {else}
                         <span class="badge badge-light text-muted">{d__('jtl_dbbackup_tool', 'keins')}</span>
@@ -114,6 +117,7 @@
             </div>
         </div>
         <div class="col-md-3 mb-3">
+            <a href="?cPluginTab={$manageTabName|escape:'url'}" class="text-decoration-none" title="{d__('jtl_dbbackup_tool', 'Zu allen Backups springen')}">
             <div class="card dbbackup-tile dbbackup-tile--sand shadow-sm h-100 {if !$hasAnyBackup}dbbackup-tile--placeholder{/if}">
                 <div class="card-body d-flex align-items-center" style="gap: .9rem;">
                     <div class="dbbackup-icon-circle"><i class="fal fa-layer-group"></i></div>
@@ -121,8 +125,10 @@
                         <div class="dbbackup-eyebrow mb-1">{d__('jtl_dbbackup_tool', 'Anzahl Backups')}</div>
                         <div class="dbbackup-kpi-value">{$backupCount}</div>
                     </div>
+                    <i class="fal fa-arrow-right" style="color:var(--jtl-dark-blue); opacity:.5;"></i>
                 </div>
             </div>
+            </a>
         </div>
     </div>
 
@@ -169,7 +175,7 @@
         <div class="d-flex align-items-start mb-3" style="gap:.6rem;">
             <i class="fal fa-bolt text-primary mt-1"></i>
             <div>
-                <h5 class="mb-1">{d__('jtl_dbbackup_tool', 'Schnellzugriff')}</h5>
+                <h5 class="mb-1">{d__('jtl_dbbackup_tool', 'Sofort-Backup')}</h5>
                 <div class="small text-muted">{d__('jtl_dbbackup_tool', 'Ein Klick startet SOFORT ein Backup mit den Standard-Einstellungen — hier werden keine Optionen geöffnet.')}</div>
             </div>
         </div>

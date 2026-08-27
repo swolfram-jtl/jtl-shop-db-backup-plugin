@@ -17,8 +17,9 @@ a breaking change for an already-installed instance.
 Deutsche Version: [README.de.md](README.de.md)
 
 > **Status:** installed and running against a real JTL-Shop 5.8.0-rc3
-> instance — Dashboard, Backup jetzt, Backups (manager + restore), and
-> Settings tabs all render and the manual backup flow works end-to-end. Under
+> instance — Dashboard, Erstellen, Backups verwalten (Historie) (manager +
+> restore), and Settings tabs all render and the manual backup flow works
+> end-to-end. Under
 > active real-usage iteration; see `CHANGELOG.md` for the running log of bugs
 > found and fixed this way (several — a duplicate-trigger bug, a wrong return
 > type, an ephemeral-credentials UI that was previously a no-op, a restore

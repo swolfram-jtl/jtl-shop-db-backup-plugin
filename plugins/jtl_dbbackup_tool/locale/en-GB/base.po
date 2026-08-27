@@ -453,3 +453,111 @@ msgstr "Reset"
 msgid "zusätzlich hochgeladen"
 msgstr "additionally uploaded"
 
+msgid "Sofort-Backup"
+msgstr "Instant Backup"
+
+msgid "Zu allen Backups springen"
+msgstr "Jump to all backups"
+
+msgid "Erstellen"
+msgstr "Create"
+
+msgid "Backups verwalten (Historie)"
+msgstr "Manage Backups (History)"
+
+msgid "Einstellungen"
+msgstr "Settings"
+
+msgid "Backup-Einstellungen"
+msgstr "Backup Settings"
+
+msgid "Wiederherstellen-Einstellungen"
+msgstr "Restore Settings"
+
+msgid "Übertragungsprotokoll"
+msgstr "Transfer Protocol"
+
+msgid "Klartext-FTP wird aus Sicherheitsgruenden nicht unterstuetzt — nur FTPS oder SFTP."
+msgstr "Plain-text FTP is not supported for security reasons — FTPS or SFTP only."
+
+msgid "Adresse des FTPS/SFTP-Servers, z. B. backup.example.com"
+msgstr "Address of the FTPS/SFTP server, e.g. backup.example.com"
+
+msgid "Leer lassen fuer den Standard-Port (FTPS: 21, SFTP: 22)."
+msgstr "Leave empty for the default port (FTPS: 21, SFTP: 22)."
+
+msgid "Fuer FTPS immer noetig; fuer SFTP nur, wenn unten kein privater Schluessel hinterlegt ist."
+msgstr "Always required for FTPS; for SFTP only if no private key is set below."
+
+msgid "SFTP: Privater Schlüssel"
+msgstr "SFTP: Private Key"
+
+msgid "Alternative zum Passwort, nur fuer SFTP. Einzeiliges Eingabefeld — den Schluessel ggf. extern zu einer Zeile zusammenhaengend kopieren."
+msgstr "An alternative to the password, SFTP only. Single-line field — join the key into one line externally first if needed."
+
+msgid "SFTP: Passphrase des Schlüssels"
+msgstr "SFTP: Key Passphrase"
+
+msgid "Nur noetig, wenn der obige private Schluessel selbst mit einer Passphrase geschuetzt ist."
+msgstr "Only needed if the private key above is itself protected by a passphrase."
+
+msgid "Zielverzeichnis"
+msgstr "Target Directory"
+
+msgid "Verzeichnis auf dem FTPS/SFTP-Server, in das Backups hochgeladen werden."
+msgstr "Directory on the FTPS/SFTP server that backups are uploaded into."
+
+msgid "Backup verschlüsseln"
+msgstr "Encrypt Backup"
+
+msgid "Backup-Datei zusaetzlich mit XChaCha20-Poly1305 verschluesseln, bevor sie lokal gespeichert bzw. hochgeladen wird. Standard: aus. Passwort unten festlegen — ohne dieses Passwort ist ein verschluesseltes Backup spaeter nicht mehr lesbar."
+msgstr "Additionally encrypts the backup file with XChaCha20-Poly1305 before it's stored locally or uploaded. Default: off. Set a password below — without it, an encrypted backup can no longer be read later."
+
+msgid "Verschlüsselungs-Passwort"
+msgstr "Encryption Password"
+
+msgid "Nur wirksam, wenn \"Backup verschluesseln\" oben aktiviert ist. Wichtig: dieses Passwort verloren = betroffene Backups unlesbar, es gibt keine Wiederherstellung ohne es."
+msgstr "Only takes effect if \"Encrypt Backup\" above is enabled. Important: lose this password and the affected backups become unreadable — there is no recovery without it."
+
+msgid "Wartungsmodus während des Backups"
+msgstr "Maintenance Mode During Backup"
+
+msgid "Shop waehrend des Backups kurz in den Wartungsmodus versetzen. Reiner Kunden-Komfort (verhindert Bestellungen mitten im Backup) — keine technische Konsistenzgarantie fuer die Backup-Datei selbst. Standard: an."
+msgstr "Briefly puts the shop into maintenance mode during the backup. Pure customer-facing convenience (prevents orders mid-backup) — not a technical consistency guarantee for the backup file itself. Default: on."
+
+msgid "Max. Anzahl Backups"
+msgstr "Max. Number of Backups"
+
+msgid "Aeltere Backups werden automatisch geloescht, sobald mehr als diese Anzahl vorhanden ist (die zuletzt erstellten bleiben immer erhalten)."
+msgstr "Older backups are automatically deleted once more than this many exist (the most recently created ones are always kept)."
+
+msgid "Max. Alter in Tagen"
+msgstr "Max. Age in Days"
+
+msgid "Backups, die aelter als diese Anzahl Tage sind, werden automatisch geloescht (0 = kein Alterslimit)."
+msgstr "Backups older than this many days are automatically deleted (0 = no age limit)."
+
+msgid "Benachrichtigung bei Fehlschlag"
+msgstr "Notify on Failure"
+
+msgid "E-Mail-Adresse, an die eine Nachricht geht, wenn ein Backup oder Upload fehlschlaegt. Leer lassen, um keine Benachrichtigung zu erhalten."
+msgstr "Email address a message is sent to when a backup or upload fails. Leave empty to receive no notification."
+
+msgid "Vorab-Snapshot vor Restore"
+msgstr "Pre-Restore Snapshot"
+
+msgid "Vor jedem Restore automatisch ein Backup des aktuellen Stands anlegen, damit ein missglueckter Restore selbst rueckgaengig gemacht werden kann. Standard: an — nur abschalten, wenn du genau weisst, warum."
+msgstr "Automatically creates a backup of the current state before every restore, so a failed restore can itself be undone. Default: on — only turn off if you know exactly why."
+
+msgid "Konsistenzprüfung nach Restore"
+msgstr "Consistency Check After Restore"
+
+msgid "Nach einem Teil-Restore (z. B. nur Kunden) auf moeglicherweise verwaiste Datensaetze in anderen Tabellen pruefen und als Hinweis anzeigen. Standard: an."
+msgstr "After a partial restore (e.g. customers only), checks other tables for possibly orphaned records and shows them as a notice. Default: on."
+
+msgid "Bei Strukturabweichung blockieren"
+msgstr "Block on Structure Mismatch"
+
+msgid "Restore hart blockieren, wenn sich die Tabellenstruktur seit dem Backup geaendert hat (z. B. durch ein Shop-Update), statt nur zu warnen. Standard: an — sicherer, aber ein Restore laesst sich dann nur mit ausdruecklicher Bestaetigung erzwingen."
+msgstr "Hard-blocks restore if the table structure has changed since the backup (e.g. due to a shop update), instead of just warning. Default: on — safer, but a restore can then only be forced with explicit confirmation."
+
