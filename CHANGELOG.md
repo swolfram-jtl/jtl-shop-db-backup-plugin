@@ -575,5 +575,28 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   scope decision stands, now for a checked reason instead of an
   unverified one). The `ftp_protocol` `<Setting type="selectbox">` gap is
   moot entirely now that `<Setting>` doesn't exist in `info.xml` anymore.
+- **Fixed every safety-net checkbox defaulting to OFF on a fresh install**
+  ("alle Haken sind leer"), reported right after a real uninstall + full
+  delete + reinstall. Root cause: the removed native `<Setting
+  initialValue="on">` mechanism used to seed these values into the DB at
+  INSTALL time (`SettingsLinks::install()`); the new plugin-owned
+  `SettingsStore` has no equivalent seeding step, so a genuinely fresh
+  install starts with an empty table and every checkbox reading as unset —
+  including the four that must default to ON for their own safety net to
+  actually apply (`maintenance_mode_enabled`, `pre_restore_snapshot_enabled`,
+  `post_restore_consistency_check_enabled`, `version_fingerprint_block_enabled`)
+  and the cron preset list (previously defaulting to "every preset").
+  `SettingsRepository::checkbox()` now takes an explicit `$default`, and
+  `cronBackupPresets()` has its own equivalent. Getting this right needed a
+  new `SettingsStore::has()` (presence, not value) rather than a naive
+  `value() === null` check: an unchecked box is stored as an explicit NULL
+  once a save happens, indistinguishable from "never saved" via value()
+  alone — a naive default-fallback would have silently re-enabled a
+  checkbox the moment an admin explicitly turned it off and saved, which
+  would have been a worse bug than the one being fixed.
+  `Controller\SettingsPageController`'s own checkbox rendering now reads
+  through the SAME `SettingsRepository` getters (not a separate raw-store
+  read) so the checked state shown on screen can never drift from what the
+  rest of the plugin actually does at runtime.
 
 <!-- Next bump also needs explicit confirmation. -->

@@ -11,6 +11,7 @@ use JTL\Smarty\JTLSmarty;
 use Plugin\jtl_dbbackup_tool\Service\FlashBus;
 use Plugin\jtl_dbbackup_tool\Service\PresetRegistry;
 use Plugin\jtl_dbbackup_tool\Service\RequestGuard;
+use Plugin\jtl_dbbackup_tool\Service\SettingsRepository;
 use Plugin\jtl_dbbackup_tool\Service\SettingsStore;
 
 /**
@@ -62,7 +63,8 @@ final class SettingsPageController
     public function render(JTLSmarty $smarty, DbInterface $db): string
     {
         $store = new SettingsStore($db);
-        $sections = $this->buildSections($store);
+        $settings = new SettingsRepository($db);
+        $sections = $this->buildSections($store, $settings);
 
         $flashMessage = null;
         $flashSuccess = true;
@@ -78,8 +80,12 @@ final class SettingsPageController
                 // Re-read so the form reflects exactly what was just saved
                 // (own table, read fresh right here — no cache-staleness
                 // question the way $plugin->getConfig() had within a
-                // single request, since nothing else caches this).
-                $sections = $this->buildSections($store);
+                // single request, since nothing else caches this). Fresh
+                // SettingsRepository too, since $store's own cache (which
+                // it doesn't share with $settings' internal store anyway)
+                // was already updated in place by persist().
+                $settings = new SettingsRepository($db);
+                $sections = $this->buildSections($store, $settings);
 
                 // Spec: "speichern und testen" oder nur "speichern", wie bei
                 // den Mail-Server-Einstellungen — settings.tpl's
@@ -162,15 +168,27 @@ final class SettingsPageController
     }
 
     /**
+     * $settings (SettingsRepository, constructed from the SAME $store) is
+     * used ONLY for the handful of fields whose default (when nothing has
+     * ever been saved — a fresh install) must exactly match what the rest
+     * of the plugin actually does at runtime: the checkboxes that default
+     * to ON (pre-restore snapshot etc.) and the cron preset list, which
+     * defaults to "every preset". Reading raw store values directly for
+     * those would show a DIFFERENT default than SettingsRepository's own
+     * getters use — exactly the bug reported after a real reinstall
+     * ("alle Haken sind leer"): the plugin's own safety-net checkboxes
+     * silently defaulting to off is a correctness issue, not just a
+     * cosmetic one, so this has to be the single source of truth for both.
+     *
      * @return array<int, array{title: string, fields: array<int, array<string, mixed>>}>
      */
-    private function buildSections(SettingsStore $store): array
+    private function buildSections(SettingsStore $store, SettingsRepository $settings): array
     {
         $presetOptions = [];
         foreach (PresetRegistry::all() as $key => $preset) {
             $presetOptions[$key] = $preset['label'];
         }
-        $selectedCronPresets = \array_filter(\explode(',', $this->raw($store, 'cron_backup_presets') ?? ''));
+        $selectedCronPresets = $settings->cronBackupPresets();
 
         return [
             [
@@ -191,14 +209,14 @@ final class SettingsPageController
                     $this->encrypted('ftp_private_key_passphrase', \d__('jtl_dbbackup_tool', 'SFTP: Passphrase des Schlüssels'), $store,
                         \d__('jtl_dbbackup_tool', 'Nur nötig, wenn der obige private Schlüssel selbst mit einer Passphrase geschützt ist.')),
                     $this->text('ftp_remote_dir', \d__('jtl_dbbackup_tool', 'Zielverzeichnis'), $store,
-                        \d__('jtl_dbbackup_tool', 'Verzeichnis auf dem Server, in das Backups hochgeladen werden.')),
+                        \d__('jtl_dbbackup_tool', 'Verzeichnis auf dem Server, in das Backups hochgeladen werden.'), '/'),
                 ],
                 'connectionTest' => true,
             ],
             [
                 'title'  => \d__('jtl_dbbackup_tool', 'Verschlüsselung'),
                 'fields' => [
-                    $this->checkbox('encryption_enabled', \d__('jtl_dbbackup_tool', 'Backup verschlüsseln'), $store,
+                    $this->checkbox('encryption_enabled', \d__('jtl_dbbackup_tool', 'Backup verschlüsseln'), $settings->encryptionEnabled(),
                         \d__('jtl_dbbackup_tool', 'Verschlüsselt die Backup-Datei zusätzlich mit XChaCha20-Poly1305, bevor sie lokal gespeichert bzw. hochgeladen wird.'),
                         'encryption_passphrase'),
                     $this->encrypted('encryption_passphrase', \d__('jtl_dbbackup_tool', 'Verschlüsselungs-Passwort'), $store,
@@ -209,12 +227,12 @@ final class SettingsPageController
             [
                 'title'  => \d__('jtl_dbbackup_tool', 'Backup-Verhalten'),
                 'fields' => [
-                    $this->checkbox('maintenance_mode_enabled', \d__('jtl_dbbackup_tool', 'Wartungsmodus während des Backups'), $store,
-                        \d__('jtl_dbbackup_tool', 'Reiner Kunden-Komfort (verhindert Bestellungen mitten im Backup) — keine technische Konsistenzgarantie für die Backup-Datei selbst.')),
+                    $this->checkbox('maintenance_mode_enabled', \d__('jtl_dbbackup_tool', 'Wartungsmodus während des Backups'), $settings->maintenanceModeEnabled(),
+                        \d__('jtl_dbbackup_tool', 'Reiner Kunden-Komfort (verhindert Bestellungen mitten im Backup) — keine technische Konsistenzgarantie für die Backup-Datei selbst. Standard: an.')),
                     $this->number('retention_max_count', \d__('jtl_dbbackup_tool', 'Max. Anzahl Backups'), $store,
-                        \d__('jtl_dbbackup_tool', 'Ältere Backups werden automatisch gelöscht, sobald mehr als diese Anzahl vorhanden ist.')),
+                        \d__('jtl_dbbackup_tool', 'Ältere Backups werden automatisch gelöscht, sobald mehr als diese Anzahl vorhanden ist.'), (string) $settings->retentionMaxCount()),
                     $this->number('retention_max_age_days', \d__('jtl_dbbackup_tool', 'Max. Alter in Tagen'), $store,
-                        \d__('jtl_dbbackup_tool', 'Backups älter als diese Anzahl Tage werden automatisch gelöscht (0 = kein Limit).')),
+                        \d__('jtl_dbbackup_tool', 'Backups älter als diese Anzahl Tage werden automatisch gelöscht (0 = kein Limit).'), (string) $settings->retentionMaxAgeDays()),
                     $this->text('notify_email_on_failure', \d__('jtl_dbbackup_tool', 'Info-E-Mail bei Fehlschlag'), $store,
                         \d__('jtl_dbbackup_tool', 'E-Mail-Adresse für eine automatische Infomail, sobald ein Backup oder Upload fehlschlägt. Leer lassen für keine E-Mail.')),
                 ],
@@ -222,12 +240,12 @@ final class SettingsPageController
             [
                 'title'  => \d__('jtl_dbbackup_tool', 'Wiederherstellen-Einstellungen'),
                 'fields' => [
-                    $this->checkbox('pre_restore_snapshot_enabled', \d__('jtl_dbbackup_tool', 'Vorab-Snapshot vor Restore'), $store,
-                        \d__('jtl_dbbackup_tool', 'Legt vor jedem Restore automatisch ein Backup des aktuellen Stands an, damit ein missglückter Restore selbst rückgängig gemacht werden kann. Nur abschalten, wenn du genau weißt, warum.')),
-                    $this->checkbox('post_restore_consistency_check_enabled', \d__('jtl_dbbackup_tool', 'Konsistenzprüfung nach Restore'), $store,
-                        \d__('jtl_dbbackup_tool', 'Prüft nach einem Teil-Restore (z. B. nur Kunden) andere Tabellen auf möglicherweise verwaiste Datensätze und zeigt sie als Hinweis an.')),
-                    $this->checkbox('version_fingerprint_block_enabled', \d__('jtl_dbbackup_tool', 'Bei Strukturabweichung blockieren'), $store,
-                        \d__('jtl_dbbackup_tool', 'Blockiert Restore hart, wenn sich die Tabellenstruktur seit dem Backup geändert hat (z. B. durch ein Shop-Update), statt nur zu warnen. Ein Restore lässt sich dann nur mit ausdrücklicher Bestätigung erzwingen.')),
+                    $this->checkbox('pre_restore_snapshot_enabled', \d__('jtl_dbbackup_tool', 'Vorab-Snapshot vor Restore'), $settings->preRestoreSnapshotEnabled(),
+                        \d__('jtl_dbbackup_tool', 'Legt vor jedem Restore automatisch ein Backup des aktuellen Stands an, damit ein missglückter Restore selbst rückgängig gemacht werden kann. Standard: an — nur abschalten, wenn du genau weißt, warum.')),
+                    $this->checkbox('post_restore_consistency_check_enabled', \d__('jtl_dbbackup_tool', 'Konsistenzprüfung nach Restore'), $settings->postRestoreConsistencyCheckEnabled(),
+                        \d__('jtl_dbbackup_tool', 'Prüft nach einem Teil-Restore (z. B. nur Kunden) andere Tabellen auf möglicherweise verwaiste Datensätze und zeigt sie als Hinweis an. Standard: an.')),
+                    $this->checkbox('version_fingerprint_block_enabled', \d__('jtl_dbbackup_tool', 'Bei Strukturabweichung blockieren'), $settings->versionFingerprintBlockEnabled(),
+                        \d__('jtl_dbbackup_tool', 'Blockiert Restore hart, wenn sich die Tabellenstruktur seit dem Backup geändert hat (z. B. durch ein Shop-Update), statt nur zu warnen. Standard: an — ein Restore lässt sich dann nur mit ausdrücklicher Bestätigung erzwingen.')),
                 ],
             ],
             [
@@ -243,7 +261,7 @@ final class SettingsPageController
                         'selected'    => $selectedCronPresets,
                         'selectedCsv' => \implode(',', $selectedCronPresets),
                     ],
-                    $this->checkbox('cron_backup_include_full', \d__('jtl_dbbackup_tool', '„Komplett" zusätzlich in DIESEN Cronjob einschließen'), $store,
+                    $this->checkbox('cron_backup_include_full', \d__('jtl_dbbackup_tool', '„Komplett" zusätzlich in DIESEN Cronjob einschließen'), $settings->cronBackupIncludeFull(),
                         \d__('jtl_dbbackup_tool', 'Standard: aus — ein wiederkehrendes Komplett-Backup kann die Performance auf einer großen Datenbank spürbar beeinträchtigen. Der zweite, unabhängige Cronjob-Typ für „Komplett" ist meist die bessere Wahl für ein eigenes Zeitfenster.')),
                 ],
             ],
@@ -260,33 +278,39 @@ final class SettingsPageController
     /**
      * @return array<string, mixed>
      */
-    private function text(string $name, string $label, SettingsStore $store, string $description): array
+    private function text(string $name, string $label, SettingsStore $store, string $description, string $default = ''): array
     {
         return [
             'type' => 'text', 'name' => $name, 'label' => $label, 'description' => $description,
-            'value' => $this->raw($store, $name) ?? '',
+            'value' => $this->raw($store, $name) ?? $default,
         ];
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function number(string $name, string $label, SettingsStore $store, string $description): array
+    private function number(string $name, string $label, SettingsStore $store, string $description, string $default = ''): array
     {
         return [
             'type' => 'number', 'name' => $name, 'label' => $label, 'description' => $description,
-            'value' => $this->raw($store, $name) ?? '',
+            'value' => $this->raw($store, $name) ?? $default,
         ];
     }
 
     /**
+     * $checked is passed in already-resolved (from SettingsRepository, not
+     * read raw here) — see buildSections()'s own docblock for why: several
+     * of these checkboxes must default to ON when nothing has been saved
+     * yet, and SettingsRepository is the single place that default lives,
+     * shared with the code that actually acts on the setting at runtime.
+     *
      * @return array<string, mixed>
      */
-    private function checkbox(string $name, string $label, SettingsStore $store, string $description, ?string $revealsField = null): array
+    private function checkbox(string $name, string $label, bool $checked, string $description, ?string $revealsField = null): array
     {
         return [
             'type' => 'checkbox', 'name' => $name, 'label' => $label, 'description' => $description,
-            'checked' => $this->raw($store, $name) === 'on', 'revealsField' => $revealsField,
+            'checked' => $checked, 'revealsField' => $revealsField,
         ];
     }
 

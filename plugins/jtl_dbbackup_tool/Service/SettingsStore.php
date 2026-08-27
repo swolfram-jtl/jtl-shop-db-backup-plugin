@@ -40,6 +40,21 @@ final class SettingsStore
     }
 
     /**
+     * Distinguishes "never saved at all" from "saved, currently empty/NULL"
+     * — get() alone can't: an unchecked checkbox is stored as an explicit
+     * NULL (see SettingsPageController::persist()), which reads back
+     * indistinguishable from "no row exists yet" via get() alone. Needed
+     * so SettingsRepository's checkbox defaults (several must default to
+     * ON on a fresh install) only apply when a setting was truly never
+     * saved — never re-applying a default over an admin's own explicit
+     * "off" after they've saved the form once.
+     */
+    public function has(string $name): bool
+    {
+        return \array_key_exists($name, $this->all());
+    }
+
+    /**
      * @return array<string, string>
      */
     public function all(): array

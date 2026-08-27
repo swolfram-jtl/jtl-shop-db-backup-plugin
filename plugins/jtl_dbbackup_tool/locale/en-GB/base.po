@@ -744,3 +744,15 @@ msgstr "Also include \"Komplett\" in THIS cron job"
 msgid "Standard: aus — ein wiederkehrendes Komplett-Backup kann die Performance auf einer großen Datenbank spürbar beeinträchtigen. Der zweite, unabhängige Cronjob-Typ für „Komplett\" ist meist die bessere Wahl für ein eigenes Zeitfenster."
 msgstr "Default: off — a recurring full backup can noticeably impact performance on a large database. The second, independent cron job type for \"Komplett\" is usually the better choice for its own time window."
 
+msgid "Reiner Kunden-Komfort (verhindert Bestellungen mitten im Backup) — keine technische Konsistenzgarantie für die Backup-Datei selbst. Standard: an."
+msgstr "Purely a customer convenience (prevents orders mid-backup) — no technical consistency guarantee for the backup file itself. Default: on."
+
+msgid "Legt vor jedem Restore automatisch ein Backup des aktuellen Stands an, damit ein missglückter Restore selbst rückgängig gemacht werden kann. Standard: an — nur abschalten, wenn du genau weißt, warum."
+msgstr "Automatically creates a backup of the current state before every restore, so a failed restore can itself be undone. Default: on — only turn off if you know exactly why."
+
+msgid "Prüft nach einem Teil-Restore (z. B. nur Kunden) andere Tabellen auf möglicherweise verwaiste Datensätze und zeigt sie als Hinweis an. Standard: an."
+msgstr "After a partial restore (e.g. customers only), checks other tables for possibly orphaned rows and shows them as a hint. Default: on."
+
+msgid "Blockiert Restore hart, wenn sich die Tabellenstruktur seit dem Backup geändert hat (z. B. durch ein Shop-Update), statt nur zu warnen. Standard: an — ein Restore lässt sich dann nur mit ausdrücklicher Bestätigung erzwingen."
+msgstr "Hard-blocks restore if the table structure has changed since the backup (e.g. via a shop update), instead of only warning. Default: on — a restore can then only be forced with explicit confirmation."
+

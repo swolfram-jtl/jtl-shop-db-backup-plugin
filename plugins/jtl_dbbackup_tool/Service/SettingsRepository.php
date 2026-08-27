@@ -80,8 +80,31 @@ final class SettingsRepository
         }
     }
 
-    private function checkbox(string $name): bool
+    /**
+     * $default applies only when the setting has NEVER been saved at all
+     * (fresh install, nothing in the table yet) — a POSTED "off" still
+     * always reads back as off, never silently reverts to $default. This
+     * replaces what the removed native `<Setting initialValue="on">`
+     * mechanism used to do (SettingsLinks::install() seeded that literal
+     * value into the DB at install time); a fresh install of the plugin-
+     * owned table starts genuinely empty, with no equivalent seeding step,
+     * so every checkbox's real default now has to live here instead —
+     * CONFIRMED as a real regression after an actual uninstall+reinstall
+     * showed every checkbox unchecked, including ones that must default to
+     * ON for their own safety net to apply (e.g. the pre-restore snapshot).
+     */
+    private function checkbox(string $name, bool $default = false): bool
     {
+        // Deliberately checks presence (SettingsStore::has()), not
+        // value()===null: an unchecked box is stored as an explicit NULL
+        // (see SettingsPageController::persist()), which is indistinguishable
+        // from "no row at all" via value() alone — that would make $default
+        // silently override an admin's own explicit "off" the moment they'd
+        // ever saved the form even once. has() only says "never saved".
+        if (!$this->store->has($name)) {
+            return $default;
+        }
+
         return $this->value($name) === 'on';
     }
 
@@ -97,22 +120,22 @@ final class SettingsRepository
 
     public function maintenanceModeEnabled(): bool
     {
-        return $this->checkbox('maintenance_mode_enabled');
+        return $this->checkbox('maintenance_mode_enabled', true);
     }
 
     public function preRestoreSnapshotEnabled(): bool
     {
-        return $this->checkbox('pre_restore_snapshot_enabled');
+        return $this->checkbox('pre_restore_snapshot_enabled', true);
     }
 
     public function postRestoreConsistencyCheckEnabled(): bool
     {
-        return $this->checkbox('post_restore_consistency_check_enabled');
+        return $this->checkbox('post_restore_consistency_check_enabled', true);
     }
 
     public function versionFingerprintBlockEnabled(): bool
     {
-        return $this->checkbox('version_fingerprint_block_enabled');
+        return $this->checkbox('version_fingerprint_block_enabled', true);
     }
 
     public function retentionMaxCount(): int
@@ -138,18 +161,25 @@ final class SettingsRepository
     /**
      * Spec decision "Cronjob konfigurierbar": which presets the recurring
      * cron job backs up — see Cron/BackupCronJob.php. Falls back to every
-     * PresetRegistry key if unset (matches this plugin's previous,
-     * hardcoded-always-all-presets behavior, so an upgrade never silently
-     * changes what an existing install's cron job does).
+     * PresetRegistry key if this was NEVER saved at all (matches this
+     * plugin's previous, hardcoded-always-all-presets behavior, so an
+     * upgrade never silently changes what an existing install's cron job
+     * does). Deliberately checks presence (has()), not just an empty
+     * result — same reasoning as checkbox()'s own docblock: an admin who
+     * saves the form with every preset checkbox deliberately unchecked
+     * (e.g. only wants the separate "Komplett"-only cron job type) posts an
+     * empty string, which must stay an empty list, not silently revert to
+     * "every preset" just because the value happens to be falsy.
      *
      * @return string[]
      */
     public function cronBackupPresets(): array
     {
-        $raw = $this->value('cron_backup_presets');
-        if ($raw === null) {
+        if (!$this->store->has('cron_backup_presets')) {
             return \array_keys(PresetRegistry::all());
         }
+
+        $raw = $this->store->get('cron_backup_presets') ?? '';
 
         return \array_values(\array_filter(\array_map('trim', \explode(',', $raw))));
     }
