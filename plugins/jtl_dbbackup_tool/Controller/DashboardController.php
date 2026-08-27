@@ -7,6 +7,7 @@ namespace Plugin\jtl_dbbackup_tool\Controller;
 use JTL\DB\DbInterface;
 use JTL\Plugin\PluginInterface;
 use JTL\Smarty\JTLSmarty;
+use Plugin\jtl_dbbackup_tool\Service\AuditLogger;
 use Plugin\jtl_dbbackup_tool\Service\BackupHistoryRepository;
 use Plugin\jtl_dbbackup_tool\Service\BackupTrigger;
 use Plugin\jtl_dbbackup_tool\Service\LockService;
@@ -14,6 +15,7 @@ use Plugin\jtl_dbbackup_tool\Service\ManifestService;
 use Plugin\jtl_dbbackup_tool\Service\PresetRegistry;
 use Plugin\jtl_dbbackup_tool\Service\RequestGuard;
 use Plugin\jtl_dbbackup_tool\Service\SettingsRepository;
+use Plugin\jtl_dbbackup_tool\Service\StorageReconciliationService;
 use Plugin\jtl_dbbackup_tool\Service\StorageService;
 
 /**
@@ -47,6 +49,15 @@ final class DashboardController
             $this->handleDownload((int) $_GET['id'], $history, $storage, $instanceId);
             // handleDownload() exits — nothing below runs for a real download.
         }
+
+        // Same self-healing as HistoryController::render() — see
+        // StorageReconciliationService's docblock. Without this here too,
+        // the Dashboard's own tiles/recent-activity would keep showing 0
+        // for one extra page load after a reinstall, even after the Backups
+        // tab has already caught up (each Adminmenu tab file queries the DB
+        // independently within the same request).
+        (new StorageReconciliationService($storage, $manifestService, $history, new AuditLogger($db)))
+            ->reconcile($instanceId, (int) ($_SESSION['AdminAccount']->kAdminlogin ?? 0));
 
         $flashMessage = null;
         $flashSuccess = true;

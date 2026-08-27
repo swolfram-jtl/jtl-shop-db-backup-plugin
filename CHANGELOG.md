@@ -319,5 +319,28 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
     query backing all of this; `RequestGuard` gained `claimDeleteAction()`/
     `claimCommentAction()` alongside its existing backup/restore guards.
 
+- Fixed a real bug reported right after a reinstall: **the Manager showed no
+  backups even though the actual files were still on the server.**
+  `xplugin_jtl_dbbackup_tool_backuphistory` is dropped and recreated empty on
+  every uninstall/reinstall (and would be equally empty after restoring the
+  shop's own database from an older dump) — but the backup files themselves
+  deliberately live outside the plugin's install footprint
+  (`StorageService`'s "Speicherort außerhalb des Webroots" decision), so they
+  survive untouched. New `StorageReconciliationService::reconcile()` scans
+  each backup's `.manifest.json` sidecar and adds a history row for any
+  committed file (`.manifest.json` + data file both present) that isn't
+  already tracked — purely additive, never touches an existing row. Runs
+  automatically on every Dashboard/Backups page load (cheap: one `glob()`
+  diffed against a single filename query); recovered rows are visibly
+  flagged via their comment ("ursprünglicher Ersteller und Upload-Status
+  sind nicht mehr bekannt") since that provenance genuinely isn't
+  recoverable from the manifest. Caught and fixed a real instanceId-
+  truncation bug while building this: the manifest stores the *full*
+  untruncated instance-id hash, while every other call site in this plugin
+  truncates it to 32 chars before use — comparing them directly would have
+  silently matched nothing. Also extracted the preset-label lookup (used by
+  both `HistoryController` and this service) into a shared
+  `PresetLabelResolver` so the two can't drift apart.
+
 <!-- No version number assigned yet: first bump happens after explicit
      confirmation, once there's something real to release. -->

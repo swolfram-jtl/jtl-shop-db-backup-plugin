@@ -56,6 +56,57 @@ final class BackupHistoryRepository
         $this->db->update(self::TABLE, 'kID', $id, $row);
     }
 
+    /**
+     * @return string[] every cFilename already tracked for this instance —
+     *         used by StorageReconciliationService to diff against what's
+     *         actually sitting on disk (see its docblock for why this table
+     *         can drift out of sync with the storage directory).
+     */
+    public function allFilenamesForInstance(string $instanceId): array
+    {
+        $rows = $this->db->getObjects(
+            'SELECT cFilename FROM ' . self::TABLE . ' WHERE cInstanceId = :instanceId',
+            ['instanceId' => $instanceId],
+        );
+
+        return \array_map(static fn ($r) => $r->cFilename, $rows);
+    }
+
+    /**
+     * Inserts an already-complete row for a backup file found on disk but
+     * missing from this table (see StorageReconciliationService) — unlike
+     * create(), this writes a finished 'ok' row directly rather than a
+     * 'running' placeholder later finalized by markResult().
+     */
+    public function createRecovered(
+        string $presetKey,
+        string $label,
+        string $comment,
+        string $filename,
+        string $instanceId,
+        bool $encrypted,
+        int $sizeBytes,
+        string $manifestFormatVersion,
+        string $dCreated,
+    ): int {
+        $row = (object) [
+            'dCreated'               => $dCreated,
+            'cPresetKey'             => $presetKey,
+            'cLabel'                 => $label,
+            'cComment'               => $comment,
+            'cFilename'              => $filename,
+            'cManifestFormatVersion' => $manifestFormatVersion,
+            'nSizeBytes'             => $sizeBytes,
+            'cStatus'                => 'ok',
+            'cInstanceId'            => $instanceId,
+            'bEncrypted'             => $encrypted ? 1 : 0,
+            'bUploaded'              => 0,
+            'cLastError'             => null,
+        ];
+
+        return $this->db->insert(self::TABLE, $row);
+    }
+
     public function markResult(int $id, string $status, int $sizeBytes, ?string $error = null): void
     {
         $row = (object) [

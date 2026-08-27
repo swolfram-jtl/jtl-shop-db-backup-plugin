@@ -375,6 +375,12 @@ msgstr "Back up now"
 msgid "Jetzt sichern: Komplett"
 msgstr "Back up now: Complete"
 
+msgid "%d Backup(s) von der Festplatte wiederhergestellt."
+msgstr "%d backup(s) recovered from disk."
+
+msgid "Automatisch von der Festplatte wiederhergestellt (z. B. nach Plugin-Neuinstallation) — ursprünglicher Ersteller und Upload-Status sind nicht mehr bekannt."
+msgstr "Automatically recovered from disk (e.g. after a plugin reinstall) — the original creator and upload status are no longer known."
+
 msgid "kein Kommentar"
 msgstr "no comment"
 

@@ -236,6 +236,15 @@ Ursache und Fix klären ließen (Details jeweils in `CHANGELOG.md`):
   steht, und einmalig den Sprach-Cache des Shops (`DIR_LOCALE_CACHE`) leeren
   — JTL cacht geparste .mo-→-PHP-Array-Konvertierungen anhand der
   Datei-mtime.
+- **Manager zeigte nach einer Neuinstallation keine Backups, obwohl die
+  Dateien noch auf dem Server lagen.** Die Historie-Tabelle wird bei jeder
+  Deinstallation/Neuinstallation leer neu angelegt; die Backup-Dateien selbst
+  liegen bewusst außerhalb des Plugin-eigenen Ordners und überstehen das
+  unangetastet. Neuer `StorageReconciliationService`, der bei jedem
+  Dashboard-/Backups-Seitenaufruf automatisch läuft und für jede Backup-Datei
+  auf der Festplatte (über ihre `.manifest.json`-Begleitdatei), die noch
+  nicht erfasst ist, eine Historie-Zeile nachträgt — rein additiv, rührt nie
+  eine bestehende Zeile an.
 
 ## Nächste Schritte
 

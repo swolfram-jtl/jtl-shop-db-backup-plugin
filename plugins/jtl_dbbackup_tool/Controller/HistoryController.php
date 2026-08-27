@@ -15,10 +15,11 @@ use Plugin\jtl_dbbackup_tool\Service\ConsistencyChecker;
 use Plugin\jtl_dbbackup_tool\Service\EncryptionService;
 use Plugin\jtl_dbbackup_tool\Service\LockService;
 use Plugin\jtl_dbbackup_tool\Service\ManifestService;
-use Plugin\jtl_dbbackup_tool\Service\PresetRegistry;
+use Plugin\jtl_dbbackup_tool\Service\PresetLabelResolver;
 use Plugin\jtl_dbbackup_tool\Service\RequestGuard;
 use Plugin\jtl_dbbackup_tool\Service\RestoreService;
 use Plugin\jtl_dbbackup_tool\Service\SettingsRepository;
+use Plugin\jtl_dbbackup_tool\Service\StorageReconciliationService;
 use Plugin\jtl_dbbackup_tool\Service\StorageService;
 
 /**
@@ -73,6 +74,18 @@ final class HistoryController
         $restoreService = $this->buildRestoreService($plugin, $db);
         $settings = new SettingsRepository($plugin);
         $adminAccountId = (int) ($_SESSION['AdminAccount']->kAdminlogin ?? 0);
+
+        // Self-healing for a real reported gap: an uninstall/reinstall (or
+        // restoring the shop's own DB from an older dump) drops/recreates
+        // this plugin's history table empty while the actual backup files +
+        // manifests keep sitting on disk untouched (by design — see
+        // StorageService's docblock). Cheap (one glob() per page load) and
+        // purely additive — see StorageReconciliationService's docblock.
+        $recoveredCount = (new StorageReconciliationService($storage, $manifestService, $history, new AuditLogger($db)))
+            ->reconcile($instanceId, $adminAccountId);
+        if ($recoveredCount > 0) {
+            $flashMessage = \d__('jtl_dbbackup_tool', '%d Backup(s) von der Festplatte wiederhergestellt.', $recoveredCount);
+        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'preview' && isset($_POST['id']) && RequestGuard::claimRestoreAction()) {
             try {
@@ -170,7 +183,7 @@ final class HistoryController
             self::PER_PAGE,
         );
 
-        $presetLabels = $this->presetLabels();
+        $presetLabels = PresetLabelResolver::all();
         $groups = [];
         foreach ($result['rows'] as $row) {
             $key = $row->cPresetKey;
@@ -240,24 +253,6 @@ final class HistoryController
             ->assign('previewDecryptionPassphrase', $previewDecryptionPassphrase);
 
         return $smarty->fetch(\dirname(__DIR__) . '/adminmenu/templates/history.tpl');
-    }
-
-    /**
-     * @return array<string, string> presetKey => display label. Synthetic
-     *         entries ('full', 'self_update') go through \d__() since they're
-     *         pure UI labels; PresetRegistry's own labels stay untranslated
-     *         (spec "Preset-Benennung" — must match the shop's own backend
-     *         menu wording verbatim).
-     */
-    private function presetLabels(): array
-    {
-        $labels = ['full' => \d__('jtl_dbbackup_tool', 'Komplett')];
-        foreach (PresetRegistry::all() as $key => $preset) {
-            $labels[$key] = $preset['label'];
-        }
-        $labels['self_update'] = \d__('jtl_dbbackup_tool', 'Automatisches Backup vor Plugin-Update');
-
-        return $labels;
     }
 
     private function handleDownload(int $id, BackupHistoryRepository $history, StorageService $storage, string $instanceId): void

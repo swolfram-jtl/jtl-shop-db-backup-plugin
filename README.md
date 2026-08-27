@@ -220,6 +220,14 @@ documented in detail in `CHANGELOG.md`):
   testing admin account's language really is set to English, and clear the
   shop's locale cache (`DIR_LOCALE_CACHE`) once after deploying — JTL caches
   parsed `.mo` → PHP-array conversions keyed by file mtime.
+- **Manager showed no backups after a reinstall, even though the files were
+  still on the server.** The history table is dropped/recreated empty by
+  any uninstall/reinstall; the backup files themselves deliberately live
+  outside the plugin's own folder and survive that untouched. Added
+  `StorageReconciliationService`, which runs automatically on every
+  Dashboard/Backups page load and re-adds a history row for any backup file
+  found on disk (via its `.manifest.json` sidecar) that isn't already
+  tracked — additive only, never touches an existing row.
 
 ## Next steps
 
